@@ -19,7 +19,7 @@ import {
 } from '@ant-design/icons';
 import logo from '../assets/images/logo.png';
 
-const { Header, Content, Sider } = Layout;
+const { Header, Sider } = Layout;
 
 const MainLayout = () => {
     const navigate = useNavigate();
@@ -27,7 +27,7 @@ const MainLayout = () => {
     const [collapsed, setCollapsed] = useState(false);
     const [openKeys, setOpenKeys] = useState<string[]>([]);
     const {
-        token: { colorBgContainer, borderRadiusLG },
+        token: { colorBgContainer },
     } = theme.useToken();
 
     const menuItems = [
@@ -384,7 +384,6 @@ const MainLayout = () => {
                 </Sider>
 
                 <Layout style={{
-                    padding: '0 0 24px',
                     marginLeft: collapsed ? 80 : 200,
                     transition: 'margin-left 0.2s',
                 }}>
