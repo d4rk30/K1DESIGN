@@ -6,7 +6,6 @@ import {
     RiseOutlined, RightOutlined
 } from '@ant-design/icons';
 import ReactECharts from 'echarts-for-react';
-import { useState, useEffect } from 'react';
 
 // 统一的图表主题配置
 const chartTheme = {

@@ -91,7 +91,7 @@ const MainLayout = () => {
             children: [
                 {
                     key: 'exposure-logs',
-                    label: '暴露面检测日志',
+                    label: '暴露面监测日志',
                 },
                 {
                     key: 'exposure-assets',

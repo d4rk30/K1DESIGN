@@ -3,6 +3,7 @@ import MainLayout from './layouts/MainLayout';
 import Dashboard from './pages/Dashboard';
 import License from './pages/License';
 import UnderDevelopment from './pages/UnderDevelopment';
+import ExposureDetectionLog from './pages/ExposureDetectionLog';
 
 function App() {
   return (
@@ -12,6 +13,7 @@ function App() {
           <Route index element={<Navigate to="/home" replace />} />
           <Route path="dashboard" element={<Dashboard />} />
           <Route path="license" element={<License />} />
+          <Route path="exposure-logs" element={<ExposureDetectionLog />} />
           <Route path="*" element={<UnderDevelopment />} />
         </Route>
       </Routes>
