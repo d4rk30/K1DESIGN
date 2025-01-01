@@ -294,6 +294,32 @@ const MainLayout = () => {
         return findMenuItem(menuItems, pathname);
     }, [location.pathname, menuItems]);
 
+    const renderUpdateTime = () => {
+        const pathname = location.pathname.substring(1);
+        if (pathname === 'dashboard') {
+            return (
+                <div style={{
+                    fontSize: '14px',
+                    color: '#666',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    marginLeft: '16px'
+                }}>
+                    <span style={{
+                        width: '6px',
+                        height: '6px',
+                        background: '#52c41a',
+                        borderRadius: '50%',
+                        display: 'inline-block'
+                    }} />
+                    最近更新: 10分钟前
+                </div>
+            );
+        }
+        return null;
+    };
+
     return (
         <Layout style={{ minHeight: '100vh' }}>
             <Header style={{
@@ -395,7 +421,14 @@ const MainLayout = () => {
                         zIndex: 2,
                         borderBottom: '1px solid #f0f0f0'
                     }}>
-                        <Breadcrumb items={breadcrumbItems} />
+                        <div style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between'
+                        }}>
+                            <Breadcrumb items={breadcrumbItems} />
+                            {renderUpdateTime()}
+                        </div>
                     </div>
                     <div style={{ padding: '24px' }}>
                         <Outlet />
