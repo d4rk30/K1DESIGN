@@ -5,20 +5,15 @@ import { SearchOutlined, ReloadOutlined, ExportOutlined, DeleteOutlined, SaveOut
 import LabelSelect from '../components/LabelSelect';
 import LabelInput from '../components/LabelInput';
 import LabelCascader from '../components/LabelCascader';
-import AttackPathVisualization from '../components/AttackPathVisualization';
-import { US, CN, GB, FR, DE } from 'country-flag-icons/react/3x2';
+import { US, CN, GB, FR, DE } from 'country-flag-icons/react/3x2';  // 导入国旗图标
 
 interface DataType {
     key: string;
-    sourceIP: string;
-    location: string;
     targetIP: string;
-    targetPort: number;
+    targetDomain: string;
+    targetURL: string;
     assetGroup: string;
-    protectionType: string;
-    ruleName: string;
-    riskLevel: string;
-    action: string;
+    mappingCount: number;
     time: string;
 }
 
@@ -36,7 +31,7 @@ const timelineItemStyle = `
   }
 `;
 
-const ExposureDetectionLog: React.FC = () => {
+const ExposureAssets: React.FC = () => {
     const [form] = Form.useForm();
     const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
     const [currentPage, setCurrentPage] = useState(1);
@@ -51,333 +46,82 @@ const ExposureDetectionLog: React.FC = () => {
     const mockData: DataType[] = [
         {
             key: '1',
-            sourceIP: '10.21.23.4',
-            location: '美国 | 纽约',
             targetIP: '172.18.0.41',
-            targetPort: 900,
-            assetGroup: 'Default_v4',
-            protectionType: 'Nmap',
-            ruleName: 'nmap Kerberos扫描',
-            riskLevel: '高级',
-            action: '阻断',
+            targetDomain: 'example.com',
+            targetURL: 'https://example.com/api/v1/users',
+            assetGroup: 'Web_Server',
+            mappingCount: 156,
             time: '2024-03-11 12:03'
         },
         {
             key: '2',
-            sourceIP: '192.168.1.100',
-            location: '中国 | 北京',
             targetIP: '172.18.0.42',
-            targetPort: 443,
-            assetGroup: 'Web_Server',
-            protectionType: 'SQL注入',
-            ruleName: 'SQL注入攻击检测',
-            riskLevel: '高级',
-            action: '阻断',
+            targetDomain: 'api.example.com',
+            targetURL: 'https://api.example.com/v2/products',
+            assetGroup: 'API_Server',
+            mappingCount: 89,
             time: '2024-03-11 12:05'
         },
-        {
-            key: '3',
-            sourceIP: '172.16.0.123',
-            location: '英国 | 伦敦',
-            targetIP: '172.18.0.43',
-            targetPort: 80,
-            assetGroup: 'Web_Server',
-            protectionType: 'XSS',
-            ruleName: 'XSS攻击检测',
-            riskLevel: '中级',
-            action: '监控',
-            time: '2024-03-11 12:08'
-        },
-        {
-            key: '4',
-            sourceIP: '10.0.0.50',
-            location: '法国 | 巴黎',
-            targetIP: '172.18.0.44',
-            targetPort: 8080,
-            assetGroup: 'App_Server',
-            protectionType: 'WebShell',
-            ruleName: 'WebShell检测',
-            riskLevel: '高级',
-            action: '阻断',
-            time: '2024-03-11 12:15'
-        },
-        {
-            key: '5',
-            sourceIP: '192.168.2.200',
-            location: '德国 | 柏林',
-            targetIP: '172.18.0.45',
-            targetPort: 3306,
-            assetGroup: 'DB_Server',
-            protectionType: 'Brute Force',
-            ruleName: 'MySQL暴力破解',
-            riskLevel: '中级',
-            action: '监控',
-            time: '2024-03-11 12:20'
-        },
-        {
-            key: '6',
-            sourceIP: '10.10.10.10',
-            location: '中国 | 上海',
-            targetIP: '172.18.0.46',
-            targetPort: 22,
-            assetGroup: 'Linux_Server',
-            protectionType: 'SSH扫描',
-            ruleName: 'SSH暴力破解',
-            riskLevel: '低级',
-            action: '监控',
-            time: '2024-03-11 12:25'
-        },
-        {
-            key: '7',
-            sourceIP: '192.168.3.150',
-            location: '美国 | 洛杉矶',
-            targetIP: '172.18.0.47',
-            targetPort: 1433,
-            assetGroup: 'DB_Server',
-            protectionType: 'SQL注入',
-            ruleName: 'MSSQL注入检测',
-            riskLevel: '高级',
-            action: '阻断',
-            time: '2024-03-11 12:30'
-        },
-        {
-            key: '8',
-            sourceIP: '172.20.0.100',
-            location: '德国 | 慕尼黑',
-            targetIP: '172.18.0.48',
-            targetPort: 21,
-            assetGroup: 'FTP_Server',
-            protectionType: 'FTP扫描',
-            ruleName: 'FTP弱密码检测',
-            riskLevel: '中级',
-            action: '监控',
-            time: '2024-03-11 12:35'
-        },
-        {
-            key: '9',
-            sourceIP: '192.168.4.200',
-            location: '法国 | 里昂',
-            targetIP: '172.18.0.49',
-            targetPort: 5432,
-            assetGroup: 'DB_Server',
-            protectionType: 'SQL注入',
-            ruleName: 'PostgreSQL注入检测',
-            riskLevel: '高级',
-            action: '阻断',
-            time: '2024-03-11 12:40'
-        },
-        {
-            key: '10',
-            sourceIP: '10.30.0.15',
-            location: '中国 | 深圳',
-            targetIP: '172.18.0.50',
-            targetPort: 6379,
-            assetGroup: 'Redis_Server',
-            protectionType: 'Redis扫描',
-            ruleName: 'Redis未授权访问',
-            riskLevel: '高级',
-            action: '阻断',
-            time: '2024-03-11 12:45'
-        },
-        {
-            key: '11',
-            sourceIP: '192.168.5.150',
-            location: '英国 | 曼彻斯特',
-            targetIP: '172.18.0.51',
-            targetPort: 27017,
-            assetGroup: 'DB_Server',
-            protectionType: 'MongoDB扫描',
-            ruleName: 'MongoDB访问控制',
-            riskLevel: '中级',
-            action: '监控',
-            time: '2024-03-11 12:50'
-        },
-        {
-            key: '12',
-            sourceIP: '172.25.0.80',
-            location: '美国 | 芝加哥',
-            targetIP: '172.18.0.52',
-            targetPort: 9200,
-            assetGroup: 'ES_Server',
-            protectionType: 'ES扫描',
-            ruleName: 'Elasticsearch未授权',
-            riskLevel: '高级',
-            action: '阻断',
-            time: '2024-03-11 12:55'
-        },
-        {
-            key: '13',
-            sourceIP: '10.40.0.25',
-            location: '中国 | 广州',
-            targetIP: '172.18.0.53',
-            targetPort: 8443,
-            assetGroup: 'Web_Server',
-            protectionType: 'SSL扫描',
-            ruleName: 'SSL漏洞检测',
-            riskLevel: '低级',
-            action: '监控',
-            time: '2024-03-11 13:00'
-        },
-        {
-            key: '14',
-            sourceIP: '192.168.6.100',
-            location: '德国 | 汉堡',
-            targetIP: '172.18.0.54',
-            targetPort: 445,
-            assetGroup: 'Windows_Server',
-            protectionType: 'SMB扫描',
-            ruleName: 'SMB漏洞检测',
-            riskLevel: '高级',
-            action: '阻断',
-            time: '2024-03-11 13:05'
-        },
-        {
-            key: '15',
-            sourceIP: '172.30.0.90',
-            location: '法国 | 马赛',
-            targetIP: '172.18.0.55',
-            targetPort: 25,
-            assetGroup: 'Mail_Server',
-            protectionType: 'SMTP扫描',
-            ruleName: 'SMTP漏洞检测',
-            riskLevel: '中级',
-            action: '监控',
-            time: '2024-03-11 13:10'
-        },
-        {
-            key: '16',
-            sourceIP: '10.50.0.35',
-            location: '英国 | 利物浦',
-            targetIP: '172.18.0.56',
-            targetPort: 161,
-            assetGroup: 'Network_Device',
-            protectionType: 'SNMP扫描',
-            ruleName: 'SNMP弱密码',
-            riskLevel: '低级',
-            action: '监控',
-            time: '2024-03-11 13:15'
-        },
-        {
-            key: '17',
-            sourceIP: '192.168.7.120',
-            location: '美国 | 波士顿',
-            targetIP: '172.18.0.57',
-            targetPort: 3389,
-            assetGroup: 'Windows_Server',
-            protectionType: 'RDP扫描',
-            ruleName: 'RDP暴力破解',
-            riskLevel: '高级',
-            action: '阻断',
-            time: '2024-03-11 13:20'
-        },
-        {
-            key: '18',
-            sourceIP: '172.35.0.70',
-            location: '中国 | 杭州',
-            targetIP: '172.18.0.58',
-            targetPort: 11211,
-            assetGroup: 'Cache_Server',
-            protectionType: 'Memcached扫描',
-            ruleName: 'Memcached未授权',
-            riskLevel: '中级',
-            action: '监控',
-            time: '2024-03-11 13:25'
-        },
-        {
-            key: '19',
-            sourceIP: '10.60.0.45',
-            location: '德国 | 法兰克福',
-            targetIP: '172.18.0.59',
-            targetPort: 2181,
-            assetGroup: 'ZK_Server',
-            protectionType: 'ZooKeeper扫描',
-            ruleName: 'ZK未授权访问',
-            riskLevel: '高级',
-            action: '阻断',
-            time: '2024-03-11 13:30'
-        },
-        {
-            key: '20',
-            sourceIP: '192.168.8.140',
-            location: '法国 | 波尔多',
-            targetIP: '172.18.0.60',
-            targetPort: 9092,
-            assetGroup: 'Kafka_Server',
-            protectionType: 'Kafka扫描',
-            ruleName: 'Kafka未授权访问',
-            riskLevel: '中级',
-            action: '监控',
-            time: '2024-03-11 13:35'
-        }
+        // ... 可以继续添加更多模拟数据
     ];
 
     const columns: ColumnsType<DataType> = [
         {
-            title: '源IP',
-            dataIndex: 'sourceIP',
-            key: 'sourceIP',
-        },
-        {
-            title: '归属地',
-            dataIndex: 'location',
-            key: 'location',
-            render: (text) => {
-                const country = text.split('|')[0].trim();
-                const FlagComponent = getFlagComponent(country);
-                return (
-                    <Space>
-                        {FlagComponent && <FlagComponent style={{ width: 16 }} />}
-                        {text}
-                    </Space>
-                );
-            },
-        },
-        {
             title: '目的IP',
             dataIndex: 'targetIP',
             key: 'targetIP',
+            width: 140,
         },
         {
-            title: '目的端口',
-            dataIndex: 'targetPort',
-            key: 'targetPort',
+            title: '目的域名',
+            dataIndex: 'targetDomain',
+            key: 'targetDomain',
+        },
+        {
+            title: '最近被测绘目的URL',
+            dataIndex: 'targetURL',
+            key: 'targetURL',
+            ellipsis: true,
         },
         {
             title: '所属资产分组',
             dataIndex: 'assetGroup',
             key: 'assetGroup',
+            width: 180,
         },
         {
-            title: '防护类型',
-            dataIndex: 'protectionType',
-            key: 'protectionType',
-        },
-        {
-            title: '规则名称',
-            dataIndex: 'ruleName',
-            key: 'ruleName',
-        },
-        {
-            title: '严重级别',
-            dataIndex: 'riskLevel',
-            key: 'riskLevel',
-            render: (text) => (
-                <Tag color={text === '高级' ? 'error' : 'warning'}>{text}</Tag>
-            ),
-        },
-        {
-            title: '处理动作',
-            dataIndex: 'action',
-            key: 'action',
+            title: '被测绘次数',
+            dataIndex: 'mappingCount',
+            key: 'mappingCount',
+            width: 120,
+            render: (count: number) => {
+                // 根据次数设置不同的颜色
+                let color = 'success';
+                if (count > 100) {
+                    color = 'error';
+                } else if (count > 50) {
+                    color = 'warning';
+                } else if (count > 20) {
+                    color = 'processing';
+                }
+
+                return (
+                    <Tag color={color}>
+                        {count} 次
+                    </Tag>
+                );
+            },
         },
         {
             title: '时间',
             dataIndex: 'time',
             key: 'time',
+            width: 180,
         },
         {
             title: '操作',
             key: 'operation',
+            width: 100,
             render: (_, record) => (
                 <Button
                     type="link"
@@ -467,18 +211,6 @@ const ExposureDetectionLog: React.FC = () => {
         }
     };
 
-    // 添加一个辅助函数来获取对应的国旗组件
-    const getFlagComponent = (country: string) => {
-        const componentMap: { [key: string]: any } = {
-            '美国': US,
-            '中国': CN,
-            '英国': GB,
-            '法国': FR,
-            '德国': DE,
-        };
-        return componentMap[country];
-    };
-
     // 计算当前页的数据
     const getCurrentPageData = () => {
         const startIndex = (currentPage - 1) * pageSize;
@@ -549,8 +281,20 @@ const ExposureDetectionLog: React.FC = () => {
         return 'default';  // 其他端口
     };
 
+    // 添加一个辅助函数来获取对应的国旗组件
+    const getFlagComponent = (country: string) => {
+        const componentMap: { [key: string]: any } = {
+            '美国': US,
+            '中国': CN,
+            '英国': GB,
+            '法国': FR,
+            '德国': DE,
+        };
+        return componentMap[country];
+    };
+
     return (
-        <Card bordered={false}>
+        <Card>
             <Form
                 form={form}
                 name="exposure_log_search"
@@ -558,7 +302,7 @@ const ExposureDetectionLog: React.FC = () => {
                 style={{ marginBottom: 24 }}
             >
                 <Row gutter={[16, 16]}>
-                    <Col span={4}>
+                    <Col span={3}>
                         <Form.Item name="quickSearch" style={{ marginBottom: 0 }}>
                             <LabelSelect
                                 label="快捷搜索"
@@ -573,7 +317,7 @@ const ExposureDetectionLog: React.FC = () => {
                             </LabelSelect>
                         </Form.Item>
                     </Col>
-                    <Col span={4}>
+                    <Col span={3}>
                         <Form.Item name="sourceIP" style={{ marginBottom: 0 }}>
                             <LabelInput
                                 label="源IP"
@@ -581,14 +325,7 @@ const ExposureDetectionLog: React.FC = () => {
                             />
                         </Form.Item>
                     </Col>
-                    <Col span={4}>
-                        <Form.Item name="targetIP" style={{ marginBottom: 0 }}>
-                            <LabelInput
-                                label="目的IP"
-                                placeholder="请输入"
-                            />
-                        </Form.Item>
-                    </Col>
+
                     <Col span={4}>
                         <Form.Item name="protectionType" style={{ marginBottom: 0 }}>
                             <LabelSelect
@@ -603,33 +340,9 @@ const ExposureDetectionLog: React.FC = () => {
                     <Col span={4}>
                         <Form.Item name="assetGroup" style={{ marginBottom: 0 }}>
                             <LabelInput
-                                label="资产分组"
+                                label="所属资产分组"
                                 placeholder="请输入"
                             />
-                        </Form.Item>
-                    </Col>
-                    <Col span={4}>
-                        <Form.Item name="riskLevel" style={{ marginBottom: 0 }}>
-                            <LabelSelect
-                                label="严重级别"
-                                placeholder="请选择"
-                            >
-                                <Option value="high">高级</Option>
-                                <Option value="medium">中级</Option>
-                                <Option value="low">低级</Option>
-                            </LabelSelect>
-                        </Form.Item>
-                    </Col>
-                    <Col span={4}>
-                        <Form.Item name="action" style={{ marginBottom: 0 }}>
-                            <LabelSelect
-                                label="处理动作"
-                                placeholder="请选择"
-                            >
-                                <Option value="all">全部</Option>
-                                <Option value="block">阻断</Option>
-                                <Option value="monitor">监控</Option>
-                            </LabelSelect>
                         </Form.Item>
                     </Col>
                     <Col span={4}>
@@ -641,7 +354,7 @@ const ExposureDetectionLog: React.FC = () => {
                             />
                         </Form.Item>
                     </Col>
-                    <Col span={4}>
+                    <Col span={6}>
                         <Form.Item style={{ marginBottom: 0 }}>
                             <Space>
                                 <Button type="primary" htmlType="submit" icon={<SearchOutlined />}>
@@ -726,33 +439,8 @@ const ExposureDetectionLog: React.FC = () => {
                 }}
                 open={drawerVisible}
             >
-                <Card title="暴露面路径">
-                    <AttackPathVisualization
-                        attackerInfo={{
-                            ip: currentRecord?.sourceIP || '',
-                            port: String(currentRecord?.targetPort) || '',
-                            time: currentRecord?.time || '',
-                            location: currentRecord?.location || '',
-                            deviceType: '移动设备',
-                            browserType: 'Chrome Mobile 121.0',
-                            OSType: 'Windows 11'
-                        }}
-                        deviceInfo={{
-                            protocolType: 'HTTP',
-                            protectionRule: currentRecord?.ruleName || '',
-                            protectionType: currentRecord?.protectionType || '',
-                            reverseMappingType: '爬虫类型工具'
-                        }}
-                        victimInfo={{
-                            ip: currentRecord?.targetIP || '',
-                            port: String(currentRecord?.targetPort) || '',
-                            assetGroup: currentRecord?.assetGroup || ''
-                        }}
-                        threatLevel={currentRecord?.riskLevel || ''}
-                        action={currentRecord?.action || ''}
-                    />
-                </Card>
-                <Card title="暴露面分析" style={{ marginTop: 24 }}>
+                <Card title="资产暴露面分析">
+
                     <div style={{
                         background: 'linear-gradient(to right, rgba(255, 77, 79, 0.08) 0%, rgba(255, 77, 79, 0.05) 50%, rgba(255, 77, 79, 0.02) 100%)',
                         borderRadius: '4px',
@@ -786,14 +474,35 @@ const ExposureDetectionLog: React.FC = () => {
                                     format={() => (
                                         <div style={{ fontSize: 20, color: '#000000d9' }}>
                                             30
-                                            <div style={{ fontSize: 12, color: '#00000073' }}>分</div>
+                                            <div style={{ fontSize: 12, color: '#00000073', marginTop: 4 }}>安全分</div>
                                         </div>
                                     )}
                                 />
                             </Col>
                         </Row>
                     </div>
-
+                    <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
+                        <Col span={8}>
+                            <Typography.Text type="secondary">目的IP：</Typography.Text>
+                            <Typography.Text strong>{currentRecord?.targetIP}</Typography.Text>
+                        </Col>
+                        <Col span={8}>
+                            <Typography.Text type="secondary">目的域名：</Typography.Text>
+                            <Typography.Text strong>{currentRecord?.targetDomain}</Typography.Text>
+                        </Col>
+                        <Col span={8}>
+                            <Typography.Text type="secondary">被测绘次数：</Typography.Text>
+                            {currentRecord?.mappingCount && (
+                                <Tag color={
+                                    currentRecord.mappingCount > 100 ? 'error' :
+                                        currentRecord.mappingCount > 50 ? 'warning' :
+                                            currentRecord.mappingCount > 20 ? 'processing' : 'success'
+                                }>
+                                    {currentRecord.mappingCount} 次
+                                </Tag>
+                            )}
+                        </Col>
+                    </Row>
                     <Row gutter={[16, 16]}>
 
                         {/* 运行服务卡片 */}
@@ -1024,9 +733,86 @@ const ExposureDetectionLog: React.FC = () => {
                         </Col>
                     </Row>
                 </Card>
+                <Card title="资产暴露面日志" style={{ marginTop: 24 }}>
+                    <Table
+                        dataSource={[
+                            {
+                                key: '1',
+                                time: '2024-03-15 14:30:22',
+                                sourceIP: '192.168.1.100',
+                                location: '中国 | 北京',
+                                count: 156
+                            },
+                            {
+                                key: '2',
+                                time: '2024-03-15 13:25:16',
+                                sourceIP: '192.168.1.101',
+                                location: '中国 | 上海',
+                                count: 89
+                            },
+                            {
+                                key: '3',
+                                time: '2024-03-15 12:18:45',
+                                sourceIP: '192.168.1.102',
+                                location: '美国 | 加利福尼亚',
+                                count: 45
+                            }
+                        ]}
+                        columns={[
+                            {
+                                title: '最近测绘时间',
+                                dataIndex: 'time',
+                                key: 'time',
+                                width: 180
+                            },
+                            {
+                                title: '源IP',
+                                dataIndex: 'sourceIP',
+                                key: 'sourceIP',
+                                width: 150
+                            },
+                            {
+                                title: '源IP归属地',
+                                dataIndex: 'location',
+                                key: 'location',
+                                width: 200,
+                                render: (text: string) => {
+                                    const country = text.split('|')[0].trim();
+                                    const FlagComponent = getFlagComponent(country);
+                                    return (
+                                        <Space>
+                                            {FlagComponent && <FlagComponent style={{ width: 16 }} />}
+                                            <span>{text}</span>
+                                        </Space>
+                                    );
+                                }
+                            },
+                            {
+                                title: '测绘次数',
+                                dataIndex: 'count',
+                                key: 'count',
+                                width: 120,
+                                render: (count: number) => (
+                                    <Tag color={
+                                        count > 100 ? 'error' :
+                                            count > 50 ? 'warning' :
+                                                count > 20 ? 'processing' : 'success'
+                                    }>
+                                        {count} 次
+                                    </Tag>
+                                )
+                            }
+                        ]}
+                        pagination={{
+                            pageSize: 5,
+                            showSizeChanger: false,
+                            showTotal: (total) => `共 ${total} 条记录`
+                        }}
+                    />
+                </Card>
             </Drawer >
         </Card >
     );
 };
 
-export default ExposureDetectionLog; 
+export default ExposureAssets; 

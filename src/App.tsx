@@ -6,8 +6,9 @@ import MainLayout from './layouts/MainLayout';
 import Dashboard from './pages/Dashboard';
 import License from './pages/License';
 import UnderDevelopment from './pages/UnderDevelopment';
-import ExposureDetectionLog from './pages/ExposureDetectionLog';
-
+import ExposureLog from './pages/ExposureLog';
+import ExposureAssets from './pages/ExposureAssets';
+import ExposureStrategy from './pages/ExposureStrategy';
 const App: React.FC = () => {
   return (
     <ConfigProvider locale={zhCN}>
@@ -17,7 +18,9 @@ const App: React.FC = () => {
             <Route index element={<Navigate to="/home" replace />} />
             <Route path="dashboard" element={<Dashboard />} />
             <Route path="license" element={<License />} />
-            <Route path="exposure-logs" element={<ExposureDetectionLog />} />
+            <Route path="exposure-logs" element={<ExposureLog />} />
+            <Route path="exposure-assets" element={<ExposureAssets />} />
+            <Route path="exposure-policy" element={<ExposureStrategy />} />
             <Route path="*" element={<UnderDevelopment />} />
           </Route>
         </Routes>
