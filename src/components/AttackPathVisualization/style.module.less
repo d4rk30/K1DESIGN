@@ -1,0 +1,91 @@
+.attackPathWrapper {
+    padding-top: 10px;
+    position: relative;
+    min-height: 100px;
+}
+
+.pathContainer {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    position: relative;
+}
+
+.lineLayer {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 32px;
+    height: 2px;
+    z-index: 1;
+}
+
+.blueLine {
+    position: absolute;
+    left: calc(16.5% + 32px);
+    width: calc(35% - 64px);
+    height: 1.5px;
+    background: #1890ff;
+}
+
+.redLine {
+    position: absolute;
+    left: calc(50% + 32px);
+    width: calc(35% - 64px);
+    height: 1.5px;
+    background: #ff4d4f;
+}
+
+.threatLabel {
+    position: absolute;
+    left: 33%;
+    top: -12px;
+    transform: translateX(-50%);
+    z-index: 3;
+}
+
+.actionLabel {
+    position: absolute;
+    left: 66.5%;
+    top: -12px;
+    transform: translateX(-50%);
+    z-index: 3;
+}
+
+.nodeSection {
+    flex: 1;
+    max-width: 33%;
+    text-align: center;
+}
+
+.iconWrapper {
+    width: 64px;
+    height: 64px;
+    background: #f0f2f5;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 20px;
+    position: relative;
+    z-index: 2;
+}
+
+.icon {
+    width: 32px;
+    height: 32px;
+}
+
+.infoWrapper {
+    padding: 0 20px;
+
+    :global {
+        .ant-descriptions-item {
+            padding: 4px 0;
+        }
+
+        .ant-descriptions-item-label {
+            text-align: left;
+        }
+    }
+}

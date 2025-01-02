@@ -565,21 +565,6 @@ const getChartOptions = (type: string, data: any) => {
     }
 };
 
-// 先定义 StatisticCard 组件
-const StatisticCard = ({ children }: { children: React.ReactNode }) => (
-    <Card
-        bordered={false}
-        styles={{
-            body: { padding: '24px' }
-        }}
-        style={{
-            width: '100%',
-            boxShadow: 'none'
-        }}
-    >
-        {children}
-    </Card>
-);
 
 // 然后是 TrendCard 组件
 const TrendCard = ({
@@ -604,7 +589,7 @@ const TrendCard = ({
     mainLabel: string;
     mainUnit: string;
 }) => (
-    <StatisticCard>
+    <Card>
         <Space direction="vertical" size="middle" style={{
             width: '100%',
             background: '#ffffff',
@@ -797,7 +782,7 @@ const TrendCard = ({
                 ))}
             </Row>
         </Space>
-    </StatisticCard>
+    </Card>
 );
 
 const Dashboard = () => {
@@ -854,17 +839,7 @@ const Dashboard = () => {
                     />
                 </Col>
                 <Col span={12}>
-                    <Card
-                        bordered={false}
-                        styles={{
-                            body: {
-                                background: '#ffffff',
-                                borderRadius: '16px',
-                                padding: '24px'
-                            }
-                        }}
-                        style={{ boxShadow: 'none' }}
-                    >
+                    <Card>
                         {/* 标题区域 - 统一风格 */}
                         <div style={{
                             display: 'flex',
