@@ -1,9 +1,9 @@
-import { Card, Row, Col, Space } from 'antd';
+import { Card, Row, Col, Space, Tooltip } from 'antd';
 import {
     AlertOutlined, GlobalOutlined,
     DesktopOutlined, TeamOutlined, BugOutlined,
     DatabaseOutlined, SecurityScanOutlined, FlagOutlined,
-    RiseOutlined, RightOutlined
+    RiseOutlined, RightOutlined, ExclamationCircleOutlined
 } from '@ant-design/icons';
 import ReactECharts from 'echarts-for-react';
 
@@ -894,7 +894,20 @@ const Dashboard = () => {
                                     trendType: 'down'
                                 },
                                 {
-                                    title: '0day/1day',
+                                    title: (
+                                        <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                            0day/1day
+                                            <Tooltip title="可识别0day/1day漏洞的数量">
+                                                <ExclamationCircleOutlined 
+                                                    style={{ 
+                                                        fontSize: '14px',
+                                                        color: 'rgba(0,0,0,0.45)',
+                                                        cursor: 'help'
+                                                    }} 
+                                                />
+                                            </Tooltip>
+                                        </span>
+                                    ),
                                     value: mockData.securityData.zeroOneDayVulns,
                                     icon: <BugOutlined />,
                                     color: '#ff4d4f',
@@ -902,7 +915,20 @@ const Dashboard = () => {
                                     trendType: 'up'
                                 },
                                 {
-                                    title: 'APT组织',
+                                    title: (
+                                        <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                            APT组织
+                                            <Tooltip title="可识别APT组织的情报数量">
+                                                <ExclamationCircleOutlined 
+                                                    style={{ 
+                                                        fontSize: '14px',
+                                                        color: 'rgba(0,0,0,0.45)',
+                                                        cursor: 'help'
+                                                    }} 
+                                                />
+                                            </Tooltip>
+                                        </span>
+                                    ),
                                     value: mockData.securityData.aptGroups,
                                     icon: <TeamOutlined />,
                                     color: '#722ed1',
@@ -910,7 +936,20 @@ const Dashboard = () => {
                                     trendType: 'stable'
                                 },
                                 {
-                                    title: '攻防演练',
+                                    title: (
+                                        <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                            攻防演练
+                                            <Tooltip title="可识别攻防演练队伍的情报数量">
+                                                <ExclamationCircleOutlined 
+                                                    style={{ 
+                                                        fontSize: '14px',
+                                                        color: 'rgba(0,0,0,0.45)',
+                                                        cursor: 'help'
+                                                    }} 
+                                                />
+                                            </Tooltip>
+                                        </span>
+                                    ),
                                     value: mockData.securityData.redTeams,
                                     icon: <FlagOutlined />,
                                     color: '#eb2f96',
