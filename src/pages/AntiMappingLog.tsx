@@ -36,7 +36,7 @@ const timelineItemStyle = `
   }
 `;
 
-const ExposureDetectionLog: React.FC = () => {
+const AntiMappingLog: React.FC = () => {
     const [form] = Form.useForm();
     const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
     const [currentPage, setCurrentPage] = useState(1);
@@ -1029,4 +1029,4 @@ const ExposureDetectionLog: React.FC = () => {
     );
 };
 
-export default ExposureDetectionLog; 
+export default AntiMappingLog; 

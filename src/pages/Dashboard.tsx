@@ -898,12 +898,12 @@ const Dashboard = () => {
                                         <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                                             0day/1day
                                             <Tooltip title="可识别0day/1day漏洞的数量">
-                                                <ExclamationCircleOutlined 
-                                                    style={{ 
+                                                <ExclamationCircleOutlined
+                                                    style={{
                                                         fontSize: '14px',
                                                         color: 'rgba(0,0,0,0.45)',
                                                         cursor: 'help'
-                                                    }} 
+                                                    }}
                                                 />
                                             </Tooltip>
                                         </span>
@@ -919,12 +919,12 @@ const Dashboard = () => {
                                         <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                                             APT组织
                                             <Tooltip title="可识别APT组织的情报数量">
-                                                <ExclamationCircleOutlined 
-                                                    style={{ 
+                                                <ExclamationCircleOutlined
+                                                    style={{
                                                         fontSize: '14px',
                                                         color: 'rgba(0,0,0,0.45)',
                                                         cursor: 'help'
-                                                    }} 
+                                                    }}
                                                 />
                                             </Tooltip>
                                         </span>
@@ -940,12 +940,12 @@ const Dashboard = () => {
                                         <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                                             攻防演练
                                             <Tooltip title="可识别攻防演练队伍的情报数量">
-                                                <ExclamationCircleOutlined 
-                                                    style={{ 
+                                                <ExclamationCircleOutlined
+                                                    style={{
                                                         fontSize: '14px',
                                                         color: 'rgba(0,0,0,0.45)',
                                                         cursor: 'help'
-                                                    }} 
+                                                    }}
                                                 />
                                             </Tooltip>
                                         </span>
@@ -1433,7 +1433,7 @@ const Dashboard = () => {
                     <Col span={12}>
                         <ReactECharts
                             option={getChartOptions('line', {
-                                title: '境外流量趋势',
+                                title: '出境流量趋势',
                                 xData: ['00:00', '03:00', '06:00', '09:00', '12:00', '15:00', '18:00', '21:00'],
                                 yData: [150, 180, 160, 200, 250, 220, 190, 210],
                                 lineColor: '#fa8c16',
@@ -1777,120 +1777,6 @@ const Dashboard = () => {
                                 height: '380px',
                                 marginTop: '10px'
                             }}
-                            theme="custom"
-                        />
-                    </Col>
-                </Row>
-            </Card>
-
-            <Card style={{ marginTop: '24px' }} styles={{ body: { padding: '24px' } }}>
-                <div style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    marginBottom: '8px'
-                }}>
-                    <div style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        background: 'linear-gradient(to right, #1890ff15, transparent)',
-                        padding: '6px 12px',
-                        borderRadius: '20px'
-                    }}>
-
-                        <span style={{
-                            fontSize: '15px',
-                            fontWeight: 500,
-                            background: 'linear-gradient(to right, #1890ff, #1890ff90)',
-                            WebkitBackgroundClip: 'text',
-                            WebkitTextFillColor: 'transparent'
-                        }}>
-                            情报分析
-                        </span>
-                    </div>
-                </div>
-
-                <Row gutter={[24, 24]}>
-                    <Col span={16}>
-                        <ReactECharts
-                            option={getChartOptions('bar', {
-                                title: '情报命中厂商排行',
-                                xData: ['公安一所情报', '奇安信情报', '360情报', '华为情报', '腾讯情报', '阿里云情报', '私有情报'],
-                                yData: [61, 52, 48, 45, 38, 38, 38]
-                            })}
-                            style={{ height: '300px' }}
-                            theme="custom"
-                        />
-                    </Col>
-                    <Col span={8}>
-                        <ReactECharts
-                            option={{
-                                ...chartTheme,
-                                title: {
-                                    text: '情报能力分析',
-                                    left: '0',
-                                    top: 20,
-                                    textStyle: {
-                                        fontSize: 15,
-                                        fontWeight: 500
-                                    }
-                                },
-                                tooltip: {
-                                    trigger: 'item',
-                                    formatter: '{b}: {c}%'
-                                },
-                                legend: {
-                                    show: false
-                                },
-                                radar: {
-                                    center: ['50%', '55%'],
-                                    radius: '60%',
-                                    splitNumber: 4,
-                                    shape: 'polygon',
-                                    axisName: {
-                                        color: '#666',
-                                        fontSize: 12
-                                    },
-                                    splitArea: {
-                                        areaStyle: {
-                                            color: ['#f5f5f5', '#fff']
-                                        }
-                                    },
-                                    indicator: [
-                                        { name: '公安一所', max: 100 },
-                                        { name: '奇安信', max: 100 },
-                                        { name: '360', max: 100 },
-                                        { name: '华为', max: 100 },
-                                        { name: '腾讯', max: 100 },
-                                        { name: '阿里云', max: 100 },
-                                        { name: '私有', max: 100 }
-                                    ]
-                                },
-                                series: [{
-                                    type: 'radar',
-                                    symbolSize: 4,
-                                    symbol: 'circle',
-                                    areaStyle: {
-                                        opacity: 0.3
-                                    },
-                                    data: [
-                                        {
-                                            value: [78, 95, 85, 88, 80, 82, 75],
-                                            name: '覆盖率',
-                                            itemStyle: {
-                                                color: '#1890ff'
-                                            },
-                                            lineStyle: {
-                                                color: '#1890ff',
-                                                width: 2
-                                            },
-                                            areaStyle: {
-                                                color: '#1890ff'
-                                            }
-                                        }
-                                    ]
-                                }]
-                            }}
-                            style={{ height: '300px' }}
                             theme="custom"
                         />
                     </Col>

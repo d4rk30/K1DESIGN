@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { Card, Table, Switch, Space, Button, Tag, Row, Drawer, Form, Select, Col, Tabs } from 'antd';
+import { Card, Table, Switch, Space, Button, Row, Drawer, Form, Select, Col, Tabs } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
-import { EditOutlined, CopyOutlined, DeleteOutlined, PlusOutlined } from '@ant-design/icons';
+import { PlusOutlined } from '@ant-design/icons';
 import LabelInput from '../components/LabelInput';
 import LabelSelect from '../components/LabelSelect';
 
@@ -12,7 +12,7 @@ interface StrategyType {
     status: boolean;
 }
 
-const ExposureStrategy: React.FC = () => {
+const AntiMappingStrategy: React.FC = () => {
     const [form] = Form.useForm();
     const [drawerVisible, setDrawerVisible] = useState(false);
     const [editingStrategy, setEditingStrategy] = useState<StrategyType | null>(null);
@@ -113,7 +113,7 @@ const ExposureStrategy: React.FC = () => {
     const commercialPlatforms = [
         {
             key: '1',
-            name: 'DayDayMap',
+            name: 'RaySpace',
             status: true,
             level: 'high',
             action: 'block'
@@ -148,13 +148,6 @@ const ExposureStrategy: React.FC = () => {
         },
         {
             key: '6',
-            name: '其他探测平台',
-            status: true,
-            level: 'medium',
-            action: 'monitor'
-        },
-        {
-            key: '7',
             name: 'Censys',
             status: true,
             level: 'medium',
@@ -166,14 +159,28 @@ const ExposureStrategy: React.FC = () => {
     const crawlerTools = [
         {
             key: '1',
-            name: '常用爬虫工具',
+            name: 'BaiduSpider',
             status: true,
             level: 'high',
             action: 'block'
         },
         {
             key: '2',
-            name: '其他爬虫工具',
+            name: 'GoogleBot',
+            status: true,
+            level: 'medium',
+            action: 'monitor'
+        },
+        {
+            key: '3',
+            name: 'BingBot',
+            status: true,
+            level: 'medium',
+            action: 'monitor'
+        },
+        {
+            key: '4',
+            name: 'Sougou_Crawler',
             status: true,
             level: 'medium',
             action: 'monitor'
@@ -536,8 +543,8 @@ const ExposureStrategy: React.FC = () => {
                 onClose={handleDrawerClose}
                 open={drawerVisible}
                 footer={
-                    <div style={{ 
-                        display: 'flex', 
+                    <div style={{
+                        display: 'flex',
                         justifyContent: 'flex-end',
                         gap: '8px'
                     }}>
@@ -624,4 +631,4 @@ const ExposureStrategy: React.FC = () => {
     );
 };
 
-export default ExposureStrategy;
+export default AntiMappingStrategy;

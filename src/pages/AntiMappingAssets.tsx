@@ -31,7 +31,7 @@ const timelineItemStyle = `
   }
 `;
 
-const ExposureAssets: React.FC = () => {
+const AntiMappingAssets: React.FC = () => {
     const [form] = Form.useForm();
     const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
     const [currentPage, setCurrentPage] = useState(1);
@@ -815,4 +815,4 @@ const ExposureAssets: React.FC = () => {
     );
 };
 
-export default ExposureAssets; 
+export default AntiMappingAssets; 

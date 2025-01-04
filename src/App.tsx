@@ -6,9 +6,9 @@ import MainLayout from './layouts/MainLayout';
 import Dashboard from './pages/Dashboard';
 import License from './pages/License';
 import UnderDevelopment from './pages/UnderDevelopment';
-import ExposureLog from './pages/ExposureLog';
-import ExposureAssets from './pages/ExposureAssets';
-import ExposureStrategy from './pages/ExposureStrategy';
+import AntiMappingLog from './pages/AntiMappingLog';
+import AntiMappingAssets from './pages/AntiMappingAssets';
+import AntiMappingStrategy from './pages/AntiMappingStrategy';
 const App: React.FC = () => {
   return (
     <ConfigProvider locale={zhCN}>
@@ -18,9 +18,9 @@ const App: React.FC = () => {
             <Route index element={<Navigate to="/home" replace />} />
             <Route path="dashboard" element={<Dashboard />} />
             <Route path="license" element={<License />} />
-            <Route path="exposure-logs" element={<ExposureLog />} />
-            <Route path="exposure-assets" element={<ExposureAssets />} />
-            <Route path="exposure-policy" element={<ExposureStrategy />} />
+            <Route path="anti-mapping-logs" element={<AntiMappingLog />} />
+            <Route path="anti-mapping-assets" element={<AntiMappingAssets />} />
+            <Route path="anti-mapping-policy" element={<AntiMappingStrategy />} />
             <Route path="*" element={<UnderDevelopment />} />
           </Route>
         </Routes>

@@ -85,17 +85,21 @@ const MainLayout = () => {
             label: '弱口令登录告警',
         },
         {
-            key: 'exposure-monitor',
+            key: 'anti-mapping',
             icon: <RadarChartOutlined />,
-            label: '暴露面监测告警',
+            label: '反测绘监测告警',
             children: [
                 {
-                    key: 'exposure-logs',
-                    label: '暴露面监测日志',
+                    key: 'anti-mapping-logs',
+                    label: '反测绘监测日志',
                 },
                 {
-                    key: 'exposure-assets',
-                    label: '暴露面资产情况',
+                    key: 'anti-mapping-sources',
+                    label: '测绘源分析',
+                },
+                {
+                    key: 'anti-mapping-assets',
+                    label: '反测绘资产分析',
                 },
             ],
         },
@@ -153,8 +157,8 @@ const MainLayout = () => {
                     label: '黑白名单',
                 },
                 {
-                    key: 'exposure-policy',
-                    label: '暴露面监测策略',
+                    key: 'anti-mapping-policy',
+                    label: '反测绘监测策略',
                 },
             ],
         },
