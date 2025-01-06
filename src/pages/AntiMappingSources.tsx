@@ -5,15 +5,13 @@ import { SearchOutlined, ReloadOutlined, ExportOutlined, DeleteOutlined, SaveOut
 import LabelSelect from '../components/LabelSelect';
 import LabelInput from '../components/LabelInput';
 import LabelCascader from '../components/LabelCascader';
-import { US, CN, GB, FR, DE } from 'country-flag-icons/react/3x2';  // 导入国旗图标
+import { US, CN, GB, FR, DE } from 'country-flag-icons/react/3x2';
 
 interface DataType {
     key: string;
-    targetIP: string;
-    targetPort: number;
-    targetDomain: string;
-    targetURL: string;
-    assetGroup: string;
+    sourceIP: string;
+    location: string;
+    targetIPCount: number;
     mappingCount: number;
     time: string;
 }
@@ -32,7 +30,7 @@ const timelineItemStyle = `
   }
 `;
 
-const AntiMappingAssets: React.FC = () => {
+const AntiMappingSources: React.FC = () => {
     const [form] = Form.useForm();
     const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
     const [currentPage, setCurrentPage] = useState(1);
@@ -47,54 +45,58 @@ const AntiMappingAssets: React.FC = () => {
     const mockData: DataType[] = [
         {
             key: '1',
-            targetIP: '172.18.0.41',
-            targetPort: 80,
-            targetDomain: 'example.com',
-            targetURL: 'https://example.com/api/v1/users',
-            assetGroup: 'Web_Server',
+            sourceIP: '10.21.23.4',
+            location: '中国 | 北京',
+            targetIPCount: 23,
             mappingCount: 156,
             time: '2024-03-11 12:03'
         },
         {
             key: '2',
-            targetIP: '172.18.0.42',
-            targetPort: 443,
-            targetDomain: 'api.example.com',
-            targetURL: 'https://api.example.com/v2/products',
-            assetGroup: 'API_Server',
+            sourceIP: '10.21.23.5',
+            location: '美国 | 加利福尼亚',
+            targetIPCount: 15,
             mappingCount: 89,
             time: '2024-03-11 12:05'
         },
-        // ... 可以继续添加更多模拟数据
     ];
 
     const columns: ColumnsType<DataType> = [
         {
-            title: '目的IP',
-            dataIndex: 'targetIP',
-            key: 'targetIP',
+            title: '源IP',
+            dataIndex: 'sourceIP',
+            key: 'sourceIP',
             width: 140,
         },
         {
-            title: '目的端口',
-            dataIndex: 'targetPort',
-            key: 'targetPort',
-            width: 100,
+            title: '归属地',
+            dataIndex: 'location',
+            key: 'location',
+            width: 200,
+            render: (text: string) => {
+                const country = text.split('|')[0].trim();
+                const FlagComponent = getFlagComponent(country);
+                return (
+                    <Space>
+                        {FlagComponent && <FlagComponent style={{ width: 16 }} />}
+                        <span>{text}</span>
+                    </Space>
+                );
+            }
         },
         {
-            title: '最近被测绘目的URL',
-            dataIndex: 'targetURL',
-            key: 'targetURL',
-            ellipsis: true,
+            title: '目的IP总数',
+            dataIndex: 'targetIPCount',
+            key: 'targetIPCount',
+            width: 120,
+            render: (count: number) => (
+                <span>
+                    {count} 个
+                </span>
+            ),
         },
         {
-            title: '所属资产分组',
-            dataIndex: 'assetGroup',
-            key: 'assetGroup',
-            width: 180,
-        },
-        {
-            title: '被测绘次数',
+            title: '测绘次数',
             dataIndex: 'mappingCount',
             key: 'mappingCount',
             width: 120,
@@ -150,17 +152,6 @@ const AntiMappingAssets: React.FC = () => {
                 { value: 'uk', label: '英国' },
                 { value: 'france', label: '法国' },
                 { value: 'germany', label: '德国' },
-                { value: 'italy', label: '意大利' },
-                { value: 'spain', label: '西班牙' },
-                { value: 'portugal', label: '葡萄牙' },
-                { value: 'greece', label: '希腊' },
-                { value: 'turkey', label: '土耳其' },
-                { value: 'australia', label: '澳大利亚' },
-                { value: 'canada', label: '加拿大' },
-                { value: 'brazil', label: '巴西' },
-                { value: 'argentina', label: '阿根廷' },
-                { value: 'chile', label: '智利' },
-                { value: 'peru', label: '秘鲁' },
                 // ... 其他国家
             ]
         },
@@ -171,34 +162,10 @@ const AntiMappingAssets: React.FC = () => {
                 { value: 'beijing', label: '北京' },
                 { value: 'shanghai', label: '上海' },
                 { value: 'guangzhou', label: '广州' },
-                // ... 其他城市
             ]
         },
-        {
-            value: 'foreign',
-            label: '国外',
-            children: [
-                { value: 'usa', label: '美国' },
-                { value: 'uk', label: '英国' },
-                { value: 'france', label: '法国' },
-                { value: 'germany', label: '德国' },
-                { value: 'italy', label: '意大利' },
-                { value: 'spain', label: '西班牙' },
-                { value: 'portugal', label: '葡萄牙' },
-                { value: 'greece', label: '希腊' },
-                { value: 'turkey', label: '土耳其' },
-                { value: 'australia', label: '澳大利亚' },
-                { value: 'canada', label: '加拿大' },
-                { value: 'brazil', label: '巴西' },
-                { value: 'argentina', label: '阿根廷' },
-                { value: 'chile', label: '智利' },
-                { value: 'peru', label: '秘鲁' },
-                // ... 其他国家
-            ]
-        }
     ];
 
-    // 添加选择框配置
     const rowSelection = {
         selectedRowKeys,
         onChange: (newSelectedRowKeys: React.Key[]) => {
@@ -206,30 +173,25 @@ const AntiMappingAssets: React.FC = () => {
         }
     };
 
-    // 计算当前页的数据
     const getCurrentPageData = () => {
         const startIndex = (currentPage - 1) * pageSize;
         return mockData.slice(startIndex, startIndex + pageSize);
     };
 
-    // 处理页码改变
     const handlePageChange = (page: number, size?: number) => {
         setCurrentPage(page);
         size && setPageSize(size);
-        setSelectedRowKeys([]); // 切换页面时清空选中项
+        setSelectedRowKeys([]);
     };
 
-    // 处理每页条数改变
     const handleSizeChange = (_: number, size: number) => {
         setPageSize(size);
-        setCurrentPage(1); // 重置到第一页
-        setSelectedRowKeys([]); // 清空选中项
+        setCurrentPage(1);
+        setSelectedRowKeys([]);
     };
 
-    // 处理保存条件按钮点击
     const handleSaveCondition = () => {
         const currentConditions = form.getFieldsValue();
-        // 检查是否有设置任何条件
         const hasConditions = Object.values(currentConditions).some(value => value !== undefined && value !== '');
         if (!hasConditions) {
             message.warning('请至少设置一个搜索条件');
@@ -238,7 +200,6 @@ const AntiMappingAssets: React.FC = () => {
         setIsModalVisible(true);
     };
 
-    // 处理模态框确认
     const handleModalOk = () => {
         if (!conditionName.trim()) {
             message.warning('请输入条件名称');
@@ -258,7 +219,6 @@ const AntiMappingAssets: React.FC = () => {
         message.success('搜索条件保存成功');
     };
 
-    // 处理快捷搜索选择
     const handleQuickSearch = (value: string) => {
         const selectedCondition = savedConditions.find(item => item.value === value);
         if (selectedCondition) {
@@ -266,17 +226,15 @@ const AntiMappingAssets: React.FC = () => {
         }
     };
 
-    // 添加一个获取端口颜色的辅助函数
     const getPortColor = (port: string) => {
         const portNumber = parseInt(port.split('/')[0]);
-        if (portNumber === 80 || portNumber === 443) return 'blue';    // Web服务端口
-        if (portNumber === 22 || portNumber === 3389) return 'purple'; // 远程管理端口
-        if (portNumber === 3306 || portNumber === 1433) return 'orange'; // 数据库端口
-        if (portNumber === 8080 || portNumber === 8443) return 'cyan';  // 应用服务端口
-        return 'default';  // 其他端口
+        if (portNumber === 80 || portNumber === 443) return 'blue';
+        if (portNumber === 22 || portNumber === 3389) return 'purple';
+        if (portNumber === 3306 || portNumber === 1433) return 'orange';
+        if (portNumber === 8080 || portNumber === 8443) return 'cyan';
+        return 'default';
     };
 
-    // 添加一个辅助函数来获取对应的国旗组件
     const getFlagComponent = (country: string) => {
         const componentMap: { [key: string]: any } = {
             '美国': US,
@@ -313,17 +271,9 @@ const AntiMappingAssets: React.FC = () => {
                         </Form.Item>
                     </Col>
                     <Col span={3}>
-                        <Form.Item name="targetIP" style={{ marginBottom: 0 }}>
+                        <Form.Item name="sourceIP" style={{ marginBottom: 0 }}>
                             <LabelInput
-                                label="目的IP"
-                                placeholder="请输入"
-                            />
-                        </Form.Item>
-                    </Col>
-                    <Col span={4}>
-                        <Form.Item name="assetGroup" style={{ marginBottom: 0 }}>
-                            <LabelInput
-                                label="所属资产分组"
+                                label="源IP"
                                 placeholder="请输入"
                             />
                         </Form.Item>
@@ -355,7 +305,6 @@ const AntiMappingAssets: React.FC = () => {
                 </Row>
             </Form>
 
-            {/* 条件渲染按钮 */}
             {selectedRowKeys.length > 0 && (
                 <div style={{ marginBottom: 16 }}>
                     <Space>
@@ -423,7 +372,6 @@ const AntiMappingAssets: React.FC = () => {
                 open={drawerVisible}
             >
                 <Card title="资产暴露面分析">
-
                     <div style={{
                         background: 'linear-gradient(to right, rgba(255, 77, 79, 0.08) 0%, rgba(255, 77, 79, 0.05) 50%, rgba(255, 77, 79, 0.02) 100%)',
                         borderRadius: '4px',
@@ -464,30 +412,23 @@ const AntiMappingAssets: React.FC = () => {
                             </Col>
                         </Row>
                     </div>
+
                     <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
                         <Col span={8}>
-                            <Typography.Text type="secondary">目的IP：</Typography.Text>
-                            <Typography.Text strong>{currentRecord?.targetIP}</Typography.Text>
+                            <Typography.Text type="secondary">源IP：</Typography.Text>
+                            <Typography.Text strong>{currentRecord?.sourceIP}</Typography.Text>
                         </Col>
                         <Col span={8}>
-                            <Typography.Text type="secondary">目的域名：</Typography.Text>
-                            <Typography.Text strong>{currentRecord?.targetDomain}</Typography.Text>
+                            <Typography.Text type="secondary">归属地：</Typography.Text>
+                            <Typography.Text strong>{currentRecord?.location}</Typography.Text>
                         </Col>
                         <Col span={8}>
-                            <Typography.Text type="secondary">被测绘次数：</Typography.Text>
-                            {currentRecord?.mappingCount && (
-                                <Tag color={
-                                    currentRecord.mappingCount > 100 ? 'error' :
-                                        currentRecord.mappingCount > 50 ? 'warning' :
-                                            currentRecord.mappingCount > 20 ? 'processing' : 'success'
-                                }>
-                                    {currentRecord.mappingCount} 次
-                                </Tag>
-                            )}
+                            <Typography.Text type="secondary">目的IP总数：</Typography.Text>
+                            <Tag color="blue">{currentRecord?.targetIPCount} 个</Tag>
                         </Col>
                     </Row>
-                    <Row gutter={[16, 16]}>
 
+                    <Row gutter={[16, 16]}>
                         {/* 运行服务卡片 */}
                         <Col span={24}>
                             <h3>运行服务</h3>
@@ -569,7 +510,6 @@ const AntiMappingAssets: React.FC = () => {
                                     </List.Item>
                                 )}
                             />
-
                         </Col>
 
                         {/* 风险详情卡片 */}
@@ -623,7 +563,6 @@ const AntiMappingAssets: React.FC = () => {
                                     ]}
                                 />
                             </div>
-
                         </Col>
 
                         {/* 处置建议卡片 */}
@@ -716,13 +655,15 @@ const AntiMappingAssets: React.FC = () => {
                         </Col>
                     </Row>
                 </Card>
+
+                {/* 资产暴露面日志卡片 */}
                 <Card title="资产暴露面日志" style={{ marginTop: 24 }}>
                     <Table
                         dataSource={[
                             {
                                 key: '1',
                                 time: '2024-03-15 14:30:22',
-                                sourceIP: '192.168.1.100',
+                                sourceIP: '10.21.23.4',
                                 location: '中国 | 北京',
                                 count: 156
                             },
@@ -793,9 +734,9 @@ const AntiMappingAssets: React.FC = () => {
                         }}
                     />
                 </Card>
-            </Drawer >
-        </Card >
+            </Drawer>
+        </Card>
     );
 };
 
-export default AntiMappingAssets; 
+export default AntiMappingSources; 

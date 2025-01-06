@@ -91,7 +91,7 @@ const MainLayout = () => {
             children: [
                 {
                     key: 'anti-mapping-logs',
-                    label: '反测绘监测日志',
+                    label: '反测绘日志',
                 },
                 {
                     key: 'anti-mapping-sources',
@@ -99,7 +99,7 @@ const MainLayout = () => {
                 },
                 {
                     key: 'anti-mapping-assets',
-                    label: '反测绘资产分析',
+                    label: '测绘资产分析',
                 },
             ],
         },

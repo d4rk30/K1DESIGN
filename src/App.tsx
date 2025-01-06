@@ -7,6 +7,7 @@ import Dashboard from './pages/Dashboard';
 import License from './pages/License';
 import UnderDevelopment from './pages/UnderDevelopment';
 import AntiMappingLog from './pages/AntiMappingLog';
+import AntiMappingSources from './pages/AntiMappingSources';
 import AntiMappingAssets from './pages/AntiMappingAssets';
 import AntiMappingStrategy from './pages/AntiMappingStrategy';
 const App: React.FC = () => {
@@ -19,6 +20,7 @@ const App: React.FC = () => {
             <Route path="dashboard" element={<Dashboard />} />
             <Route path="license" element={<License />} />
             <Route path="anti-mapping-logs" element={<AntiMappingLog />} />
+            <Route path="anti-mapping-sources" element={<AntiMappingSources />} />
             <Route path="anti-mapping-assets" element={<AntiMappingAssets />} />
             <Route path="anti-mapping-policy" element={<AntiMappingStrategy />} />
             <Route path="*" element={<UnderDevelopment />} />
