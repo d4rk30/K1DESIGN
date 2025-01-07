@@ -10,6 +10,7 @@ import AntiMappingLog from './pages/AntiMappingLog';
 import AntiMappingSources from './pages/AntiMappingSources';
 import AntiMappingAssets from './pages/AntiMappingAssets';
 import AntiMappingStrategy from './pages/AntiMappingStrategy';
+import Reports from './pages/Reports';
 const App: React.FC = () => {
   return (
     <ConfigProvider locale={zhCN}>
@@ -23,6 +24,7 @@ const App: React.FC = () => {
             <Route path="anti-mapping-sources" element={<AntiMappingSources />} />
             <Route path="anti-mapping-assets" element={<AntiMappingAssets />} />
             <Route path="anti-mapping-policy" element={<AntiMappingStrategy />} />
+            <Route path="reports" element={<Reports />} />
             <Route path="*" element={<UnderDevelopment />} />
           </Route>
         </Routes>

@@ -56,3 +56,7 @@ h2 {
 .ant-menu-inline .ant-menu-submenu-title {
   transition: all 0.2s !important;
 }
+
+.ant-tabs-tab {
+  font-size: 14px !important;
+}

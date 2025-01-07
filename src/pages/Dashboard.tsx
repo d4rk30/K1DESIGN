@@ -896,8 +896,8 @@ const Dashboard = () => {
                                 {
                                     title: (
                                         <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                            0day/1day
-                                            <Tooltip title="可识别0day/1day漏洞的数量">
+                                            反测绘目标
+                                            <Tooltip title="可识别测绘，爬虫，扫描器等的数量">
                                                 <ExclamationCircleOutlined
                                                     style={{
                                                         fontSize: '14px',
