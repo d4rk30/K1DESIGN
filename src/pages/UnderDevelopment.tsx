@@ -6,11 +6,9 @@ const UnderDevelopment = () => {
     const pageName = location.pathname.substring(1); // 移除开头的 '/'
 
     return (
-        <div>
-            <Card>
-                {pageName} 功能正在开发中...
-            </Card>
-        </div>
+        <Card>
+            {pageName} 功能正在开发中...
+        </Card>
     );
 };
 

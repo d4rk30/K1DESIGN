@@ -3,6 +3,16 @@ import { Card, Table, Button, Space, Progress, message, Popconfirm, Row, Col, Sw
 import type { TableColumnsType } from 'antd';
 import dayjs from 'dayjs';
 import locale from 'antd/es/date-picker/locale/zh_CN';
+import LabelInput from '@/components/LabelInput';
+import LabelSelect from '@/components/LabelSelect';
+import LabelRangePicker from '@/components/LabelRangePicker';
+import {
+    SearchOutlined,
+    ReloadOutlined,
+    ExportOutlined,
+    DeleteOutlined,
+    DownloadOutlined,
+} from '@ant-design/icons';
 
 interface ReportRecord {
     key: string;
@@ -451,59 +461,73 @@ const Reports: React.FC = () => {
                     style={{ marginBottom: 24 }}
                 >
                     <Row gutter={[16, 16]}>
-                        <Col span={6}>
-                            <Form.Item name="name" label="报表名称" style={{ marginBottom: 0 }}>
-                                <Input placeholder="请输入报表名称" />
+                        <Col span={8}>
+                            <Form.Item name="name" style={{ marginBottom: 0 }}>
+                                <LabelInput label="报表名称" placeholder="请输入报表名称" />
                             </Form.Item>
                         </Col>
-                        <Col span={6}>
-                            <Form.Item name="module" label="告警模块" style={{ marginBottom: 0 }}>
-                                <Select
+                        <Col span={8}>
+                            <Form.Item name="module" style={{ marginBottom: 0 }}>
+                                <LabelSelect
+                                    label="告警模块"
                                     mode="multiple"
                                     allowClear
                                     placeholder="请选择告警模块"
-                                    style={{ width: '100%' }}
-                                >
-                                    <Select.Option value="攻击监测告警">攻击监测告警</Select.Option>
-                                    <Select.Option value="外联检测告警">外联检测告警</Select.Option>
-                                    <Select.Option value="威胁情报">威胁情报</Select.Option>
-                                    <Select.Option value="反测绘告警">反测绘告警</Select.Option>
-                                </Select>
+                                    options={[
+                                        { label: '攻击监测告警', value: '攻击监测告警' },
+                                        { label: '外联检测告警', value: '外联检测告警' },
+                                        { label: '威胁情报', value: '威胁情报' },
+                                        { label: '反测绘告警', value: '反测绘告警' }
+                                    ]}
+                                />
                             </Form.Item>
                         </Col>
-                        <Col span={6}>
-                            <Form.Item name="exportType" label="导出方式" style={{ marginBottom: 0 }}>
-                                <Select allowClear placeholder="请选择导出方式" style={{ width: '100%' }}>
-                                    <Select.Option value="manual">手动</Select.Option>
-                                    <Select.Option value="auto">自动</Select.Option>
-                                </Select>
+                        <Col span={8}>
+                            <Form.Item name="exportType" style={{ marginBottom: 0 }}>
+                                <LabelSelect
+                                    label="导出方式"
+                                    allowClear
+                                    placeholder="请选择导出方式"
+                                    options={[
+                                        { label: '手动', value: 'manual' },
+                                        { label: '自动', value: 'auto' }
+                                    ]}
+                                />
                             </Form.Item>
                         </Col>
-                        <Col span={6}>
-                            <Form.Item name="format" label="报表格式" style={{ marginBottom: 0 }}>
-                                <Select allowClear placeholder="请选择报表格式" style={{ width: '100%' }}>
-                                    <Select.Option value="html">HTML</Select.Option>
-                                    <Select.Option value="pdf">PDF</Select.Option>
-                                </Select>
+                        <Col span={8}>
+                            <Form.Item name="format" style={{ marginBottom: 0 }}>
+                                <LabelSelect
+                                    label="报表格式"
+                                    allowClear
+                                    placeholder="请选择报表格式"
+                                    options={[
+                                        { label: 'HTML', value: 'html' },
+                                        { label: 'PDF', value: 'pdf' }
+                                    ]}
+                                />
                             </Form.Item>
                         </Col>
-                        <Col span={6}>
-                            <Form.Item name="dateRange" label="创建时间" style={{ marginBottom: 0 }}>
-                                <RangePicker
-                                    style={{ width: '100%' }}
+                        <Col span={8}>
+                            <Form.Item name="dateRange" style={{ marginBottom: 0 }}>
+                                <LabelRangePicker
+                                    label="创建时间"
                                     showTime
                                     format="YYYY-MM-DD HH:mm:ss"
                                     presets={timeRangePresets}
                                     placeholder={['开始时间', '结束时间']}
-                                    locale={locale}
                                 />
                             </Form.Item>
                         </Col>
-                        <Col span={6}>
+                        <Col span={8}>
                             <Form.Item style={{ marginBottom: 0 }}>
                                 <Space>
-                                    <Button type="primary" htmlType="submit">筛选</Button>
-                                    <Button onClick={handleReset}>重置</Button>
+                                    <Button type="primary" htmlType="submit" icon={<SearchOutlined />}>
+                                        筛选
+                                    </Button>
+                                    <Button onClick={handleReset} icon={<ReloadOutlined />}>
+                                        重置
+                                    </Button>
                                 </Space>
                             </Form.Item>
                         </Col>
@@ -512,22 +536,12 @@ const Reports: React.FC = () => {
                 <Row style={{ marginBottom: 16 }}>
                     <Col flex="auto">
                         <Space>
-                            <Button
-                                type="primary"
-                                onClick={() => setIsExportModalVisible(true)}
-                            >
-                                手动导出
-                            </Button>
-                            <Button
-                                onClick={handleRefresh}
-                            >
-                                刷新
-                            </Button>
                             {selectedRowKeys.length > 0 && (
                                 <>
                                     <Button
                                         onClick={handleBatchDownload}
                                         disabled={!selectedRows.some(record => record.progress === 100)}
+                                        icon={<DownloadOutlined />}
                                     >
                                         批量下载
                                     </Button>
@@ -537,11 +551,22 @@ const Reports: React.FC = () => {
                                         okText="确定"
                                         cancelText="取消"
                                     >
-                                        <Button danger>批量删除</Button>
+                                        <Button danger icon={<DeleteOutlined />}>
+                                            批量删除
+                                        </Button>
                                     </Popconfirm>
                                 </>
                             )}
                         </Space>
+                    </Col>
+                    <Col>
+                        <Button
+                            type="primary"
+                            onClick={() => setIsExportModalVisible(true)}
+                            icon={<ExportOutlined />}
+                        >
+                            手动导出
+                        </Button>
                     </Col>
                 </Row>
                 <Table

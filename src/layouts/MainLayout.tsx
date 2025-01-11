@@ -109,7 +109,7 @@ const MainLayout = () => {
             label: '威胁情报',
             children: [
                 {
-                    key: 'threat-trace',
+                    key: 'threat-intelligence-trace',
                     label: '威胁情报溯源',
                 },
                 {
@@ -434,12 +434,16 @@ const MainLayout = () => {
                             {renderUpdateTime()}
                         </div>
                     </div>
-                    <div style={{ padding: '24px' }}>
+                    <div style={{
+                        padding: '24px',
+                        flex: 1,
+                        minHeight: 'calc(100% - 55px)',
+                    }}>
                         <Outlet />
                     </div>
                 </Layout>
             </Layout>
-        </Layout>
+        </Layout >
     );
 };
 

@@ -2,8 +2,8 @@ import React, { useState } from 'react';
 import { Card, Table, Switch, Space, Button, Row, Drawer, Form, Select, Col, Tabs } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { PlusOutlined } from '@ant-design/icons';
-import LabelInput from '../components/LabelInput';
-import LabelSelect from '../components/LabelSelect';
+import LabelInput from '@/components/LabelInput';
+import LabelSelect from '@/components/LabelSelect';
 
 interface StrategyType {
     key: string;

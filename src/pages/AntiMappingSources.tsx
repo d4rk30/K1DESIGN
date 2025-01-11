@@ -2,9 +2,9 @@ import React, { useState } from 'react';
 import { Card, Form, Select, Button, Table, Space, Tag, Row, Col, Modal, Input, message, Drawer, Typography, List, Timeline, Progress } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { SearchOutlined, ReloadOutlined, ExportOutlined, DeleteOutlined, SaveOutlined } from '@ant-design/icons';
-import LabelSelect from '../components/LabelSelect';
-import LabelInput from '../components/LabelInput';
-import LabelCascader from '../components/LabelCascader';
+import LabelSelect from '@/components/LabelSelect';
+import LabelInput from '@/components/LabelInput';
+import LabelCascader from '@/components/LabelCascader';
 import { US, CN, GB, FR, DE } from 'country-flag-icons/react/3x2';
 
 interface DataType {

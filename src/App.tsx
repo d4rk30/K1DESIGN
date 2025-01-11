@@ -11,6 +11,8 @@ import AntiMappingSources from './pages/AntiMappingSources';
 import AntiMappingAssets from './pages/AntiMappingAssets';
 import AntiMappingStrategy from './pages/AntiMappingStrategy';
 import Reports from './pages/Reports';
+import ThreatIntelligenceTrace from './pages/ThreatIntelligenceTrace';
+
 const App: React.FC = () => {
   return (
     <ConfigProvider locale={zhCN}>
@@ -25,6 +27,7 @@ const App: React.FC = () => {
             <Route path="anti-mapping-assets" element={<AntiMappingAssets />} />
             <Route path="anti-mapping-policy" element={<AntiMappingStrategy />} />
             <Route path="reports" element={<Reports />} />
+            <Route path="threat-intelligence-trace" element={<ThreatIntelligenceTrace />} />
             <Route path="*" element={<UnderDevelopment />} />
           </Route>
         </Routes>
