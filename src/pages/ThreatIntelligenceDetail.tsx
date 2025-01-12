@@ -1,15 +1,24 @@
 import React, { useEffect, useState } from 'react';
-import { Card, Row, Col, Table, Tag, Space, Button } from 'antd';
+import { Card, Row, Col, Table, Tag, Space, Button, Input, message, Modal, Form } from 'antd';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { SearchOutlined, ReloadOutlined, CalendarOutlined, UpOutlined, DownOutlined } from '@ant-design/icons';
+import { SearchOutlined, ReloadOutlined, CalendarOutlined, UpOutlined, DownOutlined, CopyOutlined, ApartmentOutlined, GlobalOutlined, ApiOutlined, LinkOutlined } from '@ant-design/icons';
 import LabelSelect from '@/components/LabelSelect';
 import { US, CN, GB, FR, DE, RU } from 'country-flag-icons/react/3x2';
+import ThreatInIcon from '@/assets/images/ThreatIn.png';
+import ThreatOutIcon from '@/assets/images/ThreatOut.png';
+import HuaweiLogo from '@/assets/images/华为.png';
+import QianxinLogo from '@/assets/images/奇安信.png';
+import TencentLogo from '@/assets/images/腾讯.png';
+import Logo360 from '@/assets/images/360.png';
+import AliyunLogo from '@/assets/images/阿里.png';
 
 const ThreatIntelligenceDetail: React.FC = () => {
     const location = useLocation();
     const navigate = useNavigate();
     const queryType = location.state?.type;
     const [activeTabKey, setActiveTabKey] = useState<string>(queryType === 'attack' ? 'parse' : 'dnsRecords');
+    const [feedbackVisible, setFeedbackVisible] = useState(false);
+    const [feedbackForm] = Form.useForm();
 
     const attackTabs = [
         { key: 'parse', tab: '解析信息' },
@@ -633,8 +642,8 @@ const ThreatIntelligenceDetail: React.FC = () => {
                         {
                             key: '1',
                             lastAttackTime: '2023-12-01 15:30:00',
-                            target: '某科技公司',
-                            historyTargets: '某银行、某政府部门',
+                            target: '192.168.1.109',
+                            historyTargets: 'XXX部门',
                             industry: '金融行业',
                             attackType: 'SQL注入',
                             attackCount: 156
@@ -642,8 +651,8 @@ const ThreatIntelligenceDetail: React.FC = () => {
                         {
                             key: '2',
                             lastAttackTime: '2023-11-30 18:45:00',
-                            target: '某教育机构',
-                            historyTargets: '某医院、某企业',
+                            target: '192.168.1.109',
+                            historyTargets: 'XXX医院',
                             industry: '教育行业',
                             attackType: 'XSS攻击',
                             attackCount: 89
@@ -651,8 +660,8 @@ const ThreatIntelligenceDetail: React.FC = () => {
                         {
                             key: '3',
                             lastAttackTime: '2023-11-28 11:20:00',
-                            target: '某政府部门',
-                            historyTargets: '某科技公司、某银行',
+                            target: '192.168.1.109',
+                            historyTargets: 'XX科技公司',
                             industry: '政府机构',
                             attackType: 'DDoS攻击',
                             attackCount: 234
@@ -861,15 +870,600 @@ const ThreatIntelligenceDetail: React.FC = () => {
         return componentMap[country];
     };
 
+    const handleFeedback = async (values: any) => {
+        console.log('Feedback values:', values);
+        message.success('反馈提交成功');
+        setFeedbackVisible(false);
+        feedbackForm.resetFields();
+    };
+
+    const renderAttackContent = () => (
+        <Row>
+            <Col style={{ width: 200, marginRight: 24 }}>
+                <img
+                    src={ThreatInIcon}
+                    alt="威胁分数"
+                    style={{ width: '100%' }}
+                />
+            </Col>
+            <Col flex="1">
+                <Row gutter={[0, 24]}>
+                    <Col span={24}>
+                        <div style={{ marginBottom: 8 }}>
+                            <Row justify="space-between" align="middle">
+                                <Col>
+                                    <Space size={36} align="center">
+                                        <Space align="center">
+                                            <span style={{ fontSize: 24, fontWeight: 500, display: 'flex', alignItems: 'center' }}>
+                                                192.168.1.109
+                                                <CopyOutlined
+                                                    style={{ cursor: 'pointer', color: '#1890ff', fontSize: 14, marginLeft: 8 }}
+                                                    onClick={() => {
+                                                        navigator.clipboard.writeText('192.168.1.109');
+                                                        message.success('IP已复制到剪贴板');
+                                                    }}
+                                                />
+                                            </span>
+                                        </Space>
+                                    </Space>
+                                </Col>
+                                <Col>
+                                    <Button onClick={() => setFeedbackVisible(true)}>
+                                        误报反馈
+                                    </Button>
+                                </Col>
+                            </Row>
+                        </div>
+                        <Space size={8} wrap>
+                            <Tag color="blue">SQL注入</Tag>
+                            <Tag color="blue">XSS攻击</Tag>
+                            <Tag color="blue">DDoS攻击</Tag>
+                            <Tag color="blue">暴力破解</Tag>
+                        </Space>
+                    </Col>
+                    <Col span={24}>
+                        <Row wrap gutter={[24, 12]}>
+                            <Col xs={6}>
+                                <div style={{ display: 'flex' }}>
+                                    <span style={{ color: '#999' }}>威胁等级：</span>
+                                    <Tag color="red">高危</Tag>
+                                </div>
+                            </Col>
+                            <Col xs={6}>
+                                <div style={{ display: 'flex' }}>
+                                    <span style={{ color: '#999' }}>置信度：</span>
+                                    <span>高</span>
+                                </div>
+                            </Col>
+                            <Col xs={6}>
+                                <div style={{ display: 'flex' }}>
+                                    <span style={{ color: '#999' }}>活跃度：</span>
+                                    <span>高</span>
+                                </div>
+                            </Col>
+                            <Col xs={6}>
+                                <div style={{ display: 'flex' }}>
+                                    <span style={{ color: '#999' }}>情报类型：</span>
+                                    <span>SQL注入攻击</span>
+                                </div>
+                            </Col>
+                            <Col xs={6}>
+                                <div style={{ display: 'flex' }}>
+                                    <span style={{ color: '#999' }}>情报归属：</span>
+                                    <span>公有情报源</span>
+                                </div>
+                            </Col>
+                            <Col xs={6}>
+                                <div style={{ display: 'flex' }}>
+                                    <span style={{ color: '#999' }}>运营商：</span>
+                                    <span>EstNOC OY</span>
+                                </div>
+                            </Col>
+                            <Col xs={6}>
+                                <div style={{ display: 'flex' }}>
+                                    <span style={{ color: '#999' }}>ANS：</span>
+                                    <span>206804</span>
+                                </div>
+                            </Col>
+                            <Col xs={6}>
+                                <div style={{ display: 'flex', height: '22px' }}>
+                                    <span style={{ color: '#999' }}>经纬度信息：</span>
+                                    <span>30.34324,343.3434</span>
+                                </div>
+                            </Col>
+                            <Col xs={6}>
+                                <div style={{ display: 'flex', height: '22px' }}>
+                                    <span style={{ color: '#999' }}>情报相关组织：</span>
+                                    <span>Lazarus</span>
+                                </div>
+                            </Col>
+                            <Col xs={6}>
+                                <div style={{ display: 'flex', height: '22px' }}>
+                                    <span style={{ color: '#999' }}>关联病毒家族：</span>
+                                    <span>Lockbit勒索病毒</span>
+                                </div>
+                            </Col>
+                            <Col xs={6}>
+                                <div style={{ display: 'flex', height: '22px' }}>
+                                    <span style={{ color: '#999' }}>过期时间：</span>
+                                    <span>2024-12-31 11:22:31</span>
+                                </div>
+                            </Col>
+                            <Col xs={6}>
+                                <div style={{ display: 'flex', height: '22px' }}>
+                                    <span style={{ color: '#999' }}>入库时间：</span>
+                                    <span>2024-12-31 11:22:31</span>
+                                </div>
+                            </Col>
+                        </Row>
+                        <div style={{ margin: '24px 0', borderTop: '1px solid #f0f0f0' }} />
+                        <Row gutter={24}>
+                            <Col span={6}>
+                                <div style={{ display: 'flex', alignItems: 'center' }}>
+                                    <div style={{
+                                        width: 32,
+                                        height: 32,
+                                        borderRadius: '50%',
+                                        backgroundColor: '#1890ff',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        marginRight: 8
+                                    }}>
+                                        <ApartmentOutlined style={{ color: '#fff', fontSize: 16 }} />
+                                    </div>
+                                    <span style={{ color: '#999', marginRight: 8 }}>解析记录</span>
+                                    <span style={{ color: '#1890ff', fontSize: 20, fontWeight: 500 }}>3</span>
+                                </div>
+                            </Col>
+                            <Col span={6}>
+                                <div style={{ display: 'flex', alignItems: 'center' }}>
+                                    <div style={{
+                                        width: 32,
+                                        height: 32,
+                                        borderRadius: '50%',
+                                        backgroundColor: '#1890ff',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        marginRight: 8
+                                    }}>
+                                        <GlobalOutlined style={{ color: '#fff', fontSize: 16 }} />
+                                    </div>
+                                    <span style={{ color: '#999', marginRight: 8 }}>子域名</span>
+                                    <span style={{ color: '#1890ff', fontSize: 20, fontWeight: 500 }}>4</span>
+                                </div>
+                            </Col>
+                            <Col span={6}>
+                                <div style={{ display: 'flex', alignItems: 'center' }}>
+                                    <div style={{
+                                        width: 32,
+                                        height: 32,
+                                        borderRadius: '50%',
+                                        backgroundColor: '#1890ff',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        marginRight: 8
+                                    }}>
+                                        <ApiOutlined style={{ color: '#fff', fontSize: 16 }} />
+                                    </div>
+                                    <span style={{ color: '#999', marginRight: 8 }}>通信样本</span>
+                                    <span style={{ color: '#1890ff', fontSize: 20, fontWeight: 500 }}>4</span>
+                                </div>
+                            </Col>
+                            <Col span={6}>
+                                <div style={{ display: 'flex', alignItems: 'center' }}>
+                                    <div style={{
+                                        width: 32,
+                                        height: 32,
+                                        borderRadius: '50%',
+                                        backgroundColor: '#1890ff',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        marginRight: 8
+                                    }}>
+                                        <LinkOutlined style={{ color: '#fff', fontSize: 16 }} />
+                                    </div>
+                                    <span style={{ color: '#999', marginRight: 8 }}>反查域名</span>
+                                    <span style={{ color: '#1890ff', fontSize: 20, fontWeight: 500 }}>4</span>
+                                </div>
+                            </Col>
+                        </Row>
+                    </Col>
+                </Row>
+            </Col>
+        </Row>
+    );
+
+    const renderExternalContent = () => (
+        <Row>
+            <Col style={{ width: 120, marginRight: 24 }}>
+                <img
+                    src={ThreatOutIcon}
+                    alt="威胁分数"
+                    style={{ width: '100%' }}
+                />
+            </Col>
+            <Col flex="1">
+                <Row gutter={[0, 24]}>
+                    <Col span={24}>
+                        <div style={{ marginBottom: 8 }}>
+                            <Row justify="space-between" align="middle">
+                                <Col>
+                                    <Space size={36} align="center">
+                                        <Space align="center">
+                                            <span style={{ fontSize: 24, fontWeight: 500, display: 'flex', alignItems: 'center' }}>
+                                                87.231.212.111
+                                                <CopyOutlined
+                                                    style={{ cursor: 'pointer', color: '#1890ff', fontSize: 14, marginLeft: 8 }}
+                                                    onClick={() => {
+                                                        navigator.clipboard.writeText('87.231.212.111');
+                                                        message.success('IP已复制到剪贴板');
+                                                    }}
+                                                />
+                                            </span>
+                                            <Space align="center" style={{ marginLeft: 16 }}>
+                                                <CalendarOutlined style={{ color: '#999' }} />
+                                                <span style={{ color: '#999' }}>更新时间：2023-11-10 23:03:33</span>
+                                            </Space>
+                                        </Space>
+                                    </Space>
+                                </Col>
+                                <Col>
+                                    <Button onClick={() => setFeedbackVisible(true)}>
+                                        误报反馈
+                                    </Button>
+                                </Col>
+                            </Row>
+                        </div>
+                    </Col>
+                    <Col span={24}>
+                        <Row gutter={24}>
+                            <Col span={6}>
+                                <div style={{ display: 'flex', alignItems: 'center' }}>
+                                    <div style={{
+                                        width: 32,
+                                        height: 32,
+                                        borderRadius: '50%',
+                                        backgroundColor: '#1890ff',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        marginRight: 8
+                                    }}>
+                                        <ApartmentOutlined style={{ color: '#fff', fontSize: 16 }} />
+                                    </div>
+                                    <span style={{ color: '#999', marginRight: 8 }}>相关域名：</span>
+                                    <span style={{ color: '#1890ff', fontSize: 20, fontWeight: 500 }}>4</span>
+                                </div>
+                            </Col>
+                            <Col span={6}>
+                                <div style={{ display: 'flex', alignItems: 'center' }}>
+                                    <div style={{
+                                        width: 32,
+                                        height: 32,
+                                        borderRadius: '50%',
+                                        backgroundColor: '#1890ff',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        marginRight: 8
+                                    }}>
+                                        <GlobalOutlined style={{ color: '#fff', fontSize: 16 }} />
+                                    </div>
+                                    <span style={{ color: '#999', marginRight: 8 }}>开放端口：</span>
+                                    <span style={{ color: '#1890ff', fontSize: 20, fontWeight: 500 }}>3</span>
+                                </div>
+                            </Col>
+                            <Col span={6}>
+                                <div style={{ display: 'flex', alignItems: 'center' }}>
+                                    <div style={{
+                                        width: 32,
+                                        height: 32,
+                                        borderRadius: '50%',
+                                        backgroundColor: '#1890ff',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        marginRight: 8
+                                    }}>
+                                        <ApiOutlined style={{ color: '#fff', fontSize: 16 }} />
+                                    </div>
+                                    <span style={{ color: '#999', marginRight: 8 }}>通信样本：</span>
+                                    <span style={{ color: '#1890ff', fontSize: 20, fontWeight: 500 }}>4</span>
+                                </div>
+                            </Col>
+                            <Col span={6}>
+                                <div style={{ display: 'flex', alignItems: 'center' }}>
+                                    <div style={{
+                                        width: 32,
+                                        height: 32,
+                                        borderRadius: '50%',
+                                        backgroundColor: '#1890ff',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        marginRight: 8
+                                    }}>
+                                        <LinkOutlined style={{ color: '#fff', fontSize: 16 }} />
+                                    </div>
+                                    <span style={{ color: '#999', marginRight: 8 }}>同C段信息：</span>
+                                    <span style={{ color: '#1890ff', fontSize: 20, fontWeight: 500 }}>4</span>
+                                </div>
+                            </Col>
+                        </Row>
+                    </Col>
+                    <Col span={24}>
+                        {/* 华为威胁情报 */}
+                        <div style={{ marginBottom: 24 }}>
+                            <Row wrap gutter={[24, 16]}>
+                                <Col span={4} offset={4}>
+                                    <div style={{ display: 'flex', alignItems: 'center' }}>
+                                        <img src={HuaweiLogo} alt="华为" style={{ width: 24, height: 24, marginRight: 8 }} />
+                                        <span style={{ fontSize: 16, fontWeight: 500 }}>华为威胁情报</span>
+                                    </div>
+                                </Col>
+                                <Col span={4}>
+                                    <div style={{ display: 'flex', alignItems: 'center' }}>
+                                        <img src={QianxinLogo} alt="奇安信" style={{ width: 24, height: 24, marginRight: 8 }} />
+                                        <span style={{ fontSize: 16, fontWeight: 500 }}>奇安信威胁情报</span>
+                                    </div>
+                                </Col>
+                                <Col span={4}>
+                                    <div style={{ display: 'flex', alignItems: 'center' }}>
+                                        <img src={TencentLogo} alt="腾讯" style={{ width: 24, height: 24, marginRight: 8 }} />
+                                        <span style={{ fontSize: 16, fontWeight: 500 }}>腾讯威胁情报</span>
+                                    </div>
+                                </Col>
+                                <Col span={4}>
+                                    <div style={{ display: 'flex', alignItems: 'center' }}>
+                                        <img src={Logo360} alt="360" style={{ width: 24, height: 24, marginRight: 8 }} />
+                                        <span style={{ fontSize: 16, fontWeight: 500 }}>360威胁情报</span>
+                                    </div>
+                                </Col>
+                                <Col span={4}>
+                                    <div style={{ display: 'flex', alignItems: 'center' }}>
+                                        <img src={AliyunLogo} alt="阿里云" style={{ width: 24, height: 24, marginRight: 8 }} />
+                                        <span style={{ fontSize: 16, fontWeight: 500 }}>阿里云威胁情报</span>
+                                    </div>
+                                </Col>
+                            </Row>
+                            <Row wrap gutter={[24, 16]}>
+                                <Col span={24}>
+                                    <Row gutter={24}>
+                                        <Col span={4}>
+                                            <div style={{ color: '#999' }}>威胁等级：</div>
+                                        </Col>
+                                        <Col span={4}>
+                                            <Tag color="red">高危</Tag>
+                                        </Col>
+                                        <Col span={4}>
+                                            <Tag color="green">低危</Tag>
+                                        </Col>
+                                        <Col span={4}>
+                                            <Tag color="orange">中危</Tag>
+                                        </Col>
+                                        <Col span={4}>
+                                            <Tag color="orange">中危</Tag>
+                                        </Col>
+                                        <Col span={4}>
+                                            <Tag color="orange">中危</Tag>
+                                        </Col>
+                                    </Row>
+                                </Col>
+                                <Col span={24}>
+                                    <Row gutter={24}>
+                                        <Col span={4}>
+                                            <div style={{ color: '#999' }}>置信度：</div>
+                                        </Col>
+                                        <Col span={4}>高</Col>
+                                        <Col span={4}>高</Col>
+                                        <Col span={4}>高</Col>
+                                        <Col span={4}>高</Col>
+                                        <Col span={4}>高</Col>
+                                    </Row>
+                                </Col>
+                                <Col span={24}>
+                                    <Row gutter={24}>
+                                        <Col span={4}>
+                                            <div style={{ color: '#999' }}>活跃度：</div>
+                                        </Col>
+                                        <Col span={4}>高</Col>
+                                        <Col span={4}>高</Col>
+                                        <Col span={4}>低</Col>
+                                        <Col span={4}>低</Col>
+                                        <Col span={4}>低</Col>
+                                    </Row>
+                                </Col>
+                                <Col span={24}>
+                                    <Row gutter={24}>
+                                        <Col span={4}>
+                                            <div style={{ color: '#999' }}>运营商：</div>
+                                        </Col>
+                                        <Col span={4}>EstNOC OY</Col>
+                                        <Col span={4}>未知</Col>
+                                        <Col span={4}>EstNOC OY</Col>
+                                        <Col span={4}>EstNOC OY</Col>
+                                        <Col span={4}>EstNOC OY</Col>
+                                    </Row>
+                                </Col>
+                                <Col span={24}>
+                                    <Row gutter={24}>
+                                        <Col span={4}>
+                                            <div style={{ color: '#999' }}>ANS：</div>
+                                        </Col>
+                                        <Col span={4}>206804</Col>
+                                        <Col span={4}>206804</Col>
+                                        <Col span={4}>206804</Col>
+                                        <Col span={4}>206804</Col>
+                                        <Col span={4}>206804</Col>
+                                    </Row>
+                                </Col>
+                                <Col span={24}>
+                                    <Row gutter={24}>
+                                        <Col span={4}>
+                                            <div style={{ color: '#999' }}>情报类型：</div>
+                                        </Col>
+                                        <Col span={4}>跨站脚本攻击</Col>
+                                        <Col span={4}>跨站脚本攻击</Col>
+                                        <Col span={4}>跨站脚本攻击</Col>
+                                        <Col span={4}>跨站脚本攻击</Col>
+                                        <Col span={4}>跨站脚本攻击</Col>
+                                    </Row>
+                                </Col>
+                                <Col span={24}>
+                                    <Row gutter={24}>
+                                        <Col span={4}>
+                                            <div style={{ color: '#999' }}>情报归属：</div>
+                                        </Col>
+                                        <Col span={4}>公有情报源</Col>
+                                        <Col span={4}>公有情报源</Col>
+                                        <Col span={4}>公有情报源</Col>
+                                        <Col span={4}>公有情报源</Col>
+                                        <Col span={4}>公有情报源</Col>
+                                    </Row>
+                                </Col>
+                                <Col span={24}>
+                                    <Row gutter={24}>
+                                        <Col span={4}>
+                                            <div style={{ color: '#999' }}>经纬度信息：</div>
+                                        </Col>
+                                        <Col span={4}>30.34324,343.3434</Col>
+                                        <Col span={4}>30.34324,343.3434</Col>
+                                        <Col span={4}>30.34324,343.3434</Col>
+                                        <Col span={4}>30.34324,343.3434</Col>
+                                        <Col span={4}>30.34324,343.3434</Col>
+                                    </Row>
+                                </Col>
+                                <Col span={24}>
+                                    <Row gutter={24}>
+                                        <Col span={4}>
+                                            <div style={{ color: '#999' }}>情报相关组织：</div>
+                                        </Col>
+                                        <Col span={4}>Lazarus</Col>
+                                        <Col span={4}>APT32</Col>
+                                        <Col span={4}>Lazarus</Col>
+                                        <Col span={4}>Lazarus</Col>
+                                        <Col span={4}>Lazarus</Col>
+                                    </Row>
+                                </Col>
+                                <Col span={24}>
+                                    <Row gutter={24}>
+                                        <Col span={4}>
+                                            <div style={{ color: '#999' }}>关联病毒家族：</div>
+                                        </Col>
+                                        <Col span={4}>Lockbit勒索病毒</Col>
+                                        <Col span={4}>Lockbit勒索病毒</Col>
+                                        <Col span={4}>Lockbit勒索病毒</Col>
+                                        <Col span={4}>Lockbit勒索病毒</Col>
+                                        <Col span={4}>Lockbit勒索病毒</Col>
+                                    </Row>
+                                </Col>
+                                <Col span={24}>
+                                    <Row gutter={24}>
+                                        <Col span={4}>
+                                            <div style={{ color: '#999' }}>入库时间：</div>
+                                        </Col>
+                                        <Col span={4}>2024-10-11 12:03:44</Col>
+                                        <Col span={4}>2024-12-11 12:03:44</Col>
+                                        <Col span={4}>2024-12-1 08:03:44</Col>
+                                        <Col span={4}>2024-12-1 08:03:44</Col>
+                                        <Col span={4}>2024-12-1 08:03:44</Col>
+                                    </Row>
+                                </Col>
+                                <Col span={24}>
+                                    <Row gutter={24}>
+                                        <Col span={4}>
+                                            <div style={{ color: '#999' }}>过期时间：</div>
+                                        </Col>
+                                        <Col span={4}>2024-12-31 11:22:31</Col>
+                                        <Col span={4}>2024-12-28 12:03:44</Col>
+                                        <Col span={4}>2024-10-11 12:03:44</Col>
+                                        <Col span={4}>2024-10-11 12:03:44</Col>
+                                        <Col span={4}>2024-10-11 12:03:44</Col>
+                                    </Row>
+                                </Col>
+                                <Col span={24}>
+                                    <Row gutter={24}>
+                                        <Col span={4}>
+                                            <div style={{ color: '#999' }}>标签：</div>
+                                        </Col>
+                                        <Col span={4}>
+                                            <Space size={8} wrap>
+                                                <Tag color="blue">微信机</Tag>
+                                                <Tag color="blue">垃圾邮件</Tag>
+                                            </Space>
+                                        </Col>
+                                        <Col span={4}>
+                                            <Space size={8} wrap>
+                                                <Tag color="blue">资源利用</Tag>
+                                            </Space>
+                                        </Col>
+                                        <Col span={4}>
+                                            <Space size={8} wrap>
+                                                <Tag color="blue">网络蜜罐</Tag>
+                                                <Tag color="blue">扫描器</Tag>
+                                            </Space>
+                                        </Col>
+                                        <Col span={4}>
+                                            <Space size={8} wrap>
+                                                <Tag color="blue">网络蜜罐</Tag>
+                                                <Tag color="blue">扫描器</Tag>
+                                            </Space>
+                                        </Col>
+                                        <Col span={4}>
+                                            <Space size={8} wrap>
+                                                <Tag color="blue">网络蜜罐</Tag>
+                                                <Tag color="blue">扫描器</Tag>
+                                            </Space>
+                                        </Col>
+                                    </Row>
+                                </Col>
+                            </Row>
+                        </div>
+                    </Col>
+                </Row>
+            </Col>
+        </Row>
+    );
+
     return (
         <div>
             <Row gutter={[24, 24]}>
                 <Col span={24}>
-                    <Card>
-                        <div>
-                            <h3>{queryType === 'attack' ? '攻击情报查询结果' : '外联情报查询结果'}</h3>
-                            <div>暂无数据</div>
-                        </div>
+                    <Row gutter={16} align="middle">
+                        <Col flex="auto">
+                            <Input
+                                placeholder={queryType === 'attack' ? '攻击情报仅支持输入IP' : '外联情报支持IP、域名和URL'}
+                                style={{
+                                    height: 40,
+                                    border: '1px solid #f0f0f0',
+                                }}
+                            />
+                        </Col>
+                        <Col>
+                            <Space>
+                                <Button
+                                    type={queryType === 'attack' ? 'primary' : 'default'}
+                                    style={{ height: 40 }}
+                                >
+                                    攻击情报查询
+                                </Button>
+                                <Button
+                                    type={queryType === 'external' ? 'primary' : 'default'}
+                                    style={{ height: 40 }}
+                                >
+                                    外联情报查询
+                                </Button>
+                            </Space>
+                        </Col>
+                    </Row>
+                </Col>
+                <Col span={24}>
+                    <Card styles={{ body: { padding: '24px' } }}>
+                        {queryType === 'attack' ? renderAttackContent() : renderExternalContent()}
                     </Card>
                 </Col>
                 <Col span={24}>
@@ -884,6 +1478,46 @@ const ThreatIntelligenceDetail: React.FC = () => {
                     </Card>
                 </Col>
             </Row>
+            <Modal
+                title="误报反馈"
+                open={feedbackVisible}
+                onCancel={() => setFeedbackVisible(false)}
+                footer={null}
+            >
+                <Form
+                    form={feedbackForm}
+                    onFinish={handleFeedback}
+                    layout="vertical"
+                >
+                    <Form.Item
+                        label="情报内容"
+                        name="intelContent"
+                        rules={[{ required: true, message: '请输入情报内容' }]}
+                    >
+                        <Input placeholder="请输入情报内容" />
+                    </Form.Item>
+                    <Form.Item
+                        label="反馈内容"
+                        name="feedbackContent"
+                        rules={[{ required: true, message: '请输入反馈内容' }]}
+                    >
+                        <Input.TextArea
+                            placeholder="请输入反馈内容"
+                            rows={4}
+                        />
+                    </Form.Item>
+                    <Form.Item style={{ marginBottom: 0, textAlign: 'right' }}>
+                        <Space>
+                            <Button onClick={() => setFeedbackVisible(false)}>
+                                取消
+                            </Button>
+                            <Button type="primary" htmlType="submit">
+                                提交
+                            </Button>
+                        </Space>
+                    </Form.Item>
+                </Form>
+            </Modal>
         </div>
     );
 };
