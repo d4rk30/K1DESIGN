@@ -1,12 +1,18 @@
 import React from 'react';
-import { Card, Input, Button, Space } from 'antd';
+import { Input, Button, Space } from 'antd';
+import { useNavigate } from 'react-router-dom';
 
 const ThreatIntelligenceTrace: React.FC = () => {
+    const navigate = useNavigate();
+
+    const handleSearch = (type: 'attack' | 'external') => {
+        navigate('detail', { state: { type } });
+    };
+
     return (
         <div style={{
             height: '100%',
             backgroundImage: 'url(/src/assets/images/bg.png)',
-            // backgroundSize: 'cover',
             backgroundPosition: 'center',
             backgroundRepeat: 'no-repeat',
         }}>
@@ -74,10 +80,18 @@ const ThreatIntelligenceTrace: React.FC = () => {
                             style={{ flex: 1 }}
                         />
                         <Space>
-                            <Button type="primary" size="large">
+                            <Button
+                                type="primary"
+                                size="large"
+                                onClick={() => handleSearch('attack')}
+                            >
                                 攻击情报查询
                             </Button>
-                            <Button type="primary" size="large">
+                            <Button
+                                type="primary"
+                                size="large"
+                                onClick={() => handleSearch('external')}
+                            >
                                 外联情报查询
                             </Button>
                         </Space>

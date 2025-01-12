@@ -255,10 +255,17 @@ const MainLayout = () => {
 
     const getSelectedKeys = () => {
         const pathname = location.pathname.substring(1);
+        if (pathname === 'threat-intelligence-trace/detail') {
+            return ['threat-intelligence-trace'];
+        }
         return [pathname];
     };
 
     const getOpenKeys = (pathname: string) => {
+        if (pathname === 'threat-intelligence-trace/detail') {
+            pathname = 'threat-intelligence-trace';
+        }
+
         const parentKey = menuItems.find(item =>
             item.children?.some(child => child.key === pathname)
         )?.key;
@@ -279,9 +286,18 @@ const MainLayout = () => {
 
     const breadcrumbItems = useMemo(() => {
         const pathname = location.pathname.substring(1);
+        const isDetailPage = pathname === 'threat-intelligence-trace/detail';
 
-        const findMenuItem = (menuItems: any[], path: string): any[] => {
-            for (const item of menuItems) {
+        if (isDetailPage) {
+            const type = location.state?.type;
+            return [
+                { title: '威胁情报', onClick: () => navigate('/threat-intelligence-trace') },
+                { title: type === 'attack' ? '攻击情报查询' : '外联情报查询' }
+            ];
+        }
+
+        const findMenuItem = (items: any[], path: string): any[] => {
+            for (const item of items) {
                 if (item.key === path) {
                     return [{ title: item.label }];
                 }
@@ -295,8 +311,12 @@ const MainLayout = () => {
             return [];
         };
 
-        return findMenuItem(menuItems, pathname);
-    }, [location.pathname, menuItems]);
+        const pathParts = pathname.split('/');
+        const mainPath = pathParts[0];
+        const items = findMenuItem(menuItems, mainPath);
+
+        return items;
+    }, [location.pathname, location.state, menuItems, navigate]);
 
     const renderUpdateTime = () => {
         const pathname = location.pathname.substring(1);

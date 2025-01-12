@@ -206,11 +206,6 @@ const Reports: React.FC = () => {
         message.success('删除成功');
     };
 
-    const handleRefresh = () => {
-        setData(mockData);
-        message.success('刷新成功');
-    };
-
     const handleBatchDownload = () => {
         const completedRecords = selectedRows.filter(record => record.progress === 100);
         if (completedRecords.length > 0) {
