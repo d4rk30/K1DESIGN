@@ -17,7 +17,6 @@ import {
     LogoutOutlined,
     LockOutlined,
 } from '@ant-design/icons';
-import logo from '../assets/images/logo.png';
 
 const { Header, Sider } = Layout;
 
@@ -358,8 +357,8 @@ const MainLayout = () => {
             }}>
                 <div style={{ display: 'flex', alignItems: 'center' }}>
                     <img
-                        src={logo}
-                        alt="Logo"
+                        src="/images/logo.png"
+                        alt="logo"
                         style={{
                             height: '32px',
                             marginRight: '16px'

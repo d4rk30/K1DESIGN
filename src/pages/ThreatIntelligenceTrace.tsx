@@ -12,7 +12,7 @@ const ThreatIntelligenceTrace: React.FC = () => {
     return (
         <div style={{
             height: '100%',
-            backgroundImage: 'url(/src/assets/images/bg.png)',
+            backgroundImage: 'url(/images/bg.png)',
             backgroundPosition: 'center',
             backgroundRepeat: 'no-repeat',
         }}>
@@ -44,7 +44,7 @@ const ThreatIntelligenceTrace: React.FC = () => {
                             borderRadius: '50%',
                         }} />
                         <img
-                            src="/src/assets/images/logo2.png"
+                            src="/images/logo2.png"
                             alt="威胁情报溯源"
                             style={{
                                 width: '64px',

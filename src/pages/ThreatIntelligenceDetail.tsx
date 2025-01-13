@@ -4,13 +4,6 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { SearchOutlined, ReloadOutlined, CalendarOutlined, UpOutlined, DownOutlined, CopyOutlined, ApartmentOutlined, GlobalOutlined, ApiOutlined, LinkOutlined } from '@ant-design/icons';
 import LabelSelect from '@/components/LabelSelect';
 import { US, CN, GB, FR, DE, RU } from 'country-flag-icons/react/3x2';
-import ThreatInIcon from '@/assets/images/ThreatIn.png';
-import ThreatOutIcon from '@/assets/images/ThreatOut.png';
-import HuaweiLogo from '@/assets/images/华为.png';
-import QianxinLogo from '@/assets/images/奇安信.png';
-import TencentLogo from '@/assets/images/腾讯.png';
-import Logo360 from '@/assets/images/360.png';
-import AliyunLogo from '@/assets/images/阿里.png';
 
 const ThreatIntelligenceDetail: React.FC = () => {
     const location = useLocation();
@@ -881,7 +874,7 @@ const ThreatIntelligenceDetail: React.FC = () => {
         <Row>
             <Col style={{ width: 200, marginRight: 24 }}>
                 <img
-                    src={ThreatInIcon}
+                    src="/images/ThreatIn.png"
                     alt="威胁分数"
                     style={{ width: '100%' }}
                 />
@@ -1082,7 +1075,7 @@ const ThreatIntelligenceDetail: React.FC = () => {
             <Row gutter={[24, 24]} align="middle">
                 <Col span={2}>
                     <img
-                        src={ThreatOutIcon}
+                        src="/images/ThreatOut.png"
                         alt="威胁分数"
                         style={{ width: '100%' }}
                     />
@@ -1195,53 +1188,68 @@ const ThreatIntelligenceDetail: React.FC = () => {
                     </Row>
                 </Col>
             </Row>
-            <div style={{ 
-                height: '1px', 
-                background: '#f0f0f0', 
-                margin: '16px 0'  // 减小分隔线的上下间距
+            <div style={{
+                height: '1px',
+                background: '#f0f0f0',
+                margin: '16px 0 8px 0'  // 减小分隔线的上下间距
             }} />
             <Row>
                 <Col flex="1">
                     <Row gutter={[0, 16]}>  {/* 减小行间距 */}
                         <Col span={24}>
-                            <Row gutter={[48, 24]} justify="center">
+                            <Row gutter={[24, 24]}>
                                 {[
-                                    { logo: HuaweiLogo, name: '华为威胁情报' },
-                                    { logo: QianxinLogo, name: '奇安信威胁情报' },
-                                    { logo: TencentLogo, name: '腾讯威胁情报' },
-                                    { logo: Logo360, name: '360威胁情报' },
-                                    { logo: AliyunLogo, name: '阿里云威胁情报' }
+                                    { logo: '/images/华为.png', name: '华为威胁情报' },
+                                    { logo: '/images/奇安信.png', name: '奇安信威胁情报' },
+                                    { logo: '/images/腾讯.png', name: '腾讯威胁情报' },
+                                    { logo: '/images/360.png', name: '360威胁情报' },
+                                    { logo: '/images/阿里.png', name: '阿里云威胁情报' }
                                 ].map((vendor, index) => (
-                                    <Col key={index} style={{ width: '18%' }}>
-                                        <div style={{ 
-                                            padding: '8px 0',  // 减小上下padding
-                                            textAlign: 'center',
-                                            marginBottom: '16px'  // 减小与下方内容的间距
+                                    <Col key={index} style={{ width: '19%' }}>
+                                        <div style={{
+                                            padding: '8px 0',
+                                            marginBottom: '8px',
+                                            height: '40px',
+                                            position: 'relative'
                                         }}>
-                                            <div style={{ 
-                                                display: 'flex', 
-                                                alignItems: 'center',
-                                                justifyContent: 'center'
+                                            <div style={{
+                                                position: 'relative',
+                                                width: 'fit-content',
+                                                margin: '0 auto',
+                                                height: '40px',
+                                                lineHeight: '40px'
                                             }}>
-                                                <img 
-                                                    src={vendor.logo} 
-                                                    alt={vendor.name} 
-                                                    style={{ 
-                                                        width: 32, 
-                                                        height: 32, 
-                                                        marginRight: 12 
-                                                    }} 
-                                                />
-                                                <span style={{ 
-                                                    fontSize: 16, 
-                                                    fontWeight: 500 
-                                                }}>{vendor.name}</span>
+                                                <div style={{
+                                                    position: 'absolute',
+                                                    right: '100%',
+                                                    top: '47%',
+                                                    transform: 'translateY(-50%)',
+                                                    marginRight: '12px'
+                                                }}>
+                                                    <img
+                                                        src={vendor.logo}
+                                                        alt={vendor.name}
+                                                        style={{
+                                                            width: 32,
+                                                            height: 32
+                                                        }}
+                                                    />
+                                                </div>
+                                                <span style={{
+                                                    fontSize: 16,
+                                                    fontWeight: 500,
+                                                    whiteSpace: 'nowrap'
+                                                }}>
+                                                    {vendor.name}
+                                                </span>
                                             </div>
                                         </div>
-                                        <div style={{ marginTop: '16px' }}>  {/* 减小与上方内容的间距 */}
+                                        <div>
                                             {[
-                                                { label: '威胁等级', value: index === 0 ? <Tag color="red">高危</Tag> : 
-                                                    index === 1 ? <Tag color="green">低危</Tag> : <Tag color="orange">中危</Tag> },
+                                                {
+                                                    label: '威胁等级', value: index === 0 ? <Tag color="red">高危</Tag> :
+                                                        index === 1 ? <Tag color="green">低危</Tag> : <Tag color="orange">中危</Tag>
+                                                },
                                                 { label: '置信度', value: '高' },
                                                 { label: '活跃度', value: index <= 1 ? '高' : '低' },
                                                 { label: '运营商', value: index === 1 ? '未知' : 'EstNOC OY' },
@@ -1254,20 +1262,20 @@ const ThreatIntelligenceDetail: React.FC = () => {
                                                 { label: '入库时间', value: '2024-12-11 12:03:44' },
                                                 { label: '过期时间', value: '2024-12-31 11:22:31' }
                                             ].map((item, idx) => (
-                                                <div 
-                                                    key={idx} 
-                                                    style={{ 
+                                                <div
+                                                    key={idx}
+                                                    style={{
                                                         padding: '12px 0',
                                                         borderBottom: idx !== 11 ? '1px solid #f0f0f0' : 'none',
                                                         textAlign: 'center'
                                                     }}
                                                 >
-                                                    <div style={{ 
-                                                        color: '#666', 
+                                                    <div style={{
+                                                        color: '#666',
                                                         marginBottom: '8px',
                                                         textAlign: 'center'
                                                     }}>{item.label}</div>
-                                                    <div style={{ 
+                                                    <div style={{
                                                         textAlign: 'center'
                                                     }}>{item.value}</div>
                                                 </div>
@@ -1290,7 +1298,7 @@ const ThreatIntelligenceDetail: React.FC = () => {
                     <Row gutter={16} align="middle">
                         <Col flex="auto">
                             <Input
-                                placeholder={queryType === 'attack' ? '攻击情报仅支持输入IP' : '外联情报支持IP、域名和URL'}
+                                placeholder={'攻击情报仅支持输入IP，外联情报支持IP、域名和URL'}
                                 style={{
                                     height: 40,
                                     border: '1px solid #f0f0f0',
@@ -1300,13 +1308,13 @@ const ThreatIntelligenceDetail: React.FC = () => {
                         <Col>
                             <Space>
                                 <Button
-                                    type={queryType === 'attack' ? 'primary' : 'default'}
+                                    type={'default'}
                                     style={{ height: 40 }}
                                 >
                                     攻击情报查询
                                 </Button>
                                 <Button
-                                    type={queryType === 'external' ? 'primary' : 'default'}
+                                    type={'default'}
                                     style={{ height: 40 }}
                                 >
                                     外联情报查询
