@@ -465,7 +465,6 @@ const Reports: React.FC = () => {
                             <Form.Item name="module" style={{ marginBottom: 0 }}>
                                 <LabelSelect
                                     label="告警模块"
-                                    mode="multiple"
                                     allowClear
                                     placeholder="请选择告警模块"
                                     options={[

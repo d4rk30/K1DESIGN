@@ -16,6 +16,7 @@ import ThreatIntelligenceDetail from './pages/ThreatIntelligenceDetail';
 import PublicIntelligence from './pages/PublicIntelligence';
 import AssetManagement from './pages/AssetManagement';
 import AssetList from './pages/AssetList';
+import SyslogConfig from './pages/SyslogConfig';
 
 const App: React.FC = () => {
   return (
@@ -36,6 +37,7 @@ const App: React.FC = () => {
             <Route path="public-intelligence" element={<PublicIntelligence />} />
             <Route path="asset-management" element={<AssetManagement />} />
             <Route path="asset-management/:groupId" element={<AssetList />} />
+            <Route path="syslog-config" element={<SyslogConfig />} />
             <Route path="*" element={<UnderDevelopment />} />
           </Route>
         </Routes>

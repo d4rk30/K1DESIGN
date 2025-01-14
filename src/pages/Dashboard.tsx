@@ -6,6 +6,7 @@ import {
     RiseOutlined, RightOutlined, ExclamationCircleOutlined
 } from '@ant-design/icons';
 import ReactECharts from 'echarts-for-react';
+import { useNavigate } from 'react-router-dom';
 
 // 统一的图表主题配置
 const chartTheme = {
@@ -588,202 +589,218 @@ const TrendCard = ({
     mainIcon: React.ReactNode;
     mainLabel: string;
     mainUnit: string;
-}) => (
-    <Card>
-        <Space direction="vertical" size="middle" style={{
-            width: '100%',
-            background: '#ffffff',
-            borderRadius: '16px'
-        }}>
-            {/* 标题区域 */}
-            <div style={{
-                padding: '0 4px',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center'
-            }}>
-                <div style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    background: 'linear-gradient(to right, #1890ff15, transparent)',
-                    padding: '6px 12px',
-                    borderRadius: '20px'
-                }}>
-                    <span style={{
-                        fontSize: '15px',
-                        fontWeight: 500,
-                        background: 'linear-gradient(to right, #1890ff, #1890ff90)',
-                        WebkitBackgroundClip: 'text',
-                        WebkitTextFillColor: 'transparent'
-                    }}>
-                        {title}
-                    </span>
-                </div>
-                <div style={{
-                    fontSize: '12px',
-                    color: '#1890ff',
-                    display: 'flex',
-                    alignItems: 'center',
-                    cursor: 'pointer',
-                    padding: '4px 12px',
-                    borderRadius: '15px',
-                    border: '1px solid #1890ff30',
-                    transition: 'all 0.3s',
-                    '&:hover': {
-                        background: '#1890ff10',
-                        transform: 'translateX(2px)'
-                    }
-                } as React.CSSProperties}>
-                    <span>查看详情</span>
-                    <RightOutlined style={{ fontSize: '10px', marginLeft: '4px' }} />
-                </div>
-            </div>
+}) => {
+    const navigate = useNavigate();
 
-            {/* 主数据卡片 */}
-            <div style={{
-                background: `linear-gradient(135deg, ${titleColor} 0%, ${titleColor}dd 100%)`,
-                borderRadius: '16px',
-                padding: '24px',
-                color: 'white',
-                position: 'relative',
-                overflow: 'hidden',
-                boxShadow: `0 8px 16px ${titleColor}20`,
-                cursor: 'pointer',
-                transition: 'all 0.3s'
-            }}>
-                {/* 装饰图案 */}
-                <svg style={{
-                    position: 'absolute',
-                    right: '-10%',
-                    top: '-10%',
-                    width: '60%',
-                    height: '60%',
-                    opacity: 0.1
-                }}>
-                    <circle cx="50%" cy="50%" r="50%" fill="white" />
-                </svg>
+    // 根据标题确定跳转路径
+    const handleViewDetails = () => {
+        if (title === "攻击态势") {
+            navigate('/attack-logs');
+        } else if (title === "外联态势") {
+            navigate('/external-logs');
+        }
+    };
 
+    return (
+        <Card>
+            <Space direction="vertical" size="middle" style={{
+                width: '100%',
+                background: '#ffffff',
+                borderRadius: '16px'
+            }}>
+                {/* 标题区域 */}
                 <div style={{
+                    padding: '0 4px',
                     display: 'flex',
-                    alignItems: 'center',
-                    marginBottom: '20px'
+                    justifyContent: 'space-between',
+                    alignItems: 'center'
                 }}>
                     <div style={{
-                        background: 'rgba(255,255,255,0.2)',
-                        backdropFilter: 'blur(8px)',
-                        borderRadius: '12px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        background: 'linear-gradient(to right, #1890ff15, transparent)',
                         padding: '6px 12px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        boxShadow: '0 2px 6px rgba(0,0,0,0.1)'
+                        borderRadius: '20px'
                     }}>
-                        {mainIcon}
-                        <span style={{ marginLeft: '8px' }}>{mainLabel}</span>
-                    </div>
-                </div>
-
-                <div style={{
-                    display: 'flex',
-                    alignItems: 'baseline',
-                    justifyContent: 'space-between'
-                }}>
-                    <div style={{ display: 'flex', alignItems: 'baseline' }}>
                         <span style={{
-                            fontSize: '38px',
-                            fontWeight: 600,
-                            marginRight: '8px',
-                            fontFamily: '"DIN Alternate", -apple-system',
-                            letterSpacing: '-1px'
+                            fontSize: '15px',
+                            fontWeight: 500,
+                            background: 'linear-gradient(to right, #1890ff, #1890ff90)',
+                            WebkitBackgroundClip: 'text',
+                            WebkitTextFillColor: 'transparent'
                         }}>
-                            {mainData.toLocaleString()}
+                            {title}
                         </span>
-                        <span style={{
-                            opacity: 0.9,
-                            fontSize: '15px'
-                        }}>{mainUnit}</span>
                     </div>
-                    <div style={{
-                        background: 'rgba(255,255,255,0.15)',
-                        backdropFilter: 'blur(8px)',
-                        padding: '6px 16px',
-                        borderRadius: '20px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        fontSize: '12px',
-                        border: '1px solid rgba(255,255,255,0.2)',
-                        boxShadow: '0 2px 6px rgba(0,0,0,0.1)'
-                    }}>
-                        <RiseOutlined style={{ marginRight: '6px' }} />
-                        <span>24h 趋势</span>
+                    <div 
+                        onClick={handleViewDetails}
+                        style={{
+                            fontSize: '12px',
+                            color: '#1890ff',
+                            display: 'flex',
+                            alignItems: 'center',
+                            cursor: 'pointer',
+                            padding: '4px 12px',
+                            borderRadius: '15px',
+                            border: '1px solid #1890ff30',
+                            transition: 'all 0.3s',
+                            '&:hover': {
+                                background: '#1890ff10',
+                                transform: 'translateX(2px)'
+                            }
+                        } as React.CSSProperties}
+                    >
+                        <span>查看详情</span>
+                        <RightOutlined style={{ fontSize: '10px', marginLeft: '4px' }} />
                     </div>
                 </div>
-            </div>
 
-            {/* 子数据卡片 */}
-            <Row gutter={16}>
-                {subItems.map((item, index) => (
-                    <Col span={12} key={index}>
+                {/* 主数据卡片 */}
+                <div style={{
+                    background: `linear-gradient(135deg, ${titleColor} 0%, ${titleColor}dd 100%)`,
+                    borderRadius: '16px',
+                    padding: '24px',
+                    color: 'white',
+                    position: 'relative',
+                    overflow: 'hidden',
+                    boxShadow: `0 8px 16px ${titleColor}20`,
+                    cursor: 'pointer',
+                    transition: 'all 0.3s'
+                }}>
+                    {/* 装饰图案 */}
+                    <svg style={{
+                        position: 'absolute',
+                        right: '-10%',
+                        top: '-10%',
+                        width: '60%',
+                        height: '60%',
+                        opacity: 0.1
+                    }}>
+                        <circle cx="50%" cy="50%" r="50%" fill="white" />
+                    </svg>
+
+                    <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        marginBottom: '20px'
+                    }}>
                         <div style={{
-                            background: item.bgGradient,
-                            borderRadius: '16px',
-                            padding: '16px',
-                            border: '1px solid #f0f0f0',
-                            transition: 'all 0.3s',
-                            cursor: 'pointer',
-                            position: 'relative',
-                            overflow: 'hidden'
+                            background: 'rgba(255,255,255,0.2)',
+                            backdropFilter: 'blur(8px)',
+                            borderRadius: '12px',
+                            padding: '6px 12px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            boxShadow: '0 2px 6px rgba(0,0,0,0.1)'
                         }}>
+                            {mainIcon}
+                            <span style={{ marginLeft: '8px' }}>{mainLabel}</span>
+                        </div>
+                    </div>
+
+                    <div style={{
+                        display: 'flex',
+                        alignItems: 'baseline',
+                        justifyContent: 'space-between'
+                    }}>
+                        <div style={{ display: 'flex', alignItems: 'baseline' }}>
+                            <span style={{
+                                fontSize: '38px',
+                                fontWeight: 600,
+                                marginRight: '8px',
+                                fontFamily: '"DIN Alternate", -apple-system',
+                                letterSpacing: '-1px'
+                            }}>
+                                {mainData.toLocaleString()}
+                            </span>
+                            <span style={{
+                                opacity: 0.9,
+                                fontSize: '15px'
+                            }}>{mainUnit}</span>
+                        </div>
+                        <div style={{
+                            background: 'rgba(255,255,255,0.15)',
+                            backdropFilter: 'blur(8px)',
+                            padding: '6px 16px',
+                            borderRadius: '20px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            fontSize: '12px',
+                            border: '1px solid rgba(255,255,255,0.2)',
+                            boxShadow: '0 2px 6px rgba(0,0,0,0.1)'
+                        }}>
+                            <RiseOutlined style={{ marginRight: '6px' }} />
+                            <span>24h 趋势</span>
+                        </div>
+                    </div>
+                </div>
+
+                {/* 子数据卡片 */}
+                <Row gutter={16}>
+                    {subItems.map((item, index) => (
+                        <Col span={12} key={index}>
                             <div style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                marginBottom: '10px'
+                                background: item.bgGradient,
+                                borderRadius: '16px',
+                                padding: '16px',
+                                border: '1px solid #f0f0f0',
+                                transition: 'all 0.3s',
+                                cursor: 'pointer',
+                                position: 'relative',
+                                overflow: 'hidden'
                             }}>
                                 <div style={{
-                                    width: '4px',
-                                    height: '16px',
-                                    background: item.gradient,
-                                    borderRadius: '2px',
-                                    marginRight: '10px',
-                                    boxShadow: `0 2px 4px ${titleColor}20`
-                                }} />
-                                <span style={{
-                                    fontSize: '14px',
-                                    color: 'rgba(0,0,0,0.65)',
-                                    fontWeight: 500
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    marginBottom: '10px'
                                 }}>
-                                    {item.title}
-                                </span>
+                                    <div style={{
+                                        width: '4px',
+                                        height: '16px',
+                                        background: item.gradient,
+                                        borderRadius: '2px',
+                                        marginRight: '10px',
+                                        boxShadow: `0 2px 4px ${titleColor}20`
+                                    }} />
+                                    <span style={{
+                                        fontSize: '14px',
+                                        color: 'rgba(0,0,0,0.65)',
+                                        fontWeight: 500
+                                    }}>
+                                        {item.title}
+                                    </span>
+                                </div>
+                                <div style={{
+                                    display: 'flex',
+                                    alignItems: 'baseline'
+                                }}>
+                                    <span style={{
+                                        fontSize: '28px',
+                                        fontWeight: 600,
+                                        background: item.gradient,
+                                        WebkitBackgroundClip: 'text',
+                                        WebkitTextFillColor: 'transparent',
+                                        marginRight: '6px',
+                                        fontFamily: '"DIN Alternate", -apple-system',
+                                        letterSpacing: '-0.5px'
+                                    }}>
+                                        {item.value.toLocaleString()}
+                                    </span>
+                                    <span style={{
+                                        fontSize: '13px',
+                                        color: 'rgba(0,0,0,0.45)'
+                                    }}>
+                                        次
+                                    </span>
+                                </div>
                             </div>
-                            <div style={{
-                                display: 'flex',
-                                alignItems: 'baseline'
-                            }}>
-                                <span style={{
-                                    fontSize: '28px',
-                                    fontWeight: 600,
-                                    background: item.gradient,
-                                    WebkitBackgroundClip: 'text',
-                                    WebkitTextFillColor: 'transparent',
-                                    marginRight: '6px',
-                                    fontFamily: '"DIN Alternate", -apple-system',
-                                    letterSpacing: '-0.5px'
-                                }}>
-                                    {item.value.toLocaleString()}
-                                </span>
-                                <span style={{
-                                    fontSize: '13px',
-                                    color: 'rgba(0,0,0,0.45)'
-                                }}>
-                                    次
-                                </span>
-                            </div>
-                        </div>
-                    </Col>
-                ))}
-            </Row>
-        </Space>
-    </Card>
-);
+                        </Col>
+                    ))}
+                </Row>
+            </Space>
+        </Card>
+    );
+};
 
 const Dashboard = () => {
     return (
@@ -1217,6 +1234,7 @@ const Dashboard = () => {
                         padding: '6px 12px',
                         borderRadius: '20px'
                     }}>
+
                         <span style={{
                             fontSize: '15px',
                             fontWeight: 500,
@@ -1329,7 +1347,6 @@ const Dashboard = () => {
                                         },
                                         itemStyle: {
                                             shadowBlur: 10,
-                                            shadowOffsetX: 0,
                                             shadowColor: 'rgba(0, 0, 0, 0.2)'
                                         }
                                     },

@@ -11,6 +11,7 @@ interface LabelRangePickerProps extends Omit<RangePickerProps, 'onChange'> {
     value?: [any, any];
     onChange?: (dates: [any, any] | null) => void;
     presets?: { label: string; value: [any, any] }[];
+    disabled?: boolean;
 }
 
 const LabelRangePicker: React.FC<LabelRangePickerProps> = ({
@@ -19,13 +20,15 @@ const LabelRangePicker: React.FC<LabelRangePickerProps> = ({
     onChange,
     presets,
     className,
+    disabled,
     ...rest
 }) => {
     return (
-        <div className={styles.labelRangePickerWrapper}>
+        <div className={`${styles.labelRangePickerWrapper} ${disabled ? styles.disabled : ''}`}>
             {label && <span className={styles.label}>{label}</span>}
             <RangePicker
                 {...rest}
+                disabled={disabled}
                 value={value}
                 onChange={onChange}
                 className={`${styles.picker} ${className || ''}`}

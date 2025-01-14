@@ -37,3 +37,29 @@
     border: none !important;
     box-shadow: none !important;
 }
+
+/* 添加禁用状态的样式 */
+.disabled {
+    background-color: rgba(0, 0, 0, 0.04);
+    cursor: not-allowed;
+    border-color: #d9d9d9 !important;
+}
+
+.disabled:hover {
+    border-color: #d9d9d9 !important;
+}
+
+.disabled .label {
+    color: rgba(0, 0, 0, 0.25);
+}
+
+/* 修改禁用状态下的输入框样式 */
+.disabled :global(.ant-picker) {
+    background-color: transparent !important;
+    cursor: not-allowed;
+}
+
+.disabled :global(.ant-picker-input > input) {
+    color: rgba(0, 0, 0, 0.25);
+    cursor: not-allowed;
+}

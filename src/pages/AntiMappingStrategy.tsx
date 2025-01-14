@@ -113,14 +113,14 @@ const AntiMappingStrategy: React.FC = () => {
     const commercialPlatforms = [
         {
             key: '1',
-            name: 'RaySpace',
+            name: 'DayDayMap',
             status: true,
             level: 'high',
             action: 'block'
         },
         {
             key: '2',
-            name: 'Fofa',
+            name: 'FOFA',
             status: true,
             level: 'high',
             action: 'block'
@@ -152,6 +152,13 @@ const AntiMappingStrategy: React.FC = () => {
             status: true,
             level: 'medium',
             action: 'monitor'
+        },
+        {
+            key: '7',
+            name: '其他探测平台',
+            status: true,
+            level: 'medium',
+            action: 'monitor'
         }
     ];
 
@@ -159,28 +166,42 @@ const AntiMappingStrategy: React.FC = () => {
     const crawlerTools = [
         {
             key: '1',
-            name: 'BaiduSpider',
+            name: 'BaiduSpider爬虫测绘',
             status: true,
             level: 'high',
             action: 'block'
         },
         {
             key: '2',
-            name: 'GoogleBot',
+            name: 'GoogleBot爬虫测绘',
             status: true,
             level: 'medium',
             action: 'monitor'
         },
         {
             key: '3',
-            name: 'BingBot',
+            name: 'BingBot爬虫测绘',
             status: true,
             level: 'medium',
             action: 'monitor'
         },
         {
             key: '4',
-            name: 'Sougou_Crawler',
+            name: 'SougouSpider爬虫测绘',
+            status: true,
+            level: 'medium',
+            action: 'monitor'
+        },
+        {
+            key: '5',
+            name: '360Spider爬虫测绘',
+            status: true,
+            level: 'medium',
+            action: 'monitor'
+        },
+        {
+            key: '6',
+            name: '其他爬虫',
             status: true,
             level: 'medium',
             action: 'monitor'
