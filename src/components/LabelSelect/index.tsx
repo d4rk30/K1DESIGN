@@ -3,16 +3,28 @@ import { Select } from 'antd';
 import type { SelectProps } from 'antd/es/select';
 import styles from './style.module.less';
 
-interface LabelSelectProps extends Omit<SelectProps, 'label'> {
+interface LabelSelectProps extends SelectProps {
     label: string;
+    required?: boolean;
 }
 
-const LabelSelect: React.FC<LabelSelectProps> = ({ label, ...props }) => {
+const LabelSelect: React.FC<LabelSelectProps> = ({
+    label,
+    required,
+    className,
+    ...restProps
+}) => {
     return (
-        <div className={styles.labelSelectWrapper}>
-            <span className={styles.label}>{label}</span>
-            <Select variant="borderless" {...props} className={`${styles.select} ${props.className || ''}`} />
-        </div>
+        <Select
+            className={`${styles.labelSelect} ${className || ''}`}
+            prefix={
+                <span className={styles.label}>
+                    {required && <span className={styles.required}>*</span>}
+                    {label}
+                </span>
+            }
+            {...restProps}
+        />
     );
 };
 

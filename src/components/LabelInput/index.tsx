@@ -1,35 +1,29 @@
 import React from 'react';
-import { Input } from 'antd';
-import type { InputProps } from 'antd/es/input';
+import { Input, InputProps } from 'antd';
 import styles from './style.module.less';
 
-interface LabelInputProps extends Omit<InputProps, 'label'> {
+interface LabelInputProps extends InputProps {
     label: string;
     required?: boolean;
 }
 
-const LabelInput: React.FC<LabelInputProps> = ({ 
-    label, 
-    required = false,
-    style,
-    ...props 
+const LabelInput: React.FC<LabelInputProps> = ({
+    label,
+    required,
+    className,
+    ...restProps
 }) => {
     return (
-        <div className={styles.labelWrapper} style={style}>
-            <div className={styles.label}>
-                {required && (
-                    <span className={styles.required}>
-                        *
-                    </span>
-                )}
-                <span>{label}</span>
-            </div>
+        <div className={styles.labelInputWrapper}>
             <Input
-                {...props}
-                className={styles.input}
-                style={{
-                    paddingLeft: `${label.length * 14 + 50}px`
-                }}
+                className={`${styles.input} ${className || ''}`}
+                prefix={
+                    <span className={styles.label}>
+                        {required && <span className={styles.required}>*</span>}
+                        {label}
+                    </span>
+                }
+                {...restProps}
             />
         </div>
     );

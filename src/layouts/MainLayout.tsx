@@ -251,19 +251,25 @@ const MainLayout = () => {
         }
     };
 
+    const currentPath = location.pathname;
+
     const getSelectedKeys = () => {
-        const pathname = location.pathname.substring(1);
-        if (pathname === 'threat-intelligence-trace/detail') {
+        if (currentPath.startsWith('/asset-management/')) {
+            return ['asset-management'];
+        }
+        if (currentPath.startsWith('/threat-intelligence-trace/')) {
             return ['threat-intelligence-trace'];
         }
-        return [pathname];
+        return [currentPath.substring(1)];
     };
 
     const getOpenKeys = (pathname: string) => {
-        if (pathname === 'threat-intelligence-trace/detail') {
-            pathname = 'threat-intelligence-trace';
+        if (currentPath.startsWith('/asset-management/')) {
+            return ['system'];
         }
-
+        if (currentPath.startsWith('/threat-intelligence-trace/')) {
+            return ['threat-intelligence'];
+        }
         const parentKey = menuItems.find(item =>
             item.children?.some(child => child.key === pathname)
         )?.key;
@@ -284,13 +290,27 @@ const MainLayout = () => {
 
     const breadcrumbItems = useMemo(() => {
         const pathname = location.pathname.substring(1);
-        const isDetailPage = pathname === 'threat-intelligence-trace/detail';
-
-        if (isDetailPage) {
+        
+        if (pathname === 'threat-intelligence-trace/detail') {
             const type = location.state?.type;
             return [
-                { title: '威胁情报', onClick: () => navigate('/threat-intelligence-trace') },
+                { title: '威胁情报' },
+                { 
+                    title: '威胁情报溯源',
+                    onClick: () => navigate('/threat-intelligence-trace')
+                },
                 { title: type === 'attack' ? '攻击情报查询' : '外联情报查询' }
+            ];
+        }
+
+        if (pathname.startsWith('asset-management/')) {
+            return [
+                { title: '系统管理' },
+                { 
+                    title: '防护资产管理',
+                    onClick: () => navigate('/asset-management')
+                },
+                { title: '资产列表' }
             ];
         }
 

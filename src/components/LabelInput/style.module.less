@@ -1,26 +1,21 @@
-.labelWrapper {
-    position: relative;
-}
-
-.label {
-    position: absolute;
-    left: 0;
-    top: 0;
-    height: 32px;
-    padding: 0 12px;
-    line-height: 32px;
-    z-index: 1;
-    color: rgba(0, 0, 0, 0.45);
-    pointer-events: none;
-}
-
-.required {
-    color: #ff4d4f;
-    margin-right: 4px;
-    font-size: 14px;
-    font-family: SimSun, sans-serif;
-}
-
-.input {
+.labelInputWrapper {
+    display: inline-block;
     width: 100%;
+
+    .input {
+        padding-left: 8px;
+        :global(.ant-input-prefix) {
+            margin-right: 17px;
+        }
+    }
+
+    .label {
+        color: rgba(0, 0, 0, 0.45);
+        
+        .required {
+            color: #ff4d4f;
+            margin-right: 4px;
+            font-family: SimSun, sans-serif;
+        }
+    }
 }

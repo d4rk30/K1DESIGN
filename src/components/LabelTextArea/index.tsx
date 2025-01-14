@@ -12,27 +12,22 @@ interface LabelTextAreaProps extends TextAreaProps {
 
 const LabelTextArea: React.FC<LabelTextAreaProps> = ({
     label,
-    required = false,
-    style,
-    ...props
+    required,
+    className,
+    ...restProps
 }) => {
     return (
-        <div className={styles.labelWrapper} style={style}>
-            <div className={styles.label}>
-                {required && (
-                    <span className={styles.required}>
-                        *
-                    </span>
-                )}
-                <span>{label}</span>
+        <div className={styles.labelTextAreaWrapper}>
+            <div className={styles.inputWrapper}>
+                <span className={styles.label}>
+                    {required && <span className={styles.required}>*</span>}
+                    {label}
+                </span>
+                <TextArea
+                    className={`${styles.textarea} ${className || ''}`}
+                    {...restProps}
+                />
             </div>
-            <TextArea
-                className={styles.textarea}
-                style={{
-                    paddingLeft: `${label.length * 14 + 50}px`
-                }}
-                {...props}
-            />
         </div>
     );
 };

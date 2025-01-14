@@ -14,6 +14,8 @@ import Reports from './pages/Reports';
 import ThreatIntelligenceTrace from './pages/ThreatIntelligenceTrace';
 import ThreatIntelligenceDetail from './pages/ThreatIntelligenceDetail';
 import PublicIntelligence from './pages/PublicIntelligence';
+import AssetManagement from './pages/AssetManagement';
+import AssetList from './pages/AssetList';
 
 const App: React.FC = () => {
   return (
@@ -29,11 +31,11 @@ const App: React.FC = () => {
             <Route path="anti-mapping-assets" element={<AntiMappingAssets />} />
             <Route path="anti-mapping-policy" element={<AntiMappingStrategy />} />
             <Route path="reports" element={<Reports />} />
-            <Route path="threat-intelligence-trace">
-              <Route index element={<ThreatIntelligenceTrace />} />
-              <Route path="detail" element={<ThreatIntelligenceDetail />} />
-            </Route>
+            <Route path="threat-intelligence-trace" element={<ThreatIntelligenceTrace />} />
+            <Route path="threat-intelligence-trace/detail" element={<ThreatIntelligenceDetail />} />
             <Route path="public-intelligence" element={<PublicIntelligence />} />
+            <Route path="asset-management" element={<AssetManagement />} />
+            <Route path="asset-management/:groupId" element={<AssetList />} />
             <Route path="*" element={<UnderDevelopment />} />
           </Route>
         </Routes>

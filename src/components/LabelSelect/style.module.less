@@ -1,29 +1,25 @@
-.labelSelectWrapper {
-    display: flex;
-    align-items: center;
+.labelSelect {
     width: 100%;
-    border: 1px solid #d9d9d9;
-    border-radius: 6px;
-    transition: all 0.3s;
 
-    &:hover {
-        border-color: #4096ff;
+    :global(.ant-select-selector) {
+        padding-left: 8px !important;
     }
 
-    .label {
-        padding: 0 8px;
-        color: rgba(0, 0, 0, 0.45);
-        white-space: nowrap;
+    :global(.ant-select-selection-search) {
+        left: 8px !important;
     }
 
-    .select {
-        flex: 1;
+    :global(.ant-select-prefix) {
+        margin-right: 17px;
+    }
+}
 
-        :global {
-            .ant-select-selector {
-                border: none !important;
-                box-shadow: none !important;
-            }
-        }
+.label {
+    color: rgba(0, 0, 0, 0.45);
+    
+    .required {
+        color: #ff4d4f;
+        margin-right: 4px;
+        font-family: SimSun, sans-serif;
     }
 }
