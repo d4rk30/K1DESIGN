@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { Card, Table, Button, Space, Form, Input, Modal, Popconfirm, message, Typography, Select, Row } from 'antd';
+import { Card, Table, Button, Space, Form, Input, Modal, Popconfirm, message, Typography, Select, Row, Upload } from 'antd';
 import type { TableColumnsType } from 'antd';
 import { useNavigate, useParams } from 'react-router-dom';
 import LabelInput from '@/components/LabelInput';
 import LabelSelect from '@/components/LabelSelect';
 import LabelTextArea from '@/components/LabelTextArea';
-import { LeftOutlined, SearchOutlined, ReloadOutlined, PlusOutlined, ImportOutlined, ExportOutlined, DeleteOutlined } from '@ant-design/icons';
+import { LeftOutlined, SearchOutlined, ReloadOutlined, PlusOutlined, ImportOutlined, ExportOutlined, DeleteOutlined, UploadOutlined } from '@ant-design/icons';
+import type { UploadProps } from 'antd';
 
 const { Title } = Typography;
 
@@ -72,6 +73,7 @@ const AssetList: React.FC = () => {
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [modalType, setModalType] = useState<'ip'>('ip');
     const [editingAsset, setEditingAsset] = useState<Asset | null>(null);
+    const [isImportModalVisible, setIsImportModalVisible] = useState(false);
 
     // 模拟数据
     const data: (Asset & { key: string })[] = [
@@ -125,6 +127,38 @@ const AssetList: React.FC = () => {
 
     const handleReset = () => {
         filterForm.resetFields();
+    };
+
+    const handleImport = () => {
+        setIsImportModalVisible(true);
+    };
+
+    const handleImportCancel = () => {
+        setIsImportModalVisible(false);
+    };
+
+    const handleDownloadTemplate = () => {
+        // 这里实现下载模板的逻辑
+        console.log('下载模板');
+        message.success('模板下载成功');
+    };
+
+    const { Dragger } = Upload;
+
+    const uploadProps: UploadProps = {
+        name: 'file',
+        action: '/api/asset/import',
+        accept: '.xlsx,.xls',
+        showUploadList: true,
+        maxCount: 1,
+        onChange(info) {
+            if (info.file.status === 'done') {
+                message.success(`${info.file.name} 导入成功`);
+                setIsImportModalVisible(false);
+            } else if (info.file.status === 'error') {
+                message.error(`${info.file.name} 导入失败`);
+            }
+        },
     };
 
     const columns: TableColumnsType<Asset> = [
@@ -336,7 +370,7 @@ const AssetList: React.FC = () => {
                     <Button type="primary" onClick={() => showModal('ip')} icon={<PlusOutlined />}>
                         添加IP/IP段
                     </Button>
-                    <Button icon={<ImportOutlined />}>
+                    <Button icon={<ImportOutlined />} onClick={handleImport}>
                         导入
                     </Button>
                 </Space>
@@ -361,6 +395,7 @@ const AssetList: React.FC = () => {
                 onCancel={handleCancel}
                 okText="确定"
                 cancelText="取消"
+                centered
             >
                 <Form
                     form={form}
@@ -488,6 +523,43 @@ const AssetList: React.FC = () => {
                         />
                     </Form.Item>
                 </Form>
+            </Modal>
+            <Modal
+                title="导入资产"
+                open={isImportModalVisible}
+                onCancel={handleImportCancel}
+                footer={null}
+                centered
+            >
+                <div style={{ marginBottom: 16 }}>
+                    <Dragger {...uploadProps}>
+                        <p className="ant-upload-drag-icon">
+                            <UploadOutlined />
+                        </p>
+                        <p className="ant-upload-text">
+                            点击或拖拽文件到此区域上传
+                        </p>
+                    </Dragger>
+                </div>
+                <div style={{
+                    padding: '8px 16px',
+                    background: '#f5f5f5',
+                    borderRadius: 6,
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center'
+                }}>
+                    <span style={{ color: 'rgba(0, 0, 0, 0.65)' }}>
+                        先下载模板，在模板中填写需要上传的数据
+                    </span>
+                    <Button 
+                        type="link" 
+                        onClick={handleDownloadTemplate}
+                        style={{ padding: 0 }}
+                    >
+                        下载模板
+                    </Button>
+                </div>
             </Modal>
         </Card>
     );
