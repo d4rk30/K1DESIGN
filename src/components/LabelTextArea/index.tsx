@@ -1,18 +1,20 @@
 import React from 'react';
 import { Input } from 'antd';
-import type { InputProps } from 'antd/es/input';
+import type { TextAreaProps } from 'antd/es/input';
 import styles from './style.module.less';
 
-interface LabelInputProps extends Omit<InputProps, 'label'> {
+const { TextArea } = Input;
+
+interface LabelTextAreaProps extends TextAreaProps {
     label: string;
     required?: boolean;
 }
 
-const LabelInput: React.FC<LabelInputProps> = ({ 
-    label, 
+const LabelTextArea: React.FC<LabelTextAreaProps> = ({
+    label,
     required = false,
     style,
-    ...props 
+    ...props
 }) => {
     return (
         <div className={styles.labelWrapper} style={style}>
@@ -24,15 +26,15 @@ const LabelInput: React.FC<LabelInputProps> = ({
                 )}
                 <span>{label}</span>
             </div>
-            <Input
-                {...props}
-                className={styles.input}
+            <TextArea
+                className={styles.textarea}
                 style={{
                     paddingLeft: `${label.length * 14 + 50}px`
                 }}
+                {...props}
             />
         </div>
     );
 };
 
-export default LabelInput; 
+export default LabelTextArea; 

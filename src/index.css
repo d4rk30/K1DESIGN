@@ -60,3 +60,7 @@ h2 {
 .ant-tabs-tab {
   font-size: 14px !important;
 }
+
+.ant-modal-header {
+  margin-bottom: 16px !important;
+}

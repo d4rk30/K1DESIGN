@@ -8,7 +8,6 @@ import {
     GlobalOutlined,
     KeyOutlined,
     RadarChartOutlined,
-    SafetyCertificateOutlined,
     EyeInvisibleOutlined,
     SettingOutlined,
     FileOutlined,
@@ -104,7 +103,7 @@ const MainLayout = () => {
         },
         {
             key: 'threat-intelligence',
-            icon: <SafetyCertificateOutlined />,
+            icon: <RadarChartOutlined />,
             label: '威胁情报',
             children: [
                 {
@@ -113,7 +112,7 @@ const MainLayout = () => {
                 },
                 {
                     key: 'public-intelligence',
-                    label: '公有情报管理',
+                    label: '公有情报源管理',
                 },
                 {
                     key: 'private-intelligence',

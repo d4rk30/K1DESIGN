@@ -4,6 +4,8 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { SearchOutlined, ReloadOutlined, CalendarOutlined, UpOutlined, DownOutlined, CopyOutlined, ApartmentOutlined, GlobalOutlined, ApiOutlined, LinkOutlined } from '@ant-design/icons';
 import LabelSelect from '@/components/LabelSelect';
 import { US, CN, GB, FR, DE, RU } from 'country-flag-icons/react/3x2';
+import LabelInput from '@/components/LabelInput';
+import LabelTextArea from '@/components/LabelTextArea';
 
 const ThreatIntelligenceDetail: React.FC = () => {
     const location = useLocation();
@@ -1351,21 +1353,24 @@ const ThreatIntelligenceDetail: React.FC = () => {
                 <Form
                     form={feedbackForm}
                     onFinish={handleFeedback}
-                    layout="vertical"
                 >
                     <Form.Item
-                        label="情报内容"
                         name="intelContent"
                         rules={[{ required: true, message: '请输入情报内容' }]}
                     >
-                        <Input placeholder="请输入情报内容" />
+                        <LabelInput
+                            label="情报内容"
+                            required
+                            placeholder="请输入情报内容"
+                        />
                     </Form.Item>
                     <Form.Item
-                        label="反馈内容"
                         name="feedbackContent"
                         rules={[{ required: true, message: '请输入反馈内容' }]}
                     >
-                        <Input.TextArea
+                        <LabelTextArea
+                            label="反馈内容"
+                            required
                             placeholder="请输入反馈内容"
                             rows={4}
                         />

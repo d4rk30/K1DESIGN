@@ -13,6 +13,7 @@ import AntiMappingStrategy from './pages/AntiMappingStrategy';
 import Reports from './pages/Reports';
 import ThreatIntelligenceTrace from './pages/ThreatIntelligenceTrace';
 import ThreatIntelligenceDetail from './pages/ThreatIntelligenceDetail';
+import PublicIntelligence from './pages/PublicIntelligence';
 
 const App: React.FC = () => {
   return (
@@ -32,6 +33,7 @@ const App: React.FC = () => {
               <Route index element={<ThreatIntelligenceTrace />} />
               <Route path="detail" element={<ThreatIntelligenceDetail />} />
             </Route>
+            <Route path="public-intelligence" element={<PublicIntelligence />} />
             <Route path="*" element={<UnderDevelopment />} />
           </Route>
         </Routes>
