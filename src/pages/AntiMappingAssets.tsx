@@ -6,8 +6,6 @@ import LabelSelect from '@/components/LabelSelect';
 import LabelInput from '@/components/LabelInput';
 import LabelCascader from '@/components/LabelCascader';
 import { US, CN, GB, FR, DE } from 'country-flag-icons/react/3x2';  // 导入国旗图标
-import LabelRangePicker from '@/components/LabelRangePicker';
-import dayjs from 'dayjs';
 
 interface DataType {
     key: string;
@@ -277,7 +275,7 @@ const AntiMappingAssets: React.FC = () => {
                 style={{ marginBottom: 24 }}
             >
                 <Row gutter={[16, 16]}>
-                    <Col span={6}>
+                    <Col span={4}>
                         <Form.Item name="quickSearch" style={{ marginBottom: 0 }}>
                             <LabelSelect
                                 label="快捷搜索"
@@ -292,7 +290,7 @@ const AntiMappingAssets: React.FC = () => {
                             </LabelSelect>
                         </Form.Item>
                     </Col>
-                    <Col span={6}>
+                    <Col span={4}>
                         <Form.Item name="targetIP" style={{ marginBottom: 0 }}>
                             <LabelInput
                                 label="目的IP"
@@ -300,7 +298,7 @@ const AntiMappingAssets: React.FC = () => {
                             />
                         </Form.Item>
                     </Col>
-                    <Col span={6}>
+                    <Col span={4}>
                         <Form.Item name="assetGroup" style={{ marginBottom: 0 }}>
                             <LabelInput
                                 label="所属资产分组"
@@ -308,7 +306,7 @@ const AntiMappingAssets: React.FC = () => {
                             />
                         </Form.Item>
                     </Col>
-                    <Col span={6}>
+                    <Col span={4}>
                         <Form.Item name="location" style={{ marginBottom: 0 }}>
                             <LabelCascader
                                 label="归属地"
@@ -317,31 +315,7 @@ const AntiMappingAssets: React.FC = () => {
                             />
                         </Form.Item>
                     </Col>
-                    <Col span={6}>
-                        <Form.Item name="timeRange" style={{ marginBottom: 0 }}>
-                            <LabelRangePicker
-                                label="时间范围"
-                                placeholder={['开始时间', '结束时间']}
-                                presets={[
-                                    { 
-                                        label: '今日', 
-                                        value: [dayjs().startOf('day'), dayjs().endOf('day')] 
-                                    },
-                                    { 
-                                        label: '本周', 
-                                        value: [dayjs().startOf('week'), dayjs().endOf('week')] 
-                                    },
-                                    { 
-                                        label: '当月', 
-                                        value: [dayjs().startOf('month'), dayjs().endOf('month')] 
-                                    }
-                                ]}
-                                showTime
-                                format="YYYY-MM-DD HH:mm:ss"
-                            />
-                        </Form.Item>
-                    </Col>
-                    <Col span={6}>
+                    <Col span={4}>
                         <Form.Item style={{ marginBottom: 0 }}>
                             <Space>
                                 <Button type="primary" htmlType="submit" icon={<SearchOutlined />}>

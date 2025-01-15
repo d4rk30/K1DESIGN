@@ -1,4 +1,4 @@
-import { Layout, Menu, theme, Dropdown, Space, Breadcrumb } from 'antd';
+import { Layout, Menu, theme, Dropdown, Space, Breadcrumb, Switch, Tooltip } from 'antd';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useState, useEffect, useMemo } from 'react';
 import {
@@ -15,7 +15,10 @@ import {
     UserOutlined,
     LogoutOutlined,
     LockOutlined,
+    InfoCircleOutlined,
 } from '@ant-design/icons';
+import dayjs from 'dayjs';
+import LabelRangePicker from '@/components/LabelRangePicker';
 
 const { Header, Sider } = Layout;
 
@@ -27,6 +30,7 @@ const MainLayout = () => {
     const {
         token: { colorBgContainer },
     } = theme.useToken();
+    const [autoRefresh, setAutoRefresh] = useState(false);
 
     const menuItems = [
         {
@@ -290,12 +294,12 @@ const MainLayout = () => {
 
     const breadcrumbItems = useMemo(() => {
         const pathname = location.pathname.substring(1);
-        
+
         if (pathname === 'threat-intelligence-trace/detail') {
             const type = location.state?.type;
             return [
                 { title: '威胁情报' },
-                { 
+                {
                     title: '威胁情报溯源',
                     onClick: () => navigate('/threat-intelligence-trace')
                 },
@@ -306,7 +310,7 @@ const MainLayout = () => {
         if (pathname.startsWith('asset-management/')) {
             return [
                 { title: '系统管理' },
-                { 
+                {
                     title: '防护资产管理',
                     onClick: () => navigate('/asset-management')
                 },
@@ -356,6 +360,65 @@ const MainLayout = () => {
                         display: 'inline-block'
                     }} />
                     最近更新: 10分钟前
+                </div>
+            );
+        }
+        return null;
+    };
+
+    const renderAntiMappingControls = () => {
+        const pathname = location.pathname.substring(1);
+        const antiMappingPages = [
+            'anti-mapping-logs',
+            'anti-mapping-sources',
+            'anti-mapping-assets'
+        ];
+
+        if (antiMappingPages.includes(pathname)) {
+            return (
+                <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '16px',
+                    marginLeft: '16px'
+                }}>
+                    <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        whiteSpace: 'nowrap'
+                    }}>
+                        <span>自动刷新</span>
+                        <Tooltip title="开启自动刷新后每隔两分钟刷新一次数据，数据受到右侧时间筛选器的影响">
+                            <InfoCircleOutlined style={{ color: '#999', fontSize: '14px' }} />
+                        </Tooltip>
+                        <Switch
+                            checked={autoRefresh}
+                            onChange={(checked) => {
+                                setAutoRefresh(checked);
+                            }}
+                        />
+                    </div>
+                    <LabelRangePicker
+                        label="时间范围"
+                        placeholder={['开始时间', '结束时间']}
+                        presets={[
+                            {
+                                label: '今日',
+                                value: [dayjs().startOf('day'), dayjs().endOf('day')]
+                            },
+                            {
+                                label: '本周',
+                                value: [dayjs().startOf('week'), dayjs().endOf('week')]
+                            },
+                            {
+                                label: '当月',
+                                value: [dayjs().startOf('month'), dayjs().endOf('month')]
+                            }
+                        ]}
+                        showTime
+                        format="YYYY-MM-DD HH:mm:ss"
+                    />
                 </div>
             );
         }
@@ -469,7 +532,13 @@ const MainLayout = () => {
                             justifyContent: 'space-between'
                         }}>
                             <Breadcrumb items={breadcrumbItems} />
-                            {renderUpdateTime()}
+                            <div style={{
+                                display: 'flex',
+                                alignItems: 'center'
+                            }}>
+                                {renderUpdateTime()}
+                                {renderAntiMappingControls()}
+                            </div>
                         </div>
                     </div>
                     <div style={{

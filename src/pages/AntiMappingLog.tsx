@@ -7,8 +7,6 @@ import LabelInput from '@/components/LabelInput';
 import LabelCascader from '@/components/LabelCascader';
 import AntiMappingPathVisualization from '@/components/AntiMappingPathVisualization';
 import { US, CN, GB, FR, DE } from 'country-flag-icons/react/3x2';
-import LabelRangePicker from '@/components/LabelRangePicker';
-import dayjs from 'dayjs';
 
 interface DataType {
     key: string;
@@ -619,30 +617,6 @@ const AntiMappingLog: React.FC = () => {
                                 label="归属地"
                                 options={locationOptions}
                                 placeholder="请选择"
-                            />
-                        </Form.Item>
-                    </Col>
-                    <Col span={8}>
-                        <Form.Item name="timeRange" style={{ marginBottom: 0 }}>
-                            <LabelRangePicker
-                                label="时间范围"
-                                placeholder={['开始时间', '结束时间']}
-                                presets={[
-                                    { 
-                                        label: '今日', 
-                                        value: [dayjs().startOf('day'), dayjs().endOf('day')] 
-                                    },
-                                    { 
-                                        label: '本周', 
-                                        value: [dayjs().startOf('week'), dayjs().endOf('week')] 
-                                    },
-                                    { 
-                                        label: '当月', 
-                                        value: [dayjs().startOf('month'), dayjs().endOf('month')] 
-                                    }
-                                ]}
-                                showTime
-                                format="YYYY-MM-DD HH:mm:ss"
                             />
                         </Form.Item>
                     </Col>
