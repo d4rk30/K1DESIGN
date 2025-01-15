@@ -4,7 +4,7 @@ import { StopOutlined } from '@ant-design/icons';
 import styles from './style.module.less';
 import { US, CN, GB, FR, DE } from 'country-flag-icons/react/3x2';
 
-interface AttackPathVisualizationProps {
+interface AntiMappingPathVisualizationProps {
     attackerInfo?: {
         ip: string;
         port: string;
@@ -54,7 +54,7 @@ const defaultData = {
     action: '阻断'
 };
 
-const AttackPathVisualization: React.FC<AttackPathVisualizationProps> = ({
+const AntiMappingPathVisualization: React.FC<AntiMappingPathVisualizationProps> = ({
     attackerInfo = defaultData.attackerInfo,
     deviceInfo = defaultData.deviceInfo,
     victimInfo = defaultData.victimInfo,
@@ -134,9 +134,6 @@ const AttackPathVisualization: React.FC<AttackPathVisualizationProps> = ({
                                     {attackerInfo.location}
                                 </Space>
                             </Descriptions.Item>
-                            <Descriptions.Item label="设备类型">{attackerInfo.deviceType}</Descriptions.Item>
-                            <Descriptions.Item label="浏览器类型">{attackerInfo.browserType}</Descriptions.Item>
-                            <Descriptions.Item label="操作系统">{attackerInfo.OSType}</Descriptions.Item>
                         </Descriptions>
                     </div>
                 </div>
@@ -150,8 +147,6 @@ const AttackPathVisualization: React.FC<AttackPathVisualizationProps> = ({
                         <Descriptions column={1} size="small">
                             <Descriptions.Item label="协议类型">{deviceInfo.protocolType}</Descriptions.Item>
                             <Descriptions.Item label="防护策略">{deviceInfo.protectionRule}</Descriptions.Item>
-                            <Descriptions.Item label="防护类型">{deviceInfo.protectionType}</Descriptions.Item>
-                            <Descriptions.Item label="反测绘分类">{deviceInfo.reverseMappingType}</Descriptions.Item>
                         </Descriptions>
                     </div>
                 </div>
@@ -176,4 +171,4 @@ const AttackPathVisualization: React.FC<AttackPathVisualizationProps> = ({
     );
 };
 
-export default AttackPathVisualization; 
+export default AntiMappingPathVisualization; 

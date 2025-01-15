@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
-import { Card, Form, Select, Button, Table, Space, Tag, Row, Col, Modal, Input, message, Drawer, Typography, List, Timeline, Progress } from 'antd';
+import { Card, Form, Select, Button, Table, Space, Tag, Row, Col, Modal, Input, message, Drawer } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { SearchOutlined, ReloadOutlined, ExportOutlined, DeleteOutlined, SaveOutlined } from '@ant-design/icons';
 import LabelSelect from '@/components/LabelSelect';
 import LabelInput from '@/components/LabelInput';
 import LabelCascader from '@/components/LabelCascader';
 import { US, CN, GB, FR, DE } from 'country-flag-icons/react/3x2';
+import LabelRangePicker from '@/components/LabelRangePicker';
+import dayjs from 'dayjs';
 
 interface DataType {
     key: string;
@@ -17,18 +19,6 @@ interface DataType {
 }
 
 const { Option } = Select;
-
-const timelineItemStyle = `
-  .ant-timeline {
-    .ant-timeline-item-head {
-      margin-top: 10px;
-    }
-
-    .ant-timeline-item-tail {
-        height: 100%;
-    }
-  }
-`;
 
 const AntiMappingSources: React.FC = () => {
     const [form] = Form.useForm();
@@ -100,6 +90,11 @@ const AntiMappingSources: React.FC = () => {
             dataIndex: 'mappingCount',
             key: 'mappingCount',
             width: 120,
+            sorter: {
+                compare: (a, b) => a.mappingCount - b.mappingCount,
+                multiple: 2
+            },
+            showSorterTooltip: true,
             render: (count: number) => {
                 let color = 'blue';
                 return (
@@ -110,7 +105,7 @@ const AntiMappingSources: React.FC = () => {
             },
         },
         {
-            title: '时间',
+            title: '最近测绘时间',
             dataIndex: 'time',
             key: 'time',
             width: 180,
@@ -152,6 +147,17 @@ const AntiMappingSources: React.FC = () => {
                 { value: 'uk', label: '英国' },
                 { value: 'france', label: '法国' },
                 { value: 'germany', label: '德国' },
+                { value: 'italy', label: '意大利' },
+                { value: 'spain', label: '西班牙' },
+                { value: 'portugal', label: '葡萄牙' },
+                { value: 'greece', label: '希腊' },
+                { value: 'turkey', label: '土耳其' },
+                { value: 'australia', label: '澳大利亚' },
+                { value: 'canada', label: '加拿大' },
+                { value: 'brazil', label: '巴西' },
+                { value: 'argentina', label: '阿根廷' },
+                { value: 'chile', label: '智利' },
+                { value: 'peru', label: '秘鲁' },
                 // ... 其他国家
             ]
         },
@@ -162,9 +168,33 @@ const AntiMappingSources: React.FC = () => {
                 { value: 'beijing', label: '北京' },
                 { value: 'shanghai', label: '上海' },
                 { value: 'guangzhou', label: '广州' },
+                // ... 其他城市
             ]
         },
+        {
+            value: 'foreign',
+            label: '国外',
+            children: [
+                { value: 'usa', label: '美国' },
+                { value: 'uk', label: '英国' },
+                { value: 'france', label: '法国' },
+                { value: 'germany', label: '德国' },
+                { value: 'italy', label: '意大利' },
+                { value: 'spain', label: '西班牙' },
+                { value: 'portugal', label: '葡萄牙' },
+                { value: 'greece', label: '希腊' },
+                { value: 'turkey', label: '土耳其' },
+                { value: 'australia', label: '澳大利亚' },
+                { value: 'canada', label: '加拿大' },
+                { value: 'brazil', label: '巴西' },
+                { value: 'argentina', label: '阿根廷' },
+                { value: 'chile', label: '智利' },
+                { value: 'peru', label: '秘鲁' },
+                // ... 其他国家
+            ]
+        }
     ];
+
 
     const rowSelection = {
         selectedRowKeys,
@@ -226,15 +256,6 @@ const AntiMappingSources: React.FC = () => {
         }
     };
 
-    const getPortColor = (port: string) => {
-        const portNumber = parseInt(port.split('/')[0]);
-        if (portNumber === 80 || portNumber === 443) return 'blue';
-        if (portNumber === 22 || portNumber === 3389) return 'purple';
-        if (portNumber === 3306 || portNumber === 1433) return 'orange';
-        if (portNumber === 8080 || portNumber === 8443) return 'cyan';
-        return 'default';
-    };
-
     const getFlagComponent = (country: string) => {
         const componentMap: { [key: string]: any } = {
             '美国': US,
@@ -284,6 +305,30 @@ const AntiMappingSources: React.FC = () => {
                                 label="归属地"
                                 options={locationOptions}
                                 placeholder="请选择"
+                            />
+                        </Form.Item>
+                    </Col>
+                    <Col span={8}>
+                        <Form.Item name="timeRange" style={{ marginBottom: 0 }}>
+                            <LabelRangePicker
+                                label="时间范围"
+                                placeholder={['开始时间', '结束时间']}
+                                presets={[
+                                    { 
+                                        label: '今日', 
+                                        value: [dayjs().startOf('day'), dayjs().endOf('day')] 
+                                    },
+                                    { 
+                                        label: '本周', 
+                                        value: [dayjs().startOf('week'), dayjs().endOf('week')] 
+                                    },
+                                    { 
+                                        label: '当月', 
+                                        value: [dayjs().startOf('month'), dayjs().endOf('month')] 
+                                    }
+                                ]}
+                                showTime
+                                format="YYYY-MM-DD HH:mm:ss"
                             />
                         </Form.Item>
                     </Col>
@@ -362,7 +407,7 @@ const AntiMappingSources: React.FC = () => {
 
             {/* 添加抽屉组件 */}
             <Drawer
-                title="详细信息"
+                title={`详细信息 - ${currentRecord?.sourceIP || ''}`}
                 placement="right"
                 width={960}
                 onClose={() => {
@@ -371,369 +416,66 @@ const AntiMappingSources: React.FC = () => {
                 }}
                 open={drawerVisible}
             >
-                <Card title="资产暴露面分析">
-                    <div style={{
-                        background: 'linear-gradient(to right, rgba(255, 77, 79, 0.08) 0%, rgba(255, 77, 79, 0.05) 50%, rgba(255, 77, 79, 0.02) 100%)',
-                        borderRadius: '4px',
-                        padding: '20px',
-                        marginBottom: '24px'
-                    }}>
-                        <Row gutter={[24, 24]} align="middle">
-                            <Col span={16}>
-                                <Space direction="vertical" size={12}>
-                                    <Space size={16}>
-                                        <Typography.Title level={4} style={{ margin: 0, fontSize: 16 }}>
-                                            高危风险
-                                        </Typography.Title>
-                                        <Tag color="error">需立即处理</Tag>
-                                    </Space>
-                                    <Typography.Text type="secondary">
-                                        检测到 3 个高危漏洞，1 个中危漏洞，建议及时进行安全加固
-                                    </Typography.Text>
-                                </Space>
-                            </Col>
-                            <Col span={8} style={{ textAlign: 'right' }}>
-                                <Progress
-                                    type="circle"
-                                    percent={30}
-                                    size={80}
-                                    strokeWidth={6}
-                                    strokeColor={{
-                                        '0%': '#ff4d4f',
-                                        '100%': '#ff7875'
-                                    }}
-                                    format={() => (
-                                        <div style={{ fontSize: 20, color: '#000000d9' }}>
-                                            30
-                                            <div style={{ fontSize: 12, color: '#00000073', marginTop: 4 }}>安全分</div>
-                                        </div>
-                                    )}
-                                />
-                            </Col>
-                        </Row>
-                    </div>
+                <Table
+                    columns={[
+                        {
+                            title: '最近测绘时间',
+                            dataIndex: 'time',
+                            key: 'time',
+                            width: 180,
+                        },
+                        {
+                            title: '目的IP',
+                            dataIndex: 'targetIP',
+                            key: 'targetIP',
+                            width: 140,
+                        },
+                        {
+                            title: '目的端口',
+                            dataIndex: 'targetPort',
+                            key: 'targetPort',
+                            width: 100,
+                            render: (port: number) => `${port}`,
+                        },
+                        {
+                            title: '测绘次数',
+                            dataIndex: 'mappingCount',
+                            key: 'mappingCount',
+                            width: 120,
+                            sorter: (a, b) => a.mappingCount - b.mappingCount,
+                            render: (count: number) => (
+                                <Tag color="blue">
+                                    {count} 次
+                                </Tag>
+                            ),
+                        },
+                        {
+                            title: '防护类型',
+                            dataIndex: 'protectionType',
+                            key: 'protectionType',
+                            width: 140,
+                        }
+                    ]}
+                    dataSource={currentRecord ? [
+                        {
+                            key: '1',
+                            time: currentRecord.time,
+                            targetIP: '172.18.0.41',
+                            targetPort: 80,
+                            mappingCount: currentRecord.mappingCount,
+                            protectionType: 'Nmap扫描'
+                        },
+                        // ... 其他数据项
+                    ] : []}
+                    pagination={{
+                        total: 3,
+                        pageSize: 10,
+                        showSizeChanger: true,
+                        showQuickJumper: true,
+                        showTotal: (total) => `共 ${total} 条记录`
+                    }}
 
-                    <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
-                        <Col span={8}>
-                            <Typography.Text type="secondary">源IP：</Typography.Text>
-                            <Typography.Text strong>{currentRecord?.sourceIP}</Typography.Text>
-                        </Col>
-                        <Col span={8}>
-                            <Typography.Text type="secondary">归属地：</Typography.Text>
-                            <Typography.Text strong>{currentRecord?.location}</Typography.Text>
-                        </Col>
-                        <Col span={8}>
-                            <Typography.Text type="secondary">目的IP总数：</Typography.Text>
-                            <Tag color="blue">{currentRecord?.targetIPCount} 个</Tag>
-                        </Col>
-                    </Row>
-
-                    <Row gutter={[16, 16]}>
-                        {/* 运行服务卡片 */}
-                        <Col span={24}>
-                            <h3>运行服务</h3>
-                            <List
-                                split={false}
-                                dataSource={[
-                                    {
-                                        name: 'WordPress',
-                                        version: '5.2.4',
-                                        risk: 'high',
-                                        ports: ['80/TCP', '443/TCP']
-                                    },
-                                    {
-                                        name: 'Tomcat',
-                                        version: '9.0.30',
-                                        risk: 'low',
-                                        ports: ['8080/TCP']
-                                    },
-                                    {
-                                        name: 'MySQL',
-                                        version: '5.7.26',
-                                        risk: 'medium',
-                                        ports: ['3306/TCP']
-                                    },
-                                    {
-                                        name: 'Nginx',
-                                        version: '1.18.0',
-                                        risk: 'low',
-                                        ports: ['80/TCP', '443/TCP']
-                                    },
-                                    {
-                                        name: 'SSH',
-                                        version: '8.9p1',
-                                        risk: 'low',
-                                        ports: ['22/TCP']
-                                    }
-                                ]}
-                                renderItem={item => (
-                                    <List.Item style={{ padding: '8px 0' }}>
-                                        <div style={{
-                                            padding: '12px 16px',
-                                            background: '#fff',
-                                            width: '100%',
-                                            border: '1px solid #f0f0f0',
-                                            borderRadius: '4px'
-                                        }}>
-                                            <Row justify="space-between" align="middle">
-                                                <Col>
-                                                    <Space size={16}>
-                                                        <Space>
-                                                            <Typography.Text strong>{item.name}</Typography.Text>
-                                                            <Typography.Text type="secondary">v{item.version}</Typography.Text>
-                                                        </Space>
-                                                        <Space size={4}>
-                                                            {item.ports.map(port => (
-                                                                <Tag
-                                                                    key={port}
-                                                                    color={getPortColor(port)}
-                                                                    style={{
-                                                                        borderRadius: '2px',
-                                                                        fontSize: '12px',
-                                                                        padding: '0 6px',
-                                                                        lineHeight: '20px'
-                                                                    }}
-                                                                >
-                                                                    {port}
-                                                                </Tag>
-                                                            ))}
-                                                        </Space>
-                                                    </Space>
-                                                </Col>
-                                                <Col>
-                                                    {item.risk === 'high' && (
-                                                        <Tag color="error">需更新</Tag>
-                                                    )}
-                                                </Col>
-                                            </Row>
-                                        </div>
-                                    </List.Item>
-                                )}
-                            />
-                        </Col>
-
-                        {/* 风险详情卡片 */}
-                        <Col span={24}>
-                            <h3 style={{ marginBottom: '16px' }}>风险详情</h3>
-                            <div style={{ position: 'relative' }}>
-                                <style>{timelineItemStyle}</style>
-                                <Timeline
-                                    style={{
-                                        padding: '0 10px',
-                                        marginTop: '16px'
-                                    }}
-                                    items={[
-                                        {
-                                            children: (
-                                                <Card
-                                                    size="small"
-                                                    bordered={false}
-                                                    style={{
-                                                        boxShadow: 'none',
-                                                    }}
-                                                >
-                                                    <Typography.Text strong style={{ display: 'block', marginBottom: 8 }}>
-                                                        WordPress 5.2.4 版本存在 SQL 注入漏洞
-                                                    </Typography.Text>
-                                                    <Typography.Text type="secondary">
-                                                        该版本存在高危安全漏洞，可能导致数据库被非法访问。建议立即升级到最新版本，并及时进行安全补丁更新。
-                                                    </Typography.Text>
-                                                </Card>
-                                            )
-                                        },
-                                        {
-                                            children: (
-                                                <Card
-                                                    size="small"
-                                                    bordered={false}
-                                                    style={{
-                                                        boxShadow: 'none',
-                                                        marginBottom: '-20px'
-                                                    }}
-                                                >
-                                                    <Typography.Text strong style={{ display: 'block', marginBottom: 8 }}>
-                                                        MySQL 5.7.26 版本已过期
-                                                    </Typography.Text>
-                                                    <Typography.Text type="secondary">
-                                                        当前版本已不再获得官方安全更新支持，建议升级到 8.0 系列最新版本。
-                                                    </Typography.Text>
-                                                </Card>
-                                            )
-                                        }
-                                    ]}
-                                />
-                            </div>
-                        </Col>
-
-                        {/* 处置建议卡片 */}
-                        <Col span={24}>
-                            <h3>处置建议</h3>
-                            <div style={{ position: 'relative' }}>
-                                <style>{timelineItemStyle}</style>
-                                <Timeline
-                                    style={{
-                                        padding: '0 10px',
-                                        marginTop: '16px'
-                                    }}
-                                    items={[
-                                        {
-                                            children: (
-                                                <Card
-                                                    size="small"
-                                                    bordered={false}
-                                                    style={{
-                                                        boxShadow: 'none',
-                                                    }}
-                                                >
-                                                    <Typography.Text strong style={{ display: 'block', marginBottom: 8 }}>
-                                                        立即更新 WordPress
-                                                    </Typography.Text>
-                                                    <Typography.Text type="secondary">
-                                                        升级到最新的稳定版本，并安装所有可用的安全补丁。更新后请确保网站功能正常运行。
-                                                    </Typography.Text>
-                                                </Card>
-                                            )
-                                        },
-                                        {
-                                            children: (
-                                                <Card
-                                                    size="small"
-                                                    bordered={false}
-                                                    style={{
-                                                        boxShadow: 'none',
-                                                    }}
-                                                >
-                                                    <Typography.Text strong style={{ display: 'block', marginBottom: 8 }}>
-                                                        升级 MySQL 数据库
-                                                    </Typography.Text>
-                                                    <Typography.Text type="secondary">
-                                                        计划在合适的时间窗口进行数据库版本升级。建议先在测试环境验证，确保业务兼容性。
-                                                    </Typography.Text>
-                                                </Card>
-                                            )
-                                        },
-                                        {
-                                            children: (
-                                                <Card
-                                                    size="small"
-                                                    bordered={false}
-                                                    style={{
-                                                        boxShadow: 'none',
-                                                    }}
-                                                >
-                                                    <Typography.Text strong style={{ display: 'block', marginBottom: 8 }}>
-                                                        开启K01应用隐身功能
-                                                    </Typography.Text>
-                                                    <Typography.Text type="secondary">
-                                                        建议开启K01应用隐身功能，以避免暴露面被爬虫工具发现。
-                                                    </Typography.Text>
-                                                </Card>
-                                            )
-                                        },
-                                        {
-                                            children: (
-                                                <Card
-                                                    size="small"
-                                                    bordered={false}
-                                                    style={{
-                                                        boxShadow: 'none',
-                                                        marginBottom: '-20px'
-                                                    }}
-                                                >
-                                                    <Typography.Text strong style={{ display: 'block', marginBottom: 8 }}>
-                                                        持续监控
-                                                    </Typography.Text>
-                                                    <Typography.Text type="secondary">
-                                                        启用安全审计功能，定期检查系统日志。建议配置异常行为告警，实时监控潜在威胁。
-                                                    </Typography.Text>
-                                                </Card>
-                                            )
-                                        }
-                                    ]}
-                                />
-                            </div>
-                        </Col>
-                    </Row>
-                </Card>
-
-                {/* 资产暴露面日志卡片 */}
-                <Card title="资产暴露面日志" style={{ marginTop: 24 }}>
-                    <Table
-                        dataSource={[
-                            {
-                                key: '1',
-                                time: '2024-03-15 14:30:22',
-                                sourceIP: '10.21.23.4',
-                                location: '中国 | 北京',
-                                count: 156
-                            },
-                            {
-                                key: '2',
-                                time: '2024-03-15 13:25:16',
-                                sourceIP: '192.168.1.101',
-                                location: '中国 | 上海',
-                                count: 89
-                            },
-                            {
-                                key: '3',
-                                time: '2024-03-15 12:18:45',
-                                sourceIP: '192.168.1.102',
-                                location: '美国 | 加利福尼亚',
-                                count: 45
-                            }
-                        ]}
-                        columns={[
-                            {
-                                title: '最近测绘时间',
-                                dataIndex: 'time',
-                                key: 'time',
-                                width: 180
-                            },
-                            {
-                                title: '源IP',
-                                dataIndex: 'sourceIP',
-                                key: 'sourceIP',
-                                width: 150
-                            },
-                            {
-                                title: '源IP归属地',
-                                dataIndex: 'location',
-                                key: 'location',
-                                width: 200,
-                                render: (text: string) => {
-                                    const country = text.split('|')[0].trim();
-                                    const FlagComponent = getFlagComponent(country);
-                                    return (
-                                        <Space>
-                                            {FlagComponent && <FlagComponent style={{ width: 16 }} />}
-                                            <span>{text}</span>
-                                        </Space>
-                                    );
-                                }
-                            },
-                            {
-                                title: '测绘次数',
-                                dataIndex: 'count',
-                                key: 'count',
-                                width: 120,
-                                render: (count: number) => (
-                                    <Tag color={
-                                        count > 100 ? 'error' :
-                                            count > 50 ? 'warning' :
-                                                count > 20 ? 'processing' : 'success'
-                                    }>
-                                        {count} 次
-                                    </Tag>
-                                )
-                            }
-                        ]}
-                        pagination={{
-                            pageSize: 5,
-                            showSizeChanger: false,
-                            showTotal: (total) => `共 ${total} 条记录`
-                        }}
-                    />
-                </Card>
+                />
             </Drawer>
         </Card>
     );
