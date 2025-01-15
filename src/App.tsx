@@ -17,6 +17,11 @@ import PublicIntelligence from './pages/PublicIntelligence';
 import AssetManagement from './pages/AssetManagement';
 import AssetList from './pages/AssetList';
 import SyslogConfig from './pages/SyslogConfig';
+import dayjs from 'dayjs';
+import 'dayjs/locale/zh-cn';
+
+// 在 App 组件之前设置 dayjs 的语言
+dayjs.locale('zh-cn');
 
 const App: React.FC = () => {
   return (

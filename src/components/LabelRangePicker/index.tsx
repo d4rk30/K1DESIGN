@@ -2,12 +2,12 @@ import React from 'react';
 import { DatePicker } from 'antd';
 import type { RangePickerProps } from 'antd/es/date-picker';
 import styles from './index.module.css';
-import locale from 'antd/es/date-picker/locale/zh_CN';
 
 const { RangePicker } = DatePicker;
 
 interface LabelRangePickerProps extends Omit<RangePickerProps, 'onChange'> {
     label?: string;
+    required?: boolean;
     value?: [any, any];
     onChange?: (dates: [any, any] | null) => void;
     presets?: { label: string; value: [any, any] }[];
@@ -16,6 +16,7 @@ interface LabelRangePickerProps extends Omit<RangePickerProps, 'onChange'> {
 
 const LabelRangePicker: React.FC<LabelRangePickerProps> = ({
     label,
+    required,
     value,
     onChange,
     presets,
@@ -25,7 +26,12 @@ const LabelRangePicker: React.FC<LabelRangePickerProps> = ({
 }) => {
     return (
         <div className={`${styles.labelRangePickerWrapper} ${disabled ? styles.disabled : ''}`}>
-            {label && <span className={styles.label}>{label}</span>}
+            {label && (
+                <span className={styles.label}>
+                    {required && <span className={styles.required}>*</span>}
+                    {label}
+                </span>
+            )}
             <RangePicker
                 {...rest}
                 disabled={disabled}
@@ -33,7 +39,6 @@ const LabelRangePicker: React.FC<LabelRangePickerProps> = ({
                 onChange={onChange}
                 className={`${styles.picker} ${className || ''}`}
                 presets={presets}
-                locale={locale}
                 bordered={false}
             />
         </div>

@@ -63,3 +63,10 @@
     color: rgba(0, 0, 0, 0.25);
     cursor: not-allowed;
 }
+
+/* 添加 required 星号的样式 */
+.required {
+    color: #ff4d4f;
+    margin-right: 4px;
+    font-family: SimSun, sans-serif;
+}

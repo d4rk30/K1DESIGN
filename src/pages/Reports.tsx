@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
-import { Card, Table, Button, Space, Progress, message, Popconfirm, Row, Col, Switch, Form, Select, DatePicker, Modal, Input, Radio, Alert } from 'antd';
+import { Card, Table, Button, Space, Progress, message, Popconfirm, Row, Col, Switch, Form, Modal, Radio, Alert } from 'antd';
 import type { TableColumnsType } from 'antd';
 import dayjs from 'dayjs';
-import locale from 'antd/es/date-picker/locale/zh_CN';
 import LabelInput from '@/components/LabelInput';
 import LabelSelect from '@/components/LabelSelect';
 import LabelRangePicker from '@/components/LabelRangePicker';
@@ -12,6 +11,7 @@ import {
     ExportOutlined,
     DeleteOutlined,
     DownloadOutlined,
+    PlusOutlined,
 } from '@ant-design/icons';
 
 interface ReportRecord {
@@ -130,8 +130,6 @@ const tabList = [
     },
 ];
 
-const { RangePicker } = DatePicker;
-
 interface FilterValues {
     name?: string;
     module?: string[];
@@ -146,20 +144,6 @@ interface ExportFormValues {
     modules: string[];
     format: 'html' | 'pdf';
 }
-
-// 生成预览文件名
-const generatePreviewName = (name: string, cycle: CycleConfig) => {
-    if (!name) return '';
-
-    const cycleText = {
-        daily: '每日-',
-        weekly: '每周-',
-        monthly: '每月-'
-    }[cycle.type];
-
-    const now = dayjs();
-    return `${name}-${cycleText}${now.format('YYYYMMDD')}`;
-};
 
 // 在文件顶部，其他 interface 定义之前添加
 const timeRangePresets: {
@@ -192,7 +176,6 @@ const Reports: React.FC = () => {
     const [isConfigModalVisible, setIsConfigModalVisible] = useState(false);
     const [configForm] = Form.useForm();
     const [editingConfig, setEditingConfig] = useState<ReportConfig | null>(null);
-    const [previewName, setPreviewName] = useState('');
 
     const handleDownload = (record: ReportRecord) => {
         if (record.progress === 100) {
@@ -295,21 +278,6 @@ const Reports: React.FC = () => {
             configForm.resetFields();
         }
         setIsConfigModalVisible(true);
-    };
-
-    const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const name = e.target.value;
-        const cycle = configForm.getFieldValue('cycle') || {};
-
-        // 只有当有名称和周期类型时才生成预览名称
-        if (name && cycle.type) {
-            setPreviewName(generatePreviewName(name, cycle));
-        } else if (name) {
-            // 如果只有名称，没有周期类型，只显示名称
-            setPreviewName(name);
-        } else {
-            setPreviewName('');
-        }
     };
 
     const columns: TableColumnsType<ReportRecord> = [
@@ -466,6 +434,7 @@ const Reports: React.FC = () => {
                                 <LabelSelect
                                     label="告警模块"
                                     allowClear
+                                    mode="multiple"
                                     placeholder="请选择告警模块"
                                     options={[
                                         { label: '攻击监测告警', value: '攻击监测告警' },
@@ -587,21 +556,27 @@ const Reports: React.FC = () => {
             <>
                 <Row style={{ marginBottom: 16 }}>
                     <Col flex="auto">
-                        <Space>
-                            <Button type="primary" onClick={() => showConfigModal()}>
-                                添加
-                            </Button>
-                            {selectedConfigKeys.length > 0 && (
-                                <Popconfirm
-                                    title="确定要删除选中的配置吗？"
-                                    onConfirm={handleBatchConfigDelete}
-                                    okText="确定"
-                                    cancelText="取消"
-                                >
-                                    <Button danger>批量删除</Button>
-                                </Popconfirm>
-                            )}
-                        </Space>
+                        {selectedConfigKeys.length > 0 && (
+                            <Popconfirm
+                                title="确定要删除选中的配置吗？"
+                                onConfirm={handleBatchConfigDelete}
+                                okText="确定"
+                                cancelText="取消"
+                            >
+                                <Button danger icon={<DeleteOutlined />}>
+                                    批量删除
+                                </Button>
+                            </Popconfirm>
+                        )}
+                    </Col>
+                    <Col>
+                        <Button
+                            type="primary"
+                            onClick={() => showConfigModal()}
+                            icon={<PlusOutlined />}
+                        >
+                            新增配置
+                        </Button>
                     </Col>
                 </Row>
                 <Table
@@ -655,34 +630,38 @@ const Reports: React.FC = () => {
                 >
                     <Form.Item
                         name="name"
-                        label="报表名称"
                         rules={[{ required: true, message: '请输入报表名称' }]}
                     >
-                        <Input placeholder="请输入报表名称" />
+                        <LabelInput
+                            label="报表名称"
+                            placeholder="请输入报表名称"
+                            required
+                        />
                     </Form.Item>
 
                     <Form.Item
                         name="dateRange"
-                        label="报表数据范围"
                         rules={[{ required: true, message: '请选择报表数据范围' }]}
                     >
-                        <RangePicker
-                            style={{ width: '100%' }}
+                        <LabelRangePicker
+                            label="报表数据范围"
                             showTime
+                            required
                             format="YYYY-MM-DD HH:mm:ss"
                             presets={timeRangePresets}
                             placeholder={['开始时间', '结束时间']}
-                            locale={locale}
                         />
                     </Form.Item>
 
                     <Form.Item
                         name="modules"
-                        label="告警模块"
                         rules={[{ required: true, message: '请选择至少一个告警模块' }]}
                     >
-                        <Select
+                        <LabelSelect
+                            label="告警模块"
                             mode="multiple"
+                            allowClear
+                            required
                             placeholder="请选择告警模块"
                             options={[
                                 { label: '攻击监测告警', value: '攻击监测告警' },
@@ -694,10 +673,12 @@ const Reports: React.FC = () => {
                     </Form.Item>
 
                     <Form.Item
-                        name="format"
                         label="报表格式"
+                        name="format"
                         rules={[{ required: true, message: '请选择报表格式' }]}
                         initialValue="html"
+                        layout='horizontal'
+                        wrapperCol={{ style: { marginLeft: 16 } }}
                     >
                         <Radio.Group>
                             <Radio value="html">HTML</Radio>
@@ -728,76 +709,55 @@ const Reports: React.FC = () => {
                     layout="vertical"
                     initialValues={{ enabled: true }}
                 >
-                    <Row gutter={16}>
-                        <Col span={24}>
-                            <Form.Item
-                                name="name"
-                                label="报表名称"
-                                rules={[{ required: true, message: '请输入报表名称' }]}
-                            >
-                                <Input
-                                    placeholder="请输入报表名称"
-                                    onChange={handleNameChange}
-                                />
-                            </Form.Item>
-                            {previewName && (
-                                <div style={{
-                                    marginTop: -20,
-                                    marginBottom: 24,
-                                    color: '#666',
-                                    fontSize: '14px'
-                                }}>
-                                    预览名称：{previewName}{configForm.getFieldValue(['cycle', 'type']) ? `.${configForm.getFieldValue('format')}` : ''}
-                                </div>
-                            )}
-                        </Col>
-                    </Row>
+                    <Form.Item
+                        name="name"
+                        rules={[{ required: true, message: '请输入配置名称' }]}
+                    >
+                        <LabelInput
+                            label="配置名称"
+                            required
+                            placeholder="请输入配置名称"
+                        />
+                    </Form.Item>
 
                     <Form.Item
                         name={['cycle', 'type']}
-                        label="导出周期"
                         rules={[{ required: true, message: '请选择导出周期' }]}
                     >
-                        <Select
+                        <LabelSelect
+                            label="导出周期"
+                            required
                             placeholder="请选择导出周期"
-                            onChange={(value: CycleConfig['type']) => {
-                                const name = configForm.getFieldValue('name');
-                                if (name) {
-                                    setPreviewName(generatePreviewName(name, { type: value }));
-                                }
-                            }}
-                        >
-                            <Select.Option value="daily">每日</Select.Option>
-                            <Select.Option value="weekly">每周</Select.Option>
-                            <Select.Option value="monthly">每月</Select.Option>
-                        </Select>
+                            options={[
+                                { label: '每日', value: 'daily' },
+                                { label: '每周', value: 'weekly' },
+                                { label: '每月', value: 'monthly' }
+                            ]}
+                        />
                     </Form.Item>
 
-                    <Form.Item noStyle shouldUpdate={(prevValues, currentValues) =>
-                        prevValues.cycle?.type !== currentValues.cycle?.type
-                    }>
+                    <Form.Item noStyle shouldUpdate>
                         {({ getFieldValue }) => {
-                            const cycleType = getFieldValue(['cycle', 'type']);
+                            const cycleType = getFieldValue(['cycle', 'type']) as CycleConfig['type'];
                             return cycleType ? (
-                                <Form.Item style={{ marginTop: -10 }}>
-                                    <Alert
-                                        message={cycleAlertMessages[cycleType as CycleConfig['type']]}
-                                        type="info"
-                                        style={{ marginBottom: 0 }}
-                                    />
-                                </Form.Item>
+                                <Alert
+                                    message={cycleAlertMessages[cycleType]}
+                                    type="info"
+                                    style={{ marginBottom: 24 }}
+                                />
                             ) : null;
                         }}
                     </Form.Item>
 
                     <Form.Item
                         name="modules"
-                        label="告警模块"
                         rules={[{ required: true, message: '请选择至少一个告警模块' }]}
                     >
-                        <Select
+                        <LabelSelect
+                            label="告警模块"
                             mode="multiple"
                             placeholder="请选择告警模块"
+                            required
                             options={[
                                 { label: '攻击监测告警', value: '攻击监测告警' },
                                 { label: '外联检测告警', value: '外联检测告警' },
@@ -808,10 +768,12 @@ const Reports: React.FC = () => {
                     </Form.Item>
 
                     <Form.Item
-                        name="format"
                         label="报表格式"
+                        name="format"
                         rules={[{ required: true, message: '请选择报表格式' }]}
                         initialValue="html"
+                        layout='horizontal'
+                        wrapperCol={{ style: { marginLeft: 16 } }}
                     >
                         <Radio.Group>
                             <Radio value="html">HTML</Radio>
@@ -821,7 +783,10 @@ const Reports: React.FC = () => {
 
                     <Form.Item
                         name="enabled"
+                        valuePropName="checked"
                         label="启用状态"
+                        layout='horizontal'
+                        wrapperCol={{ style: { marginLeft: 16 } }}
                     >
                         <Switch />
                     </Form.Item>

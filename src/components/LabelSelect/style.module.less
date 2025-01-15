@@ -23,3 +23,33 @@
         font-family: SimSun, sans-serif;
     }
 }
+
+.ant-select-prefix {
+    margin-inline-start: 0px !important;
+}
+
+.ant-select-multiple{
+    margin-inline-start: 0px !important;
+}
+
+:global {
+  .ant-select-multiple {
+    .ant-select-prefix {
+      margin-inline-start: 0 !important;
+    }
+  }
+
+  // 为了确保覆盖，可以使用更具体的选择器
+  .ant-select-multiple.ant-select {
+    .ant-select-prefix {
+      margin-inline-start: 0 !important;
+    }
+  }
+
+  // 如果上面的还不够，可以使用这个更高优先级的选择器
+  :where(.css-dev-only-do-not-override-161f05s).ant-select-multiple {
+    .ant-select-prefix {
+      margin-inline-start: 0 !important;
+    }
+  }
+}
