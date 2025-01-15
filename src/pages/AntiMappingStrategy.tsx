@@ -254,245 +254,122 @@ const AntiMappingStrategy: React.FC = () => {
         }
     ];
 
-    // 修改 tabItems 中商业测绘平台的内容
+    // 添加一个新的内部组件
+    const ToolConfigCard: React.FC<{
+        title: string;
+        tools: Array<{
+            key: string;
+            name: string;
+            status: boolean;
+            level: string;
+            action: string;
+        }>;
+        prefix?: string;
+    }> = ({ tools, prefix = '' }) => (
+        <div style={{ padding: '16px 0' }}>
+            <Card>
+                <Form layout="vertical">
+                    {tools.map(tool => (
+                        <Row
+                            key={tool.key}
+                            gutter={24}
+                            style={{
+                                marginBottom: 24,
+                                alignItems: 'center'
+                            }}
+                        >
+                            <Col span={6}>
+                                <div style={{
+                                    fontSize: '14px',
+                                    color: 'rgba(0, 0, 0, 0.88)',
+                                    lineHeight: '32px',
+                                    margin: 0
+                                }}>
+                                    {tool.name}
+                                </div>
+                            </Col>
+                            <Col span={6}>
+                                <Form.Item
+                                    style={{ marginBottom: 0 }}
+                                    name={`${prefix}${tool.key}_status`}
+                                    initialValue={tool.status}
+                                >
+                                    <div style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '8px'
+                                    }}>
+                                        <span>开启状态</span>
+                                        <Switch defaultChecked={tool.status} />
+                                    </div>
+                                </Form.Item>
+                            </Col>
+                            <Col span={6}>
+                                <Form.Item
+                                    style={{ marginBottom: 0 }}
+                                    name={`${prefix}${tool.key}_level`}
+                                    initialValue={tool.level}
+                                >
+                                    <LabelSelect
+                                        label="检测级别"
+                                        placeholder="请选择"
+                                    >
+                                        <Select.Option value="high">高</Select.Option>
+                                        <Select.Option value="medium">中</Select.Option>
+                                        <Select.Option value="low">低</Select.Option>
+                                    </LabelSelect>
+                                </Form.Item>
+                            </Col>
+                            <Col span={6}>
+                                <Form.Item
+                                    style={{ marginBottom: 0 }}
+                                    name={`${prefix}${tool.key}_action`}
+                                    initialValue={tool.action}
+                                >
+                                    <LabelSelect
+                                        label="处理动作"
+                                        placeholder="请选择"
+                                    >
+                                        <Select.Option value="block">阻断</Select.Option>
+                                        <Select.Option value="monitor">监控</Select.Option>
+                                    </LabelSelect>
+                                </Form.Item>
+                            </Col>
+                        </Row>
+                    ))}
+                </Form>
+            </Card>
+        </div>
+    );
+
+    // 修改 tabItems 的定义
     const tabItems = [
         {
             key: 'commercial',
             label: '商业测绘平台',
-            children: (
-                <div style={{ padding: '16px 0' }}>
-                    <Card title="商业测绘平台">
-                        <Form layout="vertical">
-                            {commercialPlatforms.map(platform => (
-                                <Row
-                                    key={platform.key}
-                                    gutter={24}
-                                    style={{
-                                        marginBottom: 24,
-                                        alignItems: 'flex-start'
-                                    }}
-                                >
-                                    <Col span={6}>
-                                        <div style={{
-                                            fontSize: '14px',
-                                            color: 'rgba(0, 0, 0, 0.88)',
-                                            marginBottom: 8
-                                        }}>
-                                            {platform.name}
-                                        </div>
-                                    </Col>
-                                    <Col span={6}>
-                                        <Form.Item
-                                            style={{ marginBottom: 0 }}
-                                            name={`${platform.key}_status`}
-                                            initialValue={platform.status}
-                                        >
-                                            <div style={{
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                gap: '8px'
-                                            }}>
-                                                <span>开启状态</span>
-                                                <Switch defaultChecked={platform.status} />
-                                            </div>
-                                        </Form.Item>
-                                    </Col>
-                                    <Col span={6}>
-                                        <Form.Item
-                                            style={{ marginBottom: 0 }}
-                                            name={`${platform.key}_level`}
-                                            initialValue={platform.level}
-                                        >
-                                            <LabelSelect
-                                                label="检测级别"
-                                                placeholder="请选择"
-                                            >
-                                                <Select.Option value="high">高</Select.Option>
-                                                <Select.Option value="medium">中</Select.Option>
-                                                <Select.Option value="low">低</Select.Option>
-                                            </LabelSelect>
-                                        </Form.Item>
-                                    </Col>
-                                    <Col span={6}>
-                                        <Form.Item
-                                            style={{ marginBottom: 0 }}
-                                            name={`${platform.key}_action`}
-                                            initialValue={platform.action}
-                                        >
-                                            <LabelSelect
-                                                label="处理动作"
-                                                placeholder="请选择"
-                                            >
-                                                <Select.Option value="block">阻断</Select.Option>
-                                                <Select.Option value="monitor">监控</Select.Option>
-                                            </LabelSelect>
-                                        </Form.Item>
-                                    </Col>
-                                </Row>
-                            ))}
-                        </Form>
-                    </Card>
-                </div>
-            ),
+            children: <ToolConfigCard
+                title="商业测绘平台"
+                tools={commercialPlatforms}
+            />
         },
         {
             key: 'crawler',
             label: '爬虫类工具',
-            children: (
-                <div style={{ padding: '16px 0' }}>
-                    <Card title="爬虫类工具">
-                        <Form layout="vertical">
-                            {crawlerTools.map(tool => (
-                                <Row
-                                    key={tool.key}
-                                    gutter={24}
-                                    style={{
-                                        marginBottom: 24,
-                                        alignItems: 'flex-start'
-                                    }}
-                                >
-                                    <Col span={6}>
-                                        <div style={{
-                                            fontSize: '14px',
-                                            color: 'rgba(0, 0, 0, 0.88)',
-                                            marginBottom: 8
-                                        }}>
-                                            {tool.name}
-                                        </div>
-                                    </Col>
-                                    <Col span={6}>
-                                        <Form.Item
-                                            style={{ marginBottom: 0 }}
-                                            name={`crawler_${tool.key}_status`}
-                                            initialValue={tool.status}
-                                        >
-                                            <div style={{
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                gap: '8px'
-                                            }}>
-                                                <span>开启状态</span>
-                                                <Switch defaultChecked={tool.status} />
-                                            </div>
-                                        </Form.Item>
-                                    </Col>
-                                    <Col span={6}>
-                                        <Form.Item
-                                            style={{ marginBottom: 0 }}
-                                            name={`crawler_${tool.key}_level`}
-                                            initialValue={tool.level}
-                                        >
-                                            <LabelSelect
-                                                label="检测级别"
-                                                placeholder="请选择"
-                                            >
-                                                <Select.Option value="high">高</Select.Option>
-                                                <Select.Option value="medium">中</Select.Option>
-                                                <Select.Option value="low">低</Select.Option>
-                                            </LabelSelect>
-                                        </Form.Item>
-                                    </Col>
-                                    <Col span={6}>
-                                        <Form.Item
-                                            style={{ marginBottom: 0 }}
-                                            name={`crawler_${tool.key}_action`}
-                                            initialValue={tool.action}
-                                        >
-                                            <LabelSelect
-                                                label="处理动作"
-                                                placeholder="请选择"
-                                            >
-                                                <Select.Option value="block">阻断</Select.Option>
-                                                <Select.Option value="monitor">监控</Select.Option>
-                                            </LabelSelect>
-                                        </Form.Item>
-                                    </Col>
-                                </Row>
-                            ))}
-                        </Form>
-                    </Card>
-                </div>
-            ),
+            children: <ToolConfigCard
+                title="爬虫类工具"
+                tools={crawlerTools}
+                prefix="crawler_"
+            />
         },
         {
             key: 'scanner',
             label: '扫描器类测绘',
-            children: (
-                <div style={{ padding: '16px 0' }}>
-                    <Card title="扫描器类测绘">
-                        <Form layout="vertical">
-                            {scannerTools.map(tool => (
-                                <Row
-                                    key={tool.key}
-                                    gutter={24}
-                                    style={{
-                                        marginBottom: 24,
-                                        alignItems: 'flex-start'
-                                    }}
-                                >
-                                    <Col span={6}>
-                                        <div style={{
-                                            fontSize: '14px',
-                                            color: 'rgba(0, 0, 0, 0.88)',
-                                            marginBottom: 8
-                                        }}>
-                                            {tool.name}
-                                        </div>
-                                    </Col>
-                                    <Col span={6}>
-                                        <Form.Item
-                                            style={{ marginBottom: 0 }}
-                                            name={`scanner_${tool.key}_status`}
-                                            initialValue={tool.status}
-                                        >
-                                            <div style={{
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                gap: '8px'
-                                            }}>
-                                                <span>开启状态</span>
-                                                <Switch defaultChecked={tool.status} />
-                                            </div>
-                                        </Form.Item>
-                                    </Col>
-                                    <Col span={6}>
-                                        <Form.Item
-                                            style={{ marginBottom: 0 }}
-                                            name={`scanner_${tool.key}_level`}
-                                            initialValue={tool.level}
-                                        >
-                                            <LabelSelect
-                                                label="检测级别"
-                                                placeholder="请选择"
-                                            >
-                                                <Select.Option value="high">高</Select.Option>
-                                                <Select.Option value="medium">中</Select.Option>
-                                                <Select.Option value="low">低</Select.Option>
-                                            </LabelSelect>
-                                        </Form.Item>
-                                    </Col>
-                                    <Col span={6}>
-                                        <Form.Item
-                                            style={{ marginBottom: 0 }}
-                                            name={`scanner_${tool.key}_action`}
-                                            initialValue={tool.action}
-                                        >
-                                            <LabelSelect
-                                                label="处理动作"
-                                                placeholder="请选择"
-                                            >
-                                                <Select.Option value="block">阻断</Select.Option>
-                                                <Select.Option value="monitor">监控</Select.Option>
-                                            </LabelSelect>
-                                        </Form.Item>
-                                    </Col>
-                                </Row>
-                            ))}
-                        </Form>
-                    </Card>
-                </div>
-            ),
-        },
+            children: <ToolConfigCard
+                title="扫描器类测绘"
+                tools={scannerTools}
+                prefix="scanner_"
+            />
+        }
     ];
 
     // 添加编辑处理函数

@@ -17,6 +17,7 @@ import PublicIntelligence from './pages/PublicIntelligence';
 import AssetManagement from './pages/AssetManagement';
 import AssetList from './pages/AssetList';
 import SyslogConfig from './pages/SyslogConfig';
+import PasswordPolicy from './pages/PasswordPolicy';
 import dayjs from 'dayjs';
 import 'dayjs/locale/zh-cn';
 
@@ -37,6 +38,7 @@ const App: React.FC = () => {
             <Route path="anti-mapping-assets" element={<AntiMappingAssets />} />
             <Route path="anti-mapping-policy" element={<AntiMappingStrategy />} />
             <Route path="reports" element={<Reports />} />
+            <Route path="password-policy" element={<PasswordPolicy />} />
             <Route path="threat-intelligence-trace" element={<ThreatIntelligenceTrace />} />
             <Route path="threat-intelligence-trace/detail" element={<ThreatIntelligenceDetail />} />
             <Route path="public-intelligence" element={<PublicIntelligence />} />
