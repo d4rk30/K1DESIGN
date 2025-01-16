@@ -6,7 +6,7 @@ import dayjs from 'dayjs';
 import AttackTrendCard from '@/components/AttackTrendCard';
 import LabelSelect from '@/components/LabelSelect';
 import LabelInput from '@/components/LabelInput';
-import AttackPathVisualization from '@/components/AttackPathVisualization';
+import ExternalPathVisualization from '@/components/ExternalPathVisualization';
 
 // 2. 类型定义
 // 定义筛选条件的类型
@@ -374,9 +374,29 @@ const ExternalLogs: React.FC = () => {
             {
                 title: '目的IP',
                 dataIndex: 'destinationIp',
-                width: 180,
+                width: 220,
                 ellipsis: true,
-                render: (ip: string) => renderIpColumn(ip, 'target', false),
+                render: (ip: string) => (
+                    <div style={{ display: 'flex', alignItems: 'center', width: '100%' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0, flex: 1 }}>
+                            <Typography.Text copyable style={{ margin: 0 }}>
+                                {ip}
+                            </Typography.Text>
+                            {Math.random() > 0.5 && (
+                                <Tag 
+                                    style={{ 
+                                        color: '#722ed1',
+                                        backgroundColor: 'rgba(114, 46, 209, 0.1)',
+                                        border: 'none',
+                                        whiteSpace: 'nowrap'
+                                    }}
+                                >
+                                    出境流量
+                                </Tag>
+                            )}
+                        </div>
+                    </div>
+                ),
             },
             {
                 title: '目的端口',
@@ -809,34 +829,16 @@ const ExternalLogs: React.FC = () => {
                             children: (
                                 <Space direction="vertical" style={{ width: '100%' }} size="large">
                                     <Card title="告警信息详情">
-                                        <AttackPathVisualization
+                                        <ExternalPathVisualization
                                             attackerInfo={{
-                                                ip: selectedLog?.attackIp || '',
-                                                time: selectedLog?.time || '',
-                                                location: selectedLog?.location || '',
-                                            }}
-                                            deviceInfo={{
-                                                intelType: selectedLog?.intelType || '',
-                                                rule: selectedLog?.rule || '未知规则',
-                                                intelSource: selectedLog?.intelSource || '',
+                                                ip: selectedLog?.controlledHost || '',
                                             }}
                                             victimInfo={{
-                                                ip: selectedLog?.targetIp || '',
-                                                port: selectedLog?.targetPort || '',
-                                                assetGroup: selectedLog?.assetGroup || '默认资产组',
+                                                ip: selectedLog?.destinationIp || '',
+                                                isForeign: true,
                                             }}
-                                            threatLevel={selectedLog?.threatLevel || ''}
-                                            action={selectedLog?.action || ''}
-                                            onAddToBlacklist={(ip) => {
-                                                setSelectedLog({ ...selectedLog, attackIp: ip });
-                                                setListType('black');
-                                                setTimeModalVisible(true);
-                                            }}
-                                            onAddToWhitelist={(ip) => {
-                                                setSelectedLog({ ...selectedLog, attackIp: ip });
-                                                setListType('white');
-                                                setTimeModalVisible(true);
-                                            }}
+                                            protocol={selectedLog?.requestInfo?.protocol?.toUpperCase() || 'HTTP'}
+                                            url={selectedLog?.externalDomain || selectedLog?.requestInfo?.url || ''}
                                         />
                                     </Card>
 
@@ -904,6 +906,14 @@ const ExternalLogs: React.FC = () => {
                 style={{ top: '20px' }}
             >
                 <Space direction="vertical" style={{ width: '100%' }} size="large">
+                    <Radio.Group
+                        value={listType}
+                        onChange={(e) => setListType(e.target.value)}
+                        style={{ marginBottom: 16 }}
+                    >
+                        <Radio.Button value="black">黑名单</Radio.Button>
+                        <Radio.Button value="white">白名单</Radio.Button>
+                    </Radio.Group>
                     <div>
                         <Typography.Text>IP地址：{selectedLog?.attackIp}</Typography.Text>
                     </div>

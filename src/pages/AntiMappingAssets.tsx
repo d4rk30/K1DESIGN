@@ -4,7 +4,6 @@ import type { ColumnsType } from 'antd/es/table';
 import { SearchOutlined, ReloadOutlined, ExportOutlined, DeleteOutlined, SaveOutlined } from '@ant-design/icons';
 import LabelSelect from '@/components/LabelSelect';
 import LabelInput from '@/components/LabelInput';
-import LabelCascader from '@/components/LabelCascader';
 import { US, CN, GB, FR, DE } from 'country-flag-icons/react/3x2';  // 导入国旗图标
 
 interface DataType {
@@ -128,63 +127,6 @@ const AntiMappingAssets: React.FC = () => {
         form.resetFields();
     };
 
-    // 添加级联选择器的选项数据
-    const locationOptions = [
-        {
-            value: 'world',
-            label: '世界',
-            children: [
-                { value: 'usa', label: '美国' },
-                { value: 'uk', label: '英国' },
-                { value: 'france', label: '法国' },
-                { value: 'germany', label: '德国' },
-                { value: 'italy', label: '意大利' },
-                { value: 'spain', label: '西班牙' },
-                { value: 'portugal', label: '葡萄牙' },
-                { value: 'greece', label: '希腊' },
-                { value: 'turkey', label: '土耳其' },
-                { value: 'australia', label: '澳大利亚' },
-                { value: 'canada', label: '加拿大' },
-                { value: 'brazil', label: '巴西' },
-                { value: 'argentina', label: '阿根廷' },
-                { value: 'chile', label: '智利' },
-                { value: 'peru', label: '秘鲁' },
-                // ... 其他国家
-            ]
-        },
-        {
-            value: 'china',
-            label: '中国',
-            children: [
-                { value: 'beijing', label: '北京' },
-                { value: 'shanghai', label: '上海' },
-                { value: 'guangzhou', label: '广州' },
-                // ... 其他城市
-            ]
-        },
-        {
-            value: 'foreign',
-            label: '国外',
-            children: [
-                { value: 'usa', label: '美国' },
-                { value: 'uk', label: '英国' },
-                { value: 'france', label: '法国' },
-                { value: 'germany', label: '德国' },
-                { value: 'italy', label: '意大利' },
-                { value: 'spain', label: '西班牙' },
-                { value: 'portugal', label: '葡萄牙' },
-                { value: 'greece', label: '希腊' },
-                { value: 'turkey', label: '土耳其' },
-                { value: 'australia', label: '澳大利亚' },
-                { value: 'canada', label: '加拿大' },
-                { value: 'brazil', label: '巴西' },
-                { value: 'argentina', label: '阿根廷' },
-                { value: 'chile', label: '智利' },
-                { value: 'peru', label: '秘鲁' },
-                // ... 其他国家
-            ]
-        }
-    ];
 
     // 添加选择框配置
     const rowSelection = {
@@ -303,15 +245,6 @@ const AntiMappingAssets: React.FC = () => {
                             <LabelInput
                                 label="所属资产分组"
                                 placeholder="请输入"
-                            />
-                        </Form.Item>
-                    </Col>
-                    <Col span={4}>
-                        <Form.Item name="location" style={{ marginBottom: 0 }}>
-                            <LabelCascader
-                                label="归属地"
-                                options={locationOptions}
-                                placeholder="请选择"
                             />
                         </Form.Item>
                     </Col>

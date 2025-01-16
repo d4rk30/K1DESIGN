@@ -1,0 +1,122 @@
+.pathWrapper {
+    padding-top: 10px;
+    position: relative;
+    min-height: 100px;
+}
+
+.pathContainer {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    position: relative;
+    padding: 0 20px;
+}
+
+.lineLayer {
+    position: absolute;
+    left: 20px;
+    right: 20px;
+    top: 32px;
+    height: 2px;
+    z-index: 1;
+}
+
+.redLine {
+    position: absolute;
+    left: 32px;
+    right: 32px;
+    height: 2px;
+    background: #ff4d4f;
+}
+
+.protocolInfo {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    z-index: 3;
+}
+
+.protocolTag {
+    margin-bottom: 4px;
+    margin-top: -12px;
+}
+
+.urlText {
+    font-size: 12px;
+    color: #666;
+    margin-top: 8px;
+    max-width: 300px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.nodeSection {
+    flex: 0 0 40%;
+    text-align: left;
+
+    &.rightAlign {
+        text-align: right;
+    }
+}
+
+.iconWrapper {
+    width: 64px;
+    height: 64px;
+    background: #f0f2f5;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 20px;
+    position: relative;
+    z-index: 2;
+
+    &.rightAlign {
+        margin-left: auto;
+    }
+}
+
+.icon {
+    width: 32px;
+    height: 32px;
+}
+
+.foreignTag {
+    color: #722ed1;
+    background-color: rgba(114, 46, 209, 0.1);
+    border: none;
+}
+
+.urlSection {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+
+.downloadLink {
+    font-size: 14px;
+    color: #1890ff;
+    cursor: pointer;
+    padding: 4px 15px;
+    border: 1px solid #1890ff;
+    border-radius: 2px;
+
+    &:hover {
+        color: #40a9ff;
+        border-color: #40a9ff;
+    }
+}
+
+.centerSection {
+    flex: 0 0 20%;
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+    margin-top: 20px;
+    padding-top: 64px;
+}
