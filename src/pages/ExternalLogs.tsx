@@ -1,24 +1,24 @@
 // 1. 引入
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { Card, Table, Button, Space, Form, Row, Col, Modal, message, Typography, Tag, Drawer, Input, InputNumber, Radio, Empty, Tabs, Descriptions } from 'antd';
+import { Card, Table, Button, Space, Form, Row, Col, Modal, message, Typography, Tag, Drawer, Input, InputNumber, Radio, Empty, Tabs } from 'antd';
 import { StarOutlined, StarFilled, SearchOutlined, ReloadOutlined, SaveOutlined, ExportOutlined, DeleteOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import AttackTrendCard from '@/components/AttackTrendCard';
 import LabelSelect from '@/components/LabelSelect';
 import LabelInput from '@/components/LabelInput';
-import LabelCascader from '@/components/LabelCascader';
-import { US, CN, GB, FR, DE } from 'country-flag-icons/react/3x2';
 import AttackPathVisualization from '@/components/AttackPathVisualization';
 
 // 2. 类型定义
 // 定义筛选条件的类型
 interface FilterValues {
-    intelType?: string;  // 情报类型
-    intelSource?: string; // 情报源
-    action?: string;      // 处理动作
-    attackIp?: string;    // 攻击IP
-    targetIp?: string;    // 被攻击IP
-    location?: string[];   // 归属地
+    quickSearch?: string;    // 快捷搜索
+    hitType?: string;        // 命中类型
+    action?: string;         // 处理动作
+    targetType?: string;     // 目标类型
+    controlledHost?: string; // 受控主机
+    externalDomain?: string; // 外联域名/URL
+    destinationIp?: string;  // 目的IP
+    threatLevel?: string;    // 威胁等级
 }
 
 // 定义保存的筛选条件的类型
@@ -33,11 +33,14 @@ interface SavedFilter {
 interface AttackLog {
     key: string;
     time: string;
-    attackIp: string;
-    location: string;
-    targetIp: string;
-    targetPort: string;
-    intelType: string;
+    controlledHost: string;
+    sourcePort: string;
+    externalDomain: string;
+    nextHopDns: string;
+    destinationIp: string;
+    destinationPort: string;
+    targetType: string;
+    hitType: string;
     threatLevel: string;
     action: string;
     intelSource: string;
@@ -116,167 +119,135 @@ const MOCK_DATA_CONFIG = {
 };
 
 const generateMockData = (): AttackLog[] => {
-    // 从给定数组中随机选择一个元素
     const getRandomItem = (arr: any[]) => arr[Math.floor(Math.random() * arr.length)];
-    // 生成一个在指定范围内的随机整数
     const getRandomNumber = (min: number, max: number) => Math.floor(Math.random() * (max - min + 1)) + min;
-    // 生成一个随机的IP地址，格式为 "x.x.x.x"
     const getRandomIp = () => Array.from({ length: 4 }, () => getRandomNumber(0, 255)).join('.');
+    const getRandomDomain = () => `${Math.random().toString(36).substring(7)}.example.com`;
 
-    // 首先生成一条 DNS 类型的记录
-    const dnsRecord: AttackLog = {
-        key: '1',
-        time: dayjs().subtract(getRandomNumber(0, 24), 'hour').format('YYYY-MM-DD HH:mm:ss'),
-        attackIp: getRandomIp(),
-        location: getRandomItem(MOCK_DATA_CONFIG.locations),
-        targetIp: `192.168.${getRandomNumber(0, 255)}.${getRandomNumber(0, 255)}`,
-        targetPort: '53', // DNS 默认端口
-        intelType: '僵尸网络', // 或其他类型
-        threatLevel: getRandomItem(MOCK_DATA_CONFIG.threatLevels),
-        action: getRandomItem(MOCK_DATA_CONFIG.actions),
-        intelSource: getRandomItem(MOCK_DATA_CONFIG.intelSources),
-        lastAttackUnit: getRandomNumber(0, 1) ? `${getRandomNumber(1, 24)}小时前` : `${getRandomNumber(1, 60)}分钟前`,
-        requestInfo: {
-            protocol: 'dns',
-            url: '',
-            dnsName: `subdomain${getRandomNumber(1, 100)}.example.com`,
-            headers: {
-                'User-Agent': 'DNS Client',
-                'Accept': '*/*',
-                'Content-Type': 'application/dns-message',
-                'X-Forwarded-For': getRandomIp(),
-                'Host': 'dns.example.com',
-                'Connection': 'keep-alive',
-                'Accept-Encoding': 'gzip, deflate, br',
-                'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
-            },
-            body: {
-                payload: 'Base64编码的DNS请求内容...',
-                size: `${getRandomNumber(50, 200)}bytes`,
-                type: 'DNS查询',
-                timestamp: new Date().toISOString()
-            }
-        },
-        responseInfo: {
-            headers: {
-                'Content-Type': 'application/dns-message',
-                'Server': 'DNS Server/1.0',
-                'Date': new Date().toUTCString(),
-                'Content-Length': String(getRandomNumber(100, 500))
-            },
-            statusCode: 200,
-            body: {
-                status: 200,
-                message: 'DNS Response',
-                data: 'Base64编码的DNS响应内容...'
-            }
-        },
-        localVerification: {
-            ruleName: 'DNS异常检测',
-            protocolNumber: '323-2',
-            protocolType: 'DNS',
-            attackType: 'DNS隧道攻击',
-            malformedPacketLength: getRandomNumber(100, 1000),
-            attackFeatures: '特征1：异常DNS查询',
-            aiDetection: Math.random() < 0.5 ? 'hit' : 'miss' as 'hit' | 'miss'
-        }
+    const targetTypes = ['C2服务器', '恶意域名', '钓鱼网站', '僵尸网络', '挖矿程序'];
+    const hitTypes = ['情报命中', '规则命中', 'AI检测', '行为分析'];
+
+    const getRandomUserAgent = () => {
+        const userAgents = [
+            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.0 Mobile/15E148 Safari/604.1',
+            'Mozilla/5.0 (Linux; Android 13; SM-S908B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36'
+        ];
+        return userAgents[Math.floor(Math.random() * userAgents.length)];
     };
 
-    // 然后生成剩余的随机记录
-    const remainingRecords = Array.from({ length: 99 }, (_, index) => ({
-        key: String(index + 2),
+    const getRandomContentType = () => {
+        const contentTypes = [
+            'application/json',
+            'application/x-www-form-urlencoded',
+            'multipart/form-data',
+            'text/plain',
+            'application/xml'
+        ];
+        return contentTypes[Math.floor(Math.random() * contentTypes.length)];
+    };
+
+    return Array.from({ length: 100 }, (_, index) => ({
+        key: String(index + 1),
         time: dayjs().subtract(getRandomNumber(0, 24), 'hour').format('YYYY-MM-DD HH:mm:ss'),
-        attackIp: getRandomIp(),
-        location: getRandomItem(MOCK_DATA_CONFIG.locations),
-        targetIp: `192.168.${getRandomNumber(0, 255)}.${getRandomNumber(0, 255)}`,
-        targetPort: String(getRandomNumber(0, 65535)),
-        intelType: getRandomItem(MOCK_DATA_CONFIG.intelTypes),
+        controlledHost: getRandomIp(),
+        sourcePort: String(getRandomNumber(1024, 65535)),
+        externalDomain: getRandomDomain(),
+        nextHopDns: getRandomIp(),
+        destinationIp: getRandomIp(),
+        destinationPort: String(getRandomNumber(1, 65535)),
+        targetType: getRandomItem(targetTypes),
+        hitType: getRandomItem(hitTypes),
         threatLevel: getRandomItem(MOCK_DATA_CONFIG.threatLevels),
         action: getRandomItem(MOCK_DATA_CONFIG.actions),
         intelSource: getRandomItem(MOCK_DATA_CONFIG.intelSources),
         lastAttackUnit: getRandomNumber(0, 1) ? `${getRandomNumber(1, 24)}小时前` : `${getRandomNumber(1, 60)}分钟前`,
         requestInfo: {
-            protocol: ['http', 'https', 'ftp', 'smtp'][Math.floor(Math.random() * 4)],
-            url: `example.com/api/endpoint/${Math.floor(Math.random() * 1000)}`,
-            dnsName: `subdomain${Math.floor(Math.random() * 100)}.example.com`,
+            protocol: getRandomItem(['http', 'https']),
+            url: `https://${getRandomDomain()}/api/v1/${getRandomItem(['users', 'orders', 'products'])}`,
+            dnsName: getRandomDomain(),
             headers: {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-                'Accept': 'application/json',
-                'Content-Type': 'application/json',
+                'User-Agent': getRandomUserAgent(),
+                'Accept': 'application/json, text/plain, */*',
+                'Content-Type': getRandomContentType(),
                 'X-Forwarded-For': getRandomIp(),
-                'Host': 'example.com',
+                'Host': getRandomDomain(),
                 'Connection': 'keep-alive',
                 'Accept-Encoding': 'gzip, deflate, br',
                 'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
+                'X-Request-ID': `req-${Math.random().toString(36).substring(7)}`,
+                'Authorization': `Bearer ${Math.random().toString(36).substring(7)}`,
+                'Origin': `https://${getRandomDomain()}`,
+                'Referer': `https://${getRandomDomain()}/`,
             },
             body: {
-                payload: 'Base64编码的请求内容...',
-                size: Math.floor(Math.random() * 1000) + 'bytes',
-                type: ['SQL注入', 'XSS攻击', '命令注入', 'WebShell'][Math.floor(Math.random() * 4)],
-                timestamp: new Date().toISOString()
+                payload: JSON.stringify({
+                    action: getRandomItem(['login', 'getData', 'updateProfile', 'deleteRecord']),
+                    params: {
+                        userId: Math.floor(Math.random() * 10000),
+                        timestamp: new Date().toISOString(),
+                        data: {
+                            key1: Math.random().toString(36).substring(7),
+                            key2: Math.floor(Math.random() * 100),
+                            key3: getRandomItem(['value1', 'value2', 'value3']),
+                        }
+                    },
+                    signature: Math.random().toString(36).substring(7)
+                }),
+                size: `${Math.floor(Math.random() * 1000)}kb`,
+                type: getRandomContentType(),
+                timestamp: dayjs().subtract(getRandomNumber(0, 24), 'hour').format('YYYY-MM-DD HH:mm:ss')
             }
         },
         responseInfo: {
             headers: {
-                'Content-Type': 'application/json',
-                'Server': 'nginx/1.18.0',
-                'Date': new Date().toUTCString(),
-                'Content-Length': String(Math.floor(Math.random() * 1000))
+                'Content-Type': getRandomContentType(),
+                'Server': getRandomItem(['nginx/1.20.1', 'Apache/2.4.41', 'cloudflare']),
+                'Date': dayjs().format('ddd, DD MMM YYYY HH:mm:ss GMT'),
+                'Content-Length': String(Math.floor(Math.random() * 5000)),
+                'X-Response-Time': `${Math.floor(Math.random() * 500)}ms`,
+                'Cache-Control': 'no-cache, no-store, must-revalidate',
+                'X-Frame-Options': 'SAMEORIGIN',
+                'X-Content-Type-Options': 'nosniff',
+                'Strict-Transport-Security': 'max-age=31536000; includeSubDomains'
             },
-            statusCode: [200, 400, 403, 404, 500][Math.floor(Math.random() * 5)],
+            statusCode: getRandomItem([200, 201, 400, 401, 403, 404, 500]),
             body: {
-                status: [200, 400, 403, 404, 500][Math.floor(Math.random() * 5)],
-                message: ['Success', 'Bad Request', 'Forbidden', 'Not Found', 'Server Error'][Math.floor(Math.random() * 5)],
-                data: 'Base64编码的响应内容...'
+                status: getRandomItem([0, 1, -1]),
+                message: getRandomItem(['Success', 'Failed', 'Unauthorized', 'Server Error']),
+                data: JSON.stringify({
+                    result: getRandomItem(['success', 'error']),
+                    errorCode: Math.floor(Math.random() * 1000),
+                    details: {
+                        id: Math.floor(Math.random() * 10000),
+                        timestamp: new Date().toISOString(),
+                        processingTime: `${Math.floor(Math.random() * 500)}ms`
+                    }
+                })
             }
         },
         localVerification: {
-            ruleName: ['SQL注入检测', 'XSS攻击检测', '命令注入检测', 'WebShell检测'][Math.floor(Math.random() * 4)],
-            protocolNumber: '323-2',
-            protocolType: 'HTTPS',
-            attackType: ['SQL注入', 'XSS攻击', '命令注入', 'WebShell'][Math.floor(Math.random() * 4)],
-            malformedPacketLength: Math.floor(Math.random() * 1000),
-            attackFeatures: ['特征1：异常字符串', '特征2：恶意代码片段', '特征3：非法请求参数'][Math.floor(Math.random() * 3)],
-            aiDetection: Math.random() < 0.5 ? 'hit' : 'miss' as 'hit' | 'miss'
+            ruleName: '',
+            protocolNumber: '',
+            protocolType: '',
+            attackType: '',
+            malformedPacketLength: 0,
+            attackFeatures: '',
+            aiDetection: 'miss'
         }
     }));
-
-    // 将 DNS 记录和其他记录合并
-    return [dnsRecord, ...remainingRecords];
 };
 
 const FILTER_OPTIONS = {
-    intelType: MOCK_DATA_CONFIG.intelTypes,
+    hitType: ['情报命中', '规则命中', 'AI检测', '行为分析'],
     action: MOCK_DATA_CONFIG.actions,
-    intelSource: MOCK_DATA_CONFIG.intelSources,
-};
-
-// 添加获取国旗组件的辅助函数
-const getFlagComponent = (country: string) => {
-    const componentMap: { [key: string]: any } = {
-        '美国': US,
-        '中国': CN,
-        '英国': GB,
-        '法国': FR,
-        '德国': DE,
-    };
-    return componentMap[country];
-};
-
-// 在文件顶部其他辅助函数旁边添加
-const getProtocolColor = (protocol: string) => {
-    const colors: Record<string, string> = {
-        'http': 'blue',
-        'https': 'green',
-        'dns': 'orange',
-        'ftp': 'purple',
-        'smtp': 'cyan',
-    };
-    return colors[protocol?.toLowerCase()] || 'default';
+    targetType: ['C2服务器', '恶意域名', '钓鱼网站', '僵尸网络', '挖矿程序'],
+    threatLevel: MOCK_DATA_CONFIG.threatLevels,
 };
 
 // 5. 组件定义
-const AttackLogs: React.FC = () => {
+const ExternalLogs: React.FC = () => {
     // 状态定义
     const [selectedRows, setSelectedRows] = useState<any[]>([]);
     const [filterValues, setFilterValues] = useState<FilterValues>({});
@@ -297,63 +268,6 @@ const AttackLogs: React.FC = () => {
     const [duration, setDuration] = useState<number>(0);
     const [timeUnit, setTimeUnit] = useState<string>('hour');
     const prevDurationRef = useRef<number>(0);
-
-    const locationOptions = [
-        {
-            value: 'world',
-            label: '世界',
-            children: [
-                { value: 'usa', label: '美国' },
-                { value: 'uk', label: '英国' },
-                { value: 'france', label: '法国' },
-                { value: 'germany', label: '德国' },
-                { value: 'italy', label: '意大利' },
-                { value: 'spain', label: '西班牙' },
-                { value: 'portugal', label: '葡萄牙' },
-                { value: 'greece', label: '希腊' },
-                { value: 'turkey', label: '土耳其' },
-                { value: 'australia', label: '澳大利亚' },
-                { value: 'canada', label: '加拿大' },
-                { value: 'brazil', label: '巴西' },
-                { value: 'argentina', label: '阿根廷' },
-                { value: 'chile', label: '智利' },
-                { value: 'peru', label: '秘鲁' },
-                // ... 其他国家
-            ]
-        },
-        {
-            value: 'china',
-            label: '中国',
-            children: [
-                { value: 'beijing', label: '北京' },
-                { value: 'shanghai', label: '上海' },
-                { value: 'guangzhou', label: '广州' },
-                // ... 其他城市
-            ]
-        },
-        {
-            value: 'foreign',
-            label: '国外',
-            children: [
-                { value: 'usa', label: '美国' },
-                { value: 'uk', label: '英国' },
-                { value: 'france', label: '法国' },
-                { value: 'germany', label: '德国' },
-                { value: 'italy', label: '意大利' },
-                { value: 'spain', label: '西班牙' },
-                { value: 'portugal', label: '葡萄牙' },
-                { value: 'greece', label: '希腊' },
-                { value: 'turkey', label: '土耳其' },
-                { value: 'australia', label: '澳大利亚' },
-                { value: 'canada', label: '加拿大' },
-                { value: 'brazil', label: '巴西' },
-                { value: 'argentina', label: '阿根廷' },
-                { value: 'chile', label: '智利' },
-                { value: 'peru', label: '秘鲁' },
-                // ... 其他国家
-            ]
-        }
-    ];
 
     // 工具函数
     const toggleModal = (key: keyof typeof modalState) => {
@@ -384,50 +298,39 @@ const AttackLogs: React.FC = () => {
             return data.filter(item => {
                 const matchesFilter = (key: keyof FilterValues) =>
                     !filterValues[key] ||
-                    (Array.isArray(filterValues[key])
-                        ? (filterValues[key] as string[]).includes(item[key])
-                        : item[key].toLowerCase().includes((filterValues[key] as string).toLowerCase()));
+                    item[key].toLowerCase().includes((filterValues[key] as string).toLowerCase());
 
                 return Object.keys(filterValues).every(key =>
-                    key === 'location'
-                        ? !filterValues.location?.length || matchesLocation(item.location, filterValues.location)
-                        : matchesFilter(key as keyof FilterValues)
+                    matchesFilter(key as keyof FilterValues)
                 );
             });
         };
     }, [filterValues]);
-
-    const matchesLocation = (location: string, filterLocation: string[]) => {
-        const [category, specific] = filterLocation;
-        if (category === 'world') {
-            return true;
-        } else if (category === 'china') {
-            return location === specific;
-        } else if (category === 'foreign') {
-            return location === specific;
-        }
-        return false;
-    };
 
     const getTableColumns = (
         addToFavorites: (ip: string, type: 'attack' | 'target') => void,
         setSelectedLog: (log: any) => void,
         setIsDetailVisible: (visible: boolean) => void
     ) => {
-        const renderIpColumn = (ip: string, type: 'attack' | 'target') => (
+        const renderIpColumn = (ip: string, type: 'attack' | 'target', showStar = true, showAssetTag = false) => (
             <div style={{ display: 'flex', alignItems: 'center', width: '100%' }}>
-                <Button
-                    type="link"
-                    style={{ padding: 0, minWidth: 32, marginRight: 8 }}
-                    icon={favoriteIps.includes(ip) ? <StarFilled style={{ color: '#faad14' }} /> : <StarOutlined />}
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        addToFavorites(ip, type);
-                    }}
-                />
-                <Typography.Text copyable style={{ width: type === 'attack' ? 160 : 180 }} ellipsis>
-                    {ip}
-                </Typography.Text>
+                {showStar && (
+                    <Button
+                        type="link"
+                        style={{ padding: 0, minWidth: 32, marginRight: 8 }}
+                        icon={favoriteIps.includes(ip) ? <StarFilled style={{ color: '#faad14' }} /> : <StarOutlined />}
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            addToFavorites(ip, type);
+                        }}
+                    />
+                )}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0, flex: 1 }}>
+                    <Typography.Text copyable style={{ margin: 0 }}>
+                        {ip}
+                    </Typography.Text>
+                    {showAssetTag && <Tag color="blue" style={{ whiteSpace: 'nowrap' }}>全局资产</Tag>}
+                </div>
             </div>
         );
 
@@ -439,48 +342,58 @@ const AttackLogs: React.FC = () => {
                 ellipsis: true
             },
             {
-                title: '攻击IP',
-                dataIndex: 'attackIp',
-                width: 220,
-                render: (ip: string) => renderIpColumn(ip, 'attack'),
-            },
-            {
-                title: '归属地',
-                dataIndex: 'location',
-                width: 200,
-                ellipsis: true,
-                render: (text: string) => {
-                    const country = text.split('|')[0].trim();
-                    const FlagComponent = getFlagComponent(country);
-                    return (
-                        <Space>
-                            {FlagComponent && <FlagComponent style={{ width: 16 }} />}
-                            {text}
-                        </Space>
-                    );
-                }
-            },
-            {
-                title: '被攻击IP',
-                dataIndex: 'targetIp',
+                title: '受控主机',
+                dataIndex: 'controlledHost',
                 width: 280,
+                render: (ip: string) => renderIpColumn(ip, 'attack', true, true),
+            },
+            {
+                title: '源端口',
+                dataIndex: 'sourcePort',
+                width: 100,
+                ellipsis: true
+            },
+            {
+                title: '外联域名/URL',
+                dataIndex: 'externalDomain',
+                width: 220,
+                ellipsis: true,
                 render: (text: string) => (
-                    <Space>
-                        <Typography.Text copyable>{text}</Typography.Text>
-                        <Tag color="blue">内部资产</Tag>
-                    </Space>
+                    <Typography.Text copyable style={{ width: 200 }} ellipsis>
+                        {text}
+                    </Typography.Text>
                 )
             },
             {
-                title: '被攻击端口',
-                dataIndex: 'targetPort',
+                title: '下一跳DNS',
+                dataIndex: 'nextHopDns',
+                width: 180,
+                ellipsis: true,
+                render: (ip: string) => renderIpColumn(ip, 'target', false),
+            },
+            {
+                title: '目的IP',
+                dataIndex: 'destinationIp',
+                width: 180,
+                ellipsis: true,
+                render: (ip: string) => renderIpColumn(ip, 'target', false),
+            },
+            {
+                title: '目的端口',
+                dataIndex: 'destinationPort',
+                width: 100,
+                ellipsis: true
+            },
+            {
+                title: '目标类型',
+                dataIndex: 'targetType',
                 width: 120,
                 ellipsis: true
             },
             {
-                title: '情报类型',
-                dataIndex: 'intelType',
-                width: 150,
+                title: '命中类型',
+                dataIndex: 'hitType',
+                width: 120,
                 ellipsis: true
             },
             {
@@ -501,19 +414,7 @@ const AttackLogs: React.FC = () => {
                 title: '处理动作',
                 dataIndex: 'action',
                 width: 120,
-                ellipsis: true
-            },
-            {
-                title: '命中情报源',
-                dataIndex: 'intelSource',
-                width: 150,
-                ellipsis: true
-            },
-            {
-                title: '最近攻击单位',
-                dataIndex: 'lastAttackUnit',
-                width: 150,
-                ellipsis: true
+                ellipsis: true,
             },
             {
                 title: '操作',
@@ -635,36 +536,25 @@ const AttackLogs: React.FC = () => {
     const renderFilterForm = () => (
         <Form form={form} onFinish={handleFilter} style={{ marginBottom: 24 }}>
             <Row gutter={[16, 16]}>
-                <Col span={6}>
+                <Col span={4}>
                     <Form.Item name="quickSearch" style={{ marginBottom: 0 }}>
                         <LabelSelect
                             label="快捷搜索"
                             placeholder="请选择"
-                        >
-                        </LabelSelect>
-                    </Form.Item>
-                </Col>
-                <Col span={6}>
-                    <Form.Item name="intelType" style={{ marginBottom: 0 }}>
-                        <LabelSelect
-                            label="情报类型"
-                            allowClear
-                            placeholder="请选择情报类型"
-                            options={FILTER_OPTIONS.intelType.map(item => ({ label: item, value: item }))}
                         />
                     </Form.Item>
                 </Col>
-                <Col span={6}>
-                    <Form.Item name="intelSource" style={{ marginBottom: 0 }}>
+                <Col span={4}>
+                    <Form.Item name="hitType" style={{ marginBottom: 0 }}>
                         <LabelSelect
-                            label="情报源"
+                            label="命中类型"
                             allowClear
-                            placeholder="请选择情报源"
-                            options={FILTER_OPTIONS.intelSource.map(item => ({ label: item, value: item }))}
+                            placeholder="请选择命中类型"
+                            options={FILTER_OPTIONS.hitType.map(item => ({ label: item, value: item }))}
                         />
                     </Form.Item>
                 </Col>
-                <Col span={6}>
+                <Col span={4}>
                     <Form.Item name="action" style={{ marginBottom: 0 }}>
                         <LabelSelect
                             label="处理动作"
@@ -674,34 +564,54 @@ const AttackLogs: React.FC = () => {
                         />
                     </Form.Item>
                 </Col>
-                <Col span={6}>
-                    <Form.Item name="attackIp" style={{ marginBottom: 0 }}>
+                <Col span={4}>
+                    <Form.Item name="targetType" style={{ marginBottom: 0 }}>
+                        <LabelSelect
+                            label="目标类型"
+                            allowClear
+                            placeholder="请选择目标类型"
+                            options={FILTER_OPTIONS.targetType.map(item => ({ label: item, value: item }))}
+                        />
+                    </Form.Item>
+                </Col>
+                <Col span={4}>
+                    <Form.Item name="controlledHost" style={{ marginBottom: 0 }}>
                         <LabelInput
-                            label="攻击IP"
-                            placeholder="请输入攻击IP"
+                            label="受控主机"
+                            placeholder="请输入受控主机"
                             allowClear
                         />
                     </Form.Item>
                 </Col>
-                <Col span={6}>
-                    <Form.Item name="targetIp" style={{ marginBottom: 0 }}>
+                <Col span={4}>
+                    <Form.Item name="externalDomain" style={{ marginBottom: 0 }}>
                         <LabelInput
-                            label="被攻击IP"
-                            placeholder="请输入被攻击IP"
+                            label="外联域名/URL"
+                            placeholder="请输入外联域名/URL"
                             allowClear
                         />
                     </Form.Item>
                 </Col>
-                <Col span={6}>
-                    <Form.Item name="location" style={{ marginBottom: 0 }}>
-                        <LabelCascader
-                            label="归属地"
-                            options={locationOptions}
-                            placeholder="请选择"
+                <Col span={4}>
+                    <Form.Item name="destinationIp" style={{ marginBottom: 0 }}>
+                        <LabelInput
+                            label="目的IP"
+                            placeholder="请输入目的IP"
+                            allowClear
                         />
                     </Form.Item>
                 </Col>
-                <Col span={6} style={{ display: 'flex', alignItems: 'flex-end' }}>
+                <Col span={4}>
+                    <Form.Item name="threatLevel" style={{ marginBottom: 0 }}>
+                        <LabelSelect
+                            label="威胁等级"
+                            allowClear
+                            placeholder="请选择威胁等级"
+                            options={FILTER_OPTIONS.threatLevel.map(item => ({ label: item, value: item }))}
+                        />
+                    </Form.Item>
+                </Col>
+                <Col span={6}>
                     <Form.Item style={{ marginBottom: 0 }}>
                         <Space>
                             <Button type="primary" htmlType="submit" icon={<SearchOutlined />}>
@@ -773,7 +683,7 @@ const AttackLogs: React.FC = () => {
                         selectedRowKeys: selectedRows.map(row => row.key),
                         onChange: (_, rows) => setSelectedRows(rows),
                     }}
-                    scroll={{ x: true }}
+                    scroll={{ x: 1 }}
                     pagination={{
                         total: filteredData.length,
                         pageSize: 10,
@@ -930,135 +840,6 @@ const AttackLogs: React.FC = () => {
                                         />
                                     </Card>
 
-                                    <Card title="请求地址">
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'space-between' }}>
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                                <Tag color={getProtocolColor(selectedLog?.requestInfo?.protocol || '')}>
-                                                    {selectedLog?.requestInfo?.protocol || 'unknown'}
-                                                </Tag>
-                                                <Typography.Text copyable>
-                                                    {selectedLog?.requestInfo?.url || selectedLog?.requestInfo?.dnsName || selectedLog?.targetIp || ''}
-                                                </Typography.Text>
-                                                {selectedLog?.responseInfo?.statusCode && (
-                                                    <Tag
-                                                        color={
-                                                            selectedLog.responseInfo.statusCode < 300 ? 'success' :
-                                                                selectedLog.responseInfo.statusCode < 400 ? 'warning' :
-                                                                    'error'
-                                                        }
-                                                    >
-                                                        {selectedLog.responseInfo.statusCode}
-                                                    </Tag>
-                                                )}
-                                            </div>
-                                            <Button type="link">下载PCAP包</Button>
-                                        </div>
-                                    </Card>
-
-                                    {(selectedLog?.dnsResponse || selectedLog?.requestInfo?.protocol === 'dns') && (
-                                        <Card title="DNS响应">
-                                            <Tabs
-                                                items={[
-                                                    {
-                                                        key: 'header',
-                                                        label: '报文头',
-                                                        children: (
-                                                            <Descriptions bordered column={2} size="small">
-                                                                <Descriptions.Item label="报文标识">
-                                                                    {selectedLog?.dnsResponse?.header.id}
-                                                                </Descriptions.Item>
-                                                                <Descriptions.Item label="响应标志">
-                                                                    {selectedLog?.dnsResponse?.header.qr ? '响应' : '查询'}
-                                                                </Descriptions.Item>
-                                                                <Descriptions.Item label="操作码">
-                                                                    {selectedLog?.dnsResponse?.header.opcode}
-                                                                </Descriptions.Item>
-                                                                <Descriptions.Item label="权威应答">
-                                                                    {selectedLog?.dnsResponse?.header.aa ? '是' : '否'}
-                                                                </Descriptions.Item>
-                                                                <Descriptions.Item label="截断标志">
-                                                                    {selectedLog?.dnsResponse?.header.tc ? '是' : '否'}
-                                                                </Descriptions.Item>
-                                                                <Descriptions.Item label="期望递归">
-                                                                    {selectedLog?.dnsResponse?.header.rd ? '是' : '否'}
-                                                                </Descriptions.Item>
-                                                                <Descriptions.Item label="递归可用">
-                                                                    {selectedLog?.dnsResponse?.header.ra ? '是' : '否'}
-                                                                </Descriptions.Item>
-                                                                <Descriptions.Item label="返回码">
-                                                                    {selectedLog?.dnsResponse?.header.rcode}
-                                                                </Descriptions.Item>
-                                                                <Descriptions.Item label="问题数">
-                                                                    {selectedLog?.dnsResponse?.header.qdcount}
-                                                                </Descriptions.Item>
-                                                                <Descriptions.Item label="回答数">
-                                                                    {selectedLog?.dnsResponse?.header.ancount}
-                                                                </Descriptions.Item>
-                                                                <Descriptions.Item label="授权数">
-                                                                    {selectedLog?.dnsResponse?.header.nscount}
-                                                                </Descriptions.Item>
-                                                                <Descriptions.Item label="附加数">
-                                                                    {selectedLog?.dnsResponse?.header.arcount}
-                                                                </Descriptions.Item>
-                                                            </Descriptions>
-                                                        ),
-                                                    },
-                                                    {
-                                                        key: 'answers',
-                                                        label: '应答记录',
-                                                        children: (
-                                                            <Table
-                                                                dataSource={selectedLog?.dnsResponse?.answers.map((item: { name: string; type: string; ttl: number; data: string }, index: number) => ({ ...item, key: index }))}
-                                                                columns={[
-                                                                    { title: '域名', dataIndex: 'name', key: 'name' },
-                                                                    { title: '记录类型', dataIndex: 'type', key: 'type' },
-                                                                    { title: 'TTL', dataIndex: 'ttl', key: 'ttl' },
-                                                                    { title: '记录值', dataIndex: 'data', key: 'data' },
-                                                                ]}
-                                                                pagination={false}
-                                                                size="small"
-                                                            />
-                                                        ),
-                                                    },
-                                                    {
-                                                        key: 'authority',
-                                                        label: '权威记录',
-                                                        children: (
-                                                            <Table
-                                                                dataSource={selectedLog?.dnsResponse?.authority.map((item: { name: string; type: string; ttl: number; data: string }, index: number) => ({ ...item, key: index }))}
-                                                                columns={[
-                                                                    { title: '域名', dataIndex: 'name', key: 'name' },
-                                                                    { title: '记录类型', dataIndex: 'type', key: 'type' },
-                                                                    { title: 'TTL', dataIndex: 'ttl', key: 'ttl' },
-                                                                    { title: '记录值', dataIndex: 'data', key: 'data' },
-                                                                ]}
-                                                                pagination={false}
-                                                                size="small"
-                                                            />
-                                                        ),
-                                                    },
-                                                    {
-                                                        key: 'additional',
-                                                        label: '附加记录',
-                                                        children: (
-                                                            <Table
-                                                                dataSource={selectedLog?.dnsResponse?.additional.map((item: { name: string; type: string; ttl: number; data: string }, index: number) => ({ ...item, key: index }))}
-                                                                columns={[
-                                                                    { title: '域名', dataIndex: 'name', key: 'name' },
-                                                                    { title: '记录类型', dataIndex: 'type', key: 'type' },
-                                                                    { title: 'TTL', dataIndex: 'ttl', key: 'ttl' },
-                                                                    { title: '记录值', dataIndex: 'data', key: 'data' },
-                                                                ]}
-                                                                pagination={false}
-                                                                size="small"
-                                                            />
-                                                        ),
-                                                    },
-                                                ]}
-                                            />
-                                        </Card>
-                                    )}
-
                                     {selectedLog?.requestInfo && (
                                         <Card title="请求信息">
                                             <Tabs
@@ -1098,59 +879,6 @@ const AttackLogs: React.FC = () => {
                                                     },
                                                 ]}
                                             />
-                                        </Card>
-                                    )}
-
-                                    {selectedLog?.responseInfo && (
-                                        <Card title="响应信息">
-                                            <Tabs
-                                                items={[
-                                                    {
-                                                        key: 'headers',
-                                                        label: '响应头',
-                                                        children: (
-                                                            <Table
-                                                                columns={[
-                                                                    { title: '名称', dataIndex: 'name', key: 'name' },
-                                                                    { title: '值', dataIndex: 'value', key: 'value' },
-                                                                ]}
-                                                                dataSource={Object.entries(selectedLog.responseInfo.headers).map(([key, value], index: number) => ({
-                                                                    key: index,
-                                                                    name: key,
-                                                                    value: value
-                                                                }))}
-                                                                pagination={false}
-                                                                size="small"
-                                                            />
-                                                        ),
-                                                    },
-                                                    {
-                                                        key: 'body',
-                                                        label: '响应体',
-                                                        children: (
-                                                            <pre style={{ whiteSpace: 'pre-wrap', wordWrap: 'break-word' }}>
-                                                                {selectedLog.responseInfo.body ? JSON.stringify(selectedLog.responseInfo.body, null, 2) : ''}
-                                                            </pre>
-                                                        ),
-                                                    },
-                                                ]}
-                                            />
-                                        </Card>
-                                    )}
-
-                                    {selectedLog?.localVerification && (
-                                        <Card title="二次本地校准">
-                                            <Descriptions column={2}>
-                                                <Descriptions.Item label="规则名称">{selectedLog.localVerification.ruleName}</Descriptions.Item>
-                                                <Descriptions.Item label="规则号">{selectedLog.localVerification.protocolNumber}</Descriptions.Item>
-                                                <Descriptions.Item label="协议类型">{selectedLog.localVerification.protocolType}</Descriptions.Item>
-                                                <Descriptions.Item label="攻击类型">{selectedLog.localVerification.attackType}</Descriptions.Item>
-                                                <Descriptions.Item label="畸形包长度">{selectedLog.localVerification.malformedPacketLength}</Descriptions.Item>
-                                                <Descriptions.Item label="攻击特征">{selectedLog.localVerification.attackFeatures}</Descriptions.Item>
-                                                <Descriptions.Item label="AI检测引擎">
-                                                    {selectedLog.localVerification.aiDetection === 'hit' ? '命中' : '未命中'}
-                                                </Descriptions.Item>
-                                            </Descriptions>
                                         </Card>
                                     )}
                                 </Space>
@@ -1206,4 +934,4 @@ const AttackLogs: React.FC = () => {
     );
 };
 
-export default AttackLogs;
+export default ExternalLogs;

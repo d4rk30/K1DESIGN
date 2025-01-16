@@ -19,6 +19,7 @@ import AssetList from './pages/AssetList';
 import SyslogConfig from './pages/SyslogConfig';
 import PasswordPolicy from './pages/PasswordPolicy';
 import AttackLogs from './pages/AttackLogs';
+import ExternalLogs from './pages/ExternalLogs';
 import dayjs from 'dayjs';
 import 'dayjs/locale/zh-cn';
 
@@ -47,6 +48,7 @@ const App: React.FC = () => {
             <Route path="asset-management" element={<AssetManagement />} />
             <Route path="asset-management/:groupId" element={<AssetList />} />
             <Route path="syslog-config" element={<SyslogConfig />} />
+            <Route path="external-logs" element={<ExternalLogs />} />
             <Route path="*" element={<UnderDevelopment />} />
           </Route>
         </Routes>
