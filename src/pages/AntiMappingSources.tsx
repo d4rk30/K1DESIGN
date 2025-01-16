@@ -54,13 +54,11 @@ const AntiMappingSources: React.FC = () => {
             title: '源IP',
             dataIndex: 'sourceIP',
             key: 'sourceIP',
-            width: 140,
         },
         {
             title: '归属地',
             dataIndex: 'location',
             key: 'location',
-            width: 200,
             render: (text: string) => {
                 const country = text.split('|')[0].trim();
                 const FlagComponent = getFlagComponent(country);
@@ -76,7 +74,6 @@ const AntiMappingSources: React.FC = () => {
             title: '目的IP总数',
             dataIndex: 'targetIPCount',
             key: 'targetIPCount',
-            width: 120,
             render: (count: number) => (
                 <span>
                     {count} 个
@@ -87,7 +84,6 @@ const AntiMappingSources: React.FC = () => {
             title: '测绘次数',
             dataIndex: 'mappingCount',
             key: 'mappingCount',
-            width: 120,
             sorter: {
                 compare: (a, b) => a.mappingCount - b.mappingCount,
                 multiple: 2
@@ -106,7 +102,6 @@ const AntiMappingSources: React.FC = () => {
             title: '最近测绘时间',
             dataIndex: 'time',
             key: 'time',
-            width: 180,
         },
         {
             title: '操作',
@@ -198,7 +193,8 @@ const AntiMappingSources: React.FC = () => {
         selectedRowKeys,
         onChange: (newSelectedRowKeys: React.Key[]) => {
             setSelectedRowKeys(newSelectedRowKeys);
-        }
+        },
+        columnWidth: 50
     };
 
     const getCurrentPageData = () => {

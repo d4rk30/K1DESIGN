@@ -297,6 +297,7 @@ const PasswordPolicy: React.FC = () => {
                         onChange: (newSelectedRowKeys: React.Key[]) => {
                             setSelectedRowKeys(newSelectedRowKeys);
                         },
+                        columnWidth: 50
                     }}
                     columns={policyColumns}
                     dataSource={policyData}

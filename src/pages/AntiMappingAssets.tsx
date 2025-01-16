@@ -60,13 +60,11 @@ const AntiMappingAssets: React.FC = () => {
             title: '目的IP',
             dataIndex: 'targetIP',
             key: 'targetIP',
-            width: 140,
         },
         {
             title: '目的端口',
             dataIndex: 'targetPort',
             key: 'targetPort',
-            width: 100,
         },
         {
             title: '最近被测绘目的URL',
@@ -78,13 +76,11 @@ const AntiMappingAssets: React.FC = () => {
             title: '所属资产分组',
             dataIndex: 'assetGroup',
             key: 'assetGroup',
-            width: 180,
         },
         {
             title: '被测绘次数',
             dataIndex: 'mappingCount',
             key: 'mappingCount',
-            width: 120,
             render: (count: number) => {
                 let color = 'blue';
                 return (
@@ -98,7 +94,6 @@ const AntiMappingAssets: React.FC = () => {
             title: '最近被测绘时间',
             dataIndex: 'time',
             key: 'time',
-            width: 180,
         },
         {
             title: '操作',
@@ -133,7 +128,8 @@ const AntiMappingAssets: React.FC = () => {
         selectedRowKeys,
         onChange: (newSelectedRowKeys: React.Key[]) => {
             setSelectedRowKeys(newSelectedRowKeys);
-        }
+        },
+        columnWidth: 50
     };
 
     // 计算当前页的数据

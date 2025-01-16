@@ -104,3 +104,44 @@ h2 {
 .attack-logs-table .ant-table-header .ant-table-cell-fix-right {
   z-index: 3;
 }
+
+/* 外联日志表格样式 */
+.external-logs-table {
+  position: relative;
+}
+
+.external-logs-table .ant-table-container {
+  z-index: auto;
+}
+
+.external-logs-table .ant-table-cell-fix-right {
+  background: #fff;
+}
+
+.external-logs-table .ant-table-cell {
+  white-space: nowrap;
+}
+
+.external-logs-table .ant-table-body {
+  overflow-y: auto !important;
+}
+
+.external-logs-table .ant-table-header {
+  margin-bottom: 0 !important;
+  overflow: hidden !important;
+}
+
+.external-logs-table .ant-table-sticky-scroll {
+  display: none !important;
+}
+
+/* 控制固定列的z-index层级 */
+.external-logs-table .ant-table-cell-fix-left,
+.external-logs-table .ant-table-cell-fix-right {
+  z-index: 1;
+}
+
+.external-logs-table .ant-table-header .ant-table-cell-fix-left,
+.external-logs-table .ant-table-header .ant-table-cell-fix-right {
+  z-index: 2;
+}

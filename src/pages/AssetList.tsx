@@ -191,8 +191,9 @@ const AssetList: React.FC = () => {
         {
             title: '操作',
             key: 'action',
+            width: 150,
             render: (_, record) => (
-                <Space size="middle">
+                <Space>
                     <Button
                         type="link"
                         onClick={() => showModal('ip', record)}
@@ -219,6 +220,7 @@ const AssetList: React.FC = () => {
         onChange: (newSelectedRowKeys: React.Key[]) => {
             setSelectedRowKeys(newSelectedRowKeys);
         },
+        columnWidth: 50
     };
 
     // 监听区域选择变化
@@ -552,8 +554,8 @@ const AssetList: React.FC = () => {
                     <span style={{ color: 'rgba(0, 0, 0, 0.65)' }}>
                         先下载模板，在模板中填写需要上传的数据
                     </span>
-                    <Button 
-                        type="link" 
+                    <Button
+                        type="link"
                         onClick={handleDownloadTemplate}
                         style={{ padding: 0 }}
                     >

@@ -285,39 +285,36 @@ const Reports: React.FC = () => {
             title: '报表名称',
             dataIndex: 'name',
             key: 'name',
-            width: 200,
         },
         {
             title: '告警模块',
             dataIndex: 'module',
             key: 'module',
-            width: 150,
         },
         {
             title: '导出方式',
             dataIndex: 'exportType',
             key: 'exportType',
-            width: 100,
             render: (type: string) => type === 'auto' ? '自动' : '手动',
         },
         {
             title: '报表格式',
             dataIndex: 'format',
             key: 'format',
-            width: 100,
+
             render: (format: string) => format.toUpperCase(),
         },
         {
             title: '创建时间',
             dataIndex: 'createTime',
             key: 'createTime',
-            width: 180,
+
         },
         {
             title: '进度',
             dataIndex: 'progress',
             key: 'progress',
-            width: 200,
+            width: 240,
             render: (progress: number) => (
                 <Progress percent={progress} size="small" status={progress === 100 ? 'success' : 'active'} />
             ),
@@ -539,6 +536,7 @@ const Reports: React.FC = () => {
                             setSelectedRowKeys(newSelectedRowKeys);
                             setSelectedRows(newSelectedRows);
                         },
+                        columnWidth: 50
                     }}
                     columns={columns}
                     dataSource={filteredData}

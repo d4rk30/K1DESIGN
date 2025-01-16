@@ -453,7 +453,8 @@ const AntiMappingLog: React.FC = () => {
         selectedRowKeys,
         onChange: (newSelectedRowKeys: React.Key[]) => {
             setSelectedRowKeys(newSelectedRowKeys);
-        }
+        },
+        columnWidth: 50
     };
 
     // 添加一个辅助函数来获取对应的国旗组件

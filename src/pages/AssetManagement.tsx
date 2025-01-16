@@ -84,8 +84,9 @@ const AssetManagement: React.FC = () => {
     {
       title: '操作',
       key: 'action',
+      width: 260,
       render: (_, record) => (
-        <Space size="middle">
+        <Space>
           <Button
             type="link"
             onClick={() => navigate(`/asset-management/${record.id}`)}
@@ -115,8 +116,8 @@ const AssetManagement: React.FC = () => {
 
   return (
     <Card>
-      <Space 
-        style={{ 
+      <Space
+        style={{
           marginBottom: 16,
           width: '100%',
           justifyContent: 'flex-end'

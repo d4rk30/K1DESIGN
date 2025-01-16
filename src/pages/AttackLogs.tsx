@@ -934,7 +934,7 @@ const AttackLogs: React.FC = () => {
                     </div>
                 }
                 placement="right"
-                width="clamp(800px, 50%, 100%)"
+                width="clamp(1000px, 50%, 100%)"
                 onClose={() => setSelectedLog(null)}
                 open={!!selectedLog}
             >

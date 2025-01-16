@@ -374,7 +374,7 @@ const ExternalLogs: React.FC = () => {
             {
                 title: '目的IP',
                 dataIndex: 'destinationIp',
-                width: 220,
+                width: 240,
                 ellipsis: true,
                 render: (ip: string) => (
                     <div style={{ display: 'flex', alignItems: 'center', width: '100%' }}>
@@ -682,9 +682,14 @@ const ExternalLogs: React.FC = () => {
             />
 
             {/* 筛选和表格区域 */}
-            <Card style={{ backgroundColor: 'white' }}>
+            <Card
+                style={{
+                    backgroundColor: 'white',
+                    position: 'relative',
+                    zIndex: 2
+                }}
+            >
                 {renderFilterForm()}
-                {/* 条件渲染按钮 */}
                 {selectedRows.length > 0 && (
                     <div style={{ marginBottom: 16 }}>
                         <Space>
@@ -694,22 +699,31 @@ const ExternalLogs: React.FC = () => {
                     </div>
                 )}
 
-                <Table
-                    columns={columns}
-                    dataSource={filteredData}
-                    rowSelection={{
-                        selectedRowKeys: selectedRows.map(row => row.key),
-                        onChange: (_, rows) => setSelectedRows(rows),
+                <div
+                    style={{
+                        position: 'relative',
+                        zIndex: 1
                     }}
-                    scroll={{ x: 1 }}
-                    pagination={{
-                        total: filteredData.length,
-                        pageSize: 10,
-                        showSizeChanger: true,
-                        showQuickJumper: true,
-                        showTotal: (total) => `共 ${total} 条记录`,
-                    }}
-                />
+                >
+                    <Table
+                        columns={columns}
+                        dataSource={filteredData}
+                        rowSelection={{
+                            selectedRowKeys: selectedRows.map(row => row.key),
+                            onChange: (_, rows) => setSelectedRows(rows),
+                            columnWidth: 50
+                        }}
+                        scroll={{ x: 1820 }}
+                        pagination={{
+                            total: filteredData.length,
+                            pageSize: 10,
+                            showSizeChanger: true,
+                            showQuickJumper: true,
+                            showTotal: (total) => `共 ${total} 条记录`,
+                        }}
+                        className="external-logs-table"
+                    />
+                </div>
             </Card>
 
             {/* 添加 IP收藏夹抽屉组件 */}
