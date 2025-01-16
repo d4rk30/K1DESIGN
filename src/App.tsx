@@ -18,6 +18,7 @@ import AssetManagement from './pages/AssetManagement';
 import AssetList from './pages/AssetList';
 import SyslogConfig from './pages/SyslogConfig';
 import PasswordPolicy from './pages/PasswordPolicy';
+import AttackLogs from './pages/AttackLogs';
 import dayjs from 'dayjs';
 import 'dayjs/locale/zh-cn';
 
@@ -32,6 +33,7 @@ const App: React.FC = () => {
           <Route path="/" element={<MainLayout />}>
             <Route index element={<Navigate to="/home" replace />} />
             <Route path="dashboard" element={<Dashboard />} />
+            <Route path="attack-logs" element={<AttackLogs />} />
             <Route path="license" element={<License />} />
             <Route path="anti-mapping-logs" element={<AntiMappingLog />} />
             <Route path="anti-mapping-sources" element={<AntiMappingSources />} />

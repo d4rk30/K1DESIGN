@@ -369,6 +369,13 @@ const MainLayout = () => {
     const renderAntiMappingControls = () => {
         const pathname = location.pathname.substring(1);
         const antiMappingPages = [
+            'attack-logs',
+            'attack-ip-analysis',
+            'attacked-ip-analysis',
+            'external-monitor',
+            'external-logs',
+            'controlled-host',
+            'external-target',
             'anti-mapping-logs',
             'anti-mapping-sources',
             'anti-mapping-assets'

@@ -319,7 +319,7 @@ const AntiMappingAssets: React.FC = () => {
                         <Form.Item style={{ marginBottom: 0 }}>
                             <Space>
                                 <Button type="primary" htmlType="submit" icon={<SearchOutlined />}>
-                                    查询
+                                    搜索
                                 </Button>
                                 <Button icon={<ReloadOutlined />} onClick={handleReset}>
                                     重置

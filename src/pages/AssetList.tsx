@@ -334,7 +334,7 @@ const AssetList: React.FC = () => {
                 <Form.Item style={{ marginBottom: 0 }}>
                     <Space>
                         <Button type="primary" htmlType="submit" icon={<SearchOutlined />}>
-                            查询
+                            搜索
                         </Button>
                         <Button onClick={handleReset} icon={<ReloadOutlined />}>
                             重置
