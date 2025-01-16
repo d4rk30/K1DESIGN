@@ -3,10 +3,10 @@ import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { Card, Table, Button, Space, Form, Row, Col, Modal, message, Typography, Tag, Drawer, Input, InputNumber, Radio, Empty, Tabs } from 'antd';
 import { StarOutlined, StarFilled, SearchOutlined, ReloadOutlined, SaveOutlined, ExportOutlined, DeleteOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
-import AttackTrendCard from '@/components/AttackTrendCard';
 import LabelSelect from '@/components/LabelSelect';
 import LabelInput from '@/components/LabelInput';
 import ExternalPathVisualization from '@/components/ExternalPathVisualization';
+import ExternalTrendCard from '@/components/ExternalTrendCard';
 
 // 2. 类型定义
 // 定义筛选条件的类型
@@ -383,8 +383,8 @@ const ExternalLogs: React.FC = () => {
                                 {ip}
                             </Typography.Text>
                             {Math.random() > 0.5 && (
-                                <Tag 
-                                    style={{ 
+                                <Tag
+                                    style={{
                                         color: '#722ed1',
                                         backgroundColor: 'rgba(114, 46, 209, 0.1)',
                                         border: 'none',
@@ -659,27 +659,25 @@ const ExternalLogs: React.FC = () => {
     // 返回JSX
     return (
         <div>
-            <AttackTrendCard
+            <ExternalTrendCard
                 trendData={[
-                    { date: '2025年1月7日', high: 934, medium: 1498, low: 3065 },
-                    { date: '2025年1月8日', high: 856, medium: 1389, low: 2987 },
-                    { date: '2025年1月9日', high: 912, medium: 1456, low: 3123 },
-                    { date: '2025年1月10日', high: 934, medium: 1498, low: 3065 },
-                    { date: '2025年1月11日', high: 856, medium: 1389, low: 2987 },
-                    { date: '2025年1月12日', high: 912, medium: 1456, low: 3123 },
-                    { date: '2025年1月13日', high: 934, medium: 1498, low: 3065 },
+                    { date: '1月9日', count: 298 },
+                    { date: '1月10日', count: 432 },
+                    { date: '1月11日', count: 432 },
+                    { date: '1月12日', count: 634 },
+                    { date: '1月13日', count: 1234 }
                 ]}
                 intelTypeData={[
-                    { type: '注入攻击', count: 3567, percentage: 35.67 },
-                    { type: 'XSS攻击', count: 2845, percentage: 28.45 },
-                    { type: '暴力破解', count: 1789, percentage: 17.89 },
-                    { type: '僵尸网络', count: 1234, percentage: 12.34 },
-                    { type: '漏洞利用', count: 565, percentage: 5.65 },
-                    { type: '其他攻击', count: 432, percentage: 4.32 },
-                    { type: 'SQL注入', count: 298, percentage: 2.98 },
-                    { type: '命令注入', count: 256, percentage: 2.56 },
-                    { type: '文件包含', count: 189, percentage: 1.89 },
-                    { type: '目录遍历', count: 145, percentage: 1.45 }
+                    { type: '注入攻击', count: 3567 },
+                    { type: 'XSS攻击', count: 2845 },
+                    { type: '暴力破解', count: 1789 },
+                    { type: '僵尸网络', count: 1234 },
+                    { type: '漏洞利用', count: 565 },
+                    { type: '其他攻击', count: 432 },
+                    { type: 'SQL注入', count: 298 },
+                    { type: '命令注入', count: 256 },
+                    { type: '文件包含', count: 189 },
+                    { type: '目录遍历', count: 145 }
                 ]}
             />
 

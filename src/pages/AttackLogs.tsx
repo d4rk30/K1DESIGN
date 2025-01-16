@@ -123,6 +123,30 @@ const generateMockData = (): AttackLog[] => {
     // 生成一个随机的IP地址，格式为 "x.x.x.x"
     const getRandomIp = () => Array.from({ length: 4 }, () => getRandomNumber(0, 255)).join('.');
 
+    // 添加名称脱敏处理函数
+    const maskOrganizationName = (name: string) => {
+        if (name.length <= 2) return name;
+        return name.charAt(0) + '*'.repeat(name.length - 2) + name.charAt(name.length - 1);
+    };
+
+    const organizations = [
+        '中国移动集团',
+        '华为技术有限公司',
+        '清华大学',
+        '北京协和医院',
+        '中国石油集团',
+        '阿里巴巴集团',
+        '浙江大学',
+        '四川省人民医院',
+        '中国建设银行',
+        '腾讯科技集团',
+        '复旦大学',
+        '北京大学人民医院',
+        '中国电信集团',
+        '中国联通集团',
+        '上海交通大学'
+    ];
+
     // 首先生成一条 DNS 类型的记录
     const dnsRecord: AttackLog = {
         key: '1',
@@ -135,7 +159,7 @@ const generateMockData = (): AttackLog[] => {
         threatLevel: getRandomItem(MOCK_DATA_CONFIG.threatLevels),
         action: getRandomItem(MOCK_DATA_CONFIG.actions),
         intelSource: getRandomItem(MOCK_DATA_CONFIG.intelSources),
-        lastAttackUnit: getRandomNumber(0, 1) ? `${getRandomNumber(1, 24)}小时前` : `${getRandomNumber(1, 60)}分钟前`,
+        lastAttackUnit: maskOrganizationName(getRandomItem(organizations)),
         requestInfo: {
             protocol: 'dns',
             url: '',
@@ -194,7 +218,7 @@ const generateMockData = (): AttackLog[] => {
         threatLevel: getRandomItem(MOCK_DATA_CONFIG.threatLevels),
         action: getRandomItem(MOCK_DATA_CONFIG.actions),
         intelSource: getRandomItem(MOCK_DATA_CONFIG.intelSources),
-        lastAttackUnit: getRandomNumber(0, 1) ? `${getRandomNumber(1, 24)}小时前` : `${getRandomNumber(1, 60)}分钟前`,
+        lastAttackUnit: maskOrganizationName(getRandomItem(organizations)),
         requestInfo: {
             protocol: ['http', 'https', 'ftp', 'smtp'][Math.floor(Math.random() * 4)],
             url: `example.com/api/endpoint/${Math.floor(Math.random() * 1000)}`,
