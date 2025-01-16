@@ -39,7 +39,7 @@ const LabelRangePicker: React.FC<LabelRangePickerProps> = ({
                 onChange={onChange}
                 className={`${styles.picker} ${className || ''}`}
                 presets={presets}
-                bordered={false}
+                variant="borderless"
             />
         </div>
     );

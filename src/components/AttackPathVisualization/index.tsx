@@ -4,68 +4,47 @@ import { StopOutlined } from '@ant-design/icons';
 import styles from './style.module.less';
 import { US, CN, GB, FR, DE } from 'country-flag-icons/react/3x2';
 
-interface AntiMappingPathVisualizationProps {
-    attackerInfo?: {
+interface AttackPathVisualProps {
+    attackerInfo: {
         ip: string;
-        port: string;
         time: string;
         location: string;
-        deviceType: string;
-        browserType: string;
-        OSType: string;
     };
-    deviceInfo?: {
-        protocolType: string;
-        protectionRule: string;
-        protectionType: string;
-        reverseMappingType: string;
+    deviceInfo: {
+        intelType: string;
+        rule: string;
+        intelSource: string;
+        localCalibration?: {
+            status: string;
+            result: string;
+            time: string;
+        };
     };
-    victimInfo?: {
+    victimInfo: {
         ip: string;
         port: string;
         assetGroup: string;
     };
-    threatLevel?: string;
-    action?: string;
+    threatLevel: string;
+    action: string;
+    onAddToBlacklist?: (ip: string) => void;
+    onAddToWhitelist?: (ip: string) => void;
 }
 
-const defaultData = {
-    attackerInfo: {
-        ip: '10.21.23.4',
-        port: '45678',
-        time: '2024-03-21 15:30:45',
-        location: '美国｜纽约',
-        deviceType: '移动设备',
-        browserType: 'Chrome Mobile 121.0',
-        OSType: 'Windows 11'
-    },
-    deviceInfo: {
-        protocolType: 'HTTP',
-        protectionRule: 'Default_v4',
-        protectionType: '常用爬虫工具',
-        reverseMappingType: '爬虫类型工具'
-    },
-    victimInfo: {
-        ip: '10.0.2.15',
-        port: '443',
-        assetGroup: '核心业务系统'
-    },
-    threatLevel: '中级',
-    action: '阻断'
-};
-
-const AntiMappingPathVisualization: React.FC<AntiMappingPathVisualizationProps> = ({
-    attackerInfo = defaultData.attackerInfo,
-    deviceInfo = defaultData.deviceInfo,
-    victimInfo = defaultData.victimInfo,
-    threatLevel = defaultData.threatLevel,
-    action = defaultData.action
+const AttackPathVisual: React.FC<AttackPathVisualProps> = ({
+    attackerInfo,
+    deviceInfo,
+    victimInfo,
+    threatLevel,
+    action,
+    onAddToBlacklist,
+    onAddToWhitelist
 }) => {
     const getThreatLevelColor = (level: string) => {
         const colors: Record<string, string> = {
-            '高级': 'red',
-            '中级': 'orange',
-            '低级': 'green'
+            '高': 'red',
+            '中': 'orange',
+            '低': 'green'
         };
         return colors[level] || 'blue';
     };
@@ -77,7 +56,7 @@ const AntiMappingPathVisualization: React.FC<AntiMappingPathVisualizationProps> 
     };
 
     const getFlagComponent = (location: string) => {
-        const country = location.split(/[|｜]/)[0].trim();
+        const country = location.split('|')[0].trim();
         const componentMap: { [key: string]: any } = {
             '美国': US,
             '中国': CN,
@@ -120,10 +99,23 @@ const AntiMappingPathVisualization: React.FC<AntiMappingPathVisualizationProps> 
                     </div>
                     <div className={styles.infoWrapper}>
                         <Descriptions column={1} size="small">
-                            <Descriptions.Item label="源IP">
-                                <Typography.Text copyable>{attackerInfo.ip}</Typography.Text>
+                            <Descriptions.Item label="攻击IP">
+                                <Space>
+                                    <Typography.Text copyable>{attackerInfo.ip}</Typography.Text>
+                                    <Typography.Link 
+                                        onClick={() => onAddToBlacklist?.(attackerInfo.ip)}
+                                        style={{ fontSize: '14px' }}
+                                    >
+                                        加黑
+                                    </Typography.Link>
+                                    <Typography.Link 
+                                        onClick={() => onAddToWhitelist?.(attackerInfo.ip)}
+                                        style={{ fontSize: '14px' }}
+                                    >
+                                        加白
+                                    </Typography.Link>
+                                </Space>
                             </Descriptions.Item>
-                            <Descriptions.Item label="源端口">{attackerInfo.port}</Descriptions.Item>
                             <Descriptions.Item label="时间">{attackerInfo.time}</Descriptions.Item>
                             <Descriptions.Item label="归属地">
                                 <Space>
@@ -145,8 +137,26 @@ const AntiMappingPathVisualization: React.FC<AntiMappingPathVisualizationProps> 
                     </div>
                     <div className={styles.infoWrapper}>
                         <Descriptions column={1} size="small">
-                            <Descriptions.Item label="协议类型">{deviceInfo.protocolType}</Descriptions.Item>
-                            <Descriptions.Item label="防护策略">{deviceInfo.protectionRule}</Descriptions.Item>
+                            <Descriptions.Item label="情报类型">{deviceInfo.intelType}</Descriptions.Item>
+                            <Descriptions.Item label="命中规则">{deviceInfo.rule}</Descriptions.Item>
+                            <Descriptions.Item label="命中情报源">{deviceInfo.intelSource}</Descriptions.Item>
+                            {deviceInfo.localCalibration && (
+                                <>
+                                    <Descriptions.Item label="二次本地校准状态">
+                                        <Tag color={deviceInfo.localCalibration.status === '已完成' ? 'success' : 'processing'}>
+                                            {deviceInfo.localCalibration.status}
+                                        </Tag>
+                                    </Descriptions.Item>
+                                    <Descriptions.Item label="校准结果">
+                                        <Tag color={deviceInfo.localCalibration.result === '确认为威胁' ? 'error' : 'success'}>
+                                            {deviceInfo.localCalibration.result}
+                                        </Tag>
+                                    </Descriptions.Item>
+                                    <Descriptions.Item label="校准时间">
+                                        {deviceInfo.localCalibration.time}
+                                    </Descriptions.Item>
+                                </>
+                            )}
                         </Descriptions>
                     </div>
                 </div>
@@ -158,10 +168,10 @@ const AntiMappingPathVisualization: React.FC<AntiMappingPathVisualizationProps> 
                     </div>
                     <div className={styles.infoWrapper}>
                         <Descriptions column={1} size="small">
-                            <Descriptions.Item label="目的IP">
+                            <Descriptions.Item label="被攻击IP">
                                 <Typography.Text copyable>{victimInfo.ip}</Typography.Text>
                             </Descriptions.Item>
-                            <Descriptions.Item label="目的端口">{victimInfo.port}</Descriptions.Item>
+                            <Descriptions.Item label="被攻击端口">{victimInfo.port}</Descriptions.Item>
                             <Descriptions.Item label="所属资产组">{victimInfo.assetGroup}</Descriptions.Item>
                         </Descriptions>
                     </div>
@@ -171,4 +181,4 @@ const AntiMappingPathVisualization: React.FC<AntiMappingPathVisualizationProps> 
     );
 };
 
-export default AntiMappingPathVisualization; 
+export default AttackPathVisual; 

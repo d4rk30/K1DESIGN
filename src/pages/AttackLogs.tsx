@@ -1,6 +1,6 @@
 // 1. 引入
-import React, { useState, useEffect, useMemo } from 'react';
-import { Card, Table, Button, Space, Form, Row, Col, Modal, message, Typography, Tag, Drawer, Input } from 'antd';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import { Card, Table, Button, Space, Form, Row, Col, Modal, message, Typography, Tag, Drawer, Input, InputNumber, Radio, Empty, Tabs, Descriptions } from 'antd';
 import { StarOutlined, StarFilled, SearchOutlined, ReloadOutlined, SaveOutlined, ExportOutlined, DeleteOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import AttackTrendCard from '@/components/AttackTrendCard';
@@ -8,6 +8,7 @@ import LabelSelect from '@/components/LabelSelect';
 import LabelInput from '@/components/LabelInput';
 import LabelCascader from '@/components/LabelCascader';
 import { US, CN, GB, FR, DE } from 'country-flag-icons/react/3x2';
+import AttackPathVisualization from '@/components/AttackPathVisualization';
 
 // 2. 类型定义
 // 定义筛选条件的类型
@@ -83,22 +84,30 @@ interface AttackLog {
     attackType: string;
     malformedPacketLength: number;
     attackFeatures: string;
+    aiDetection: 'hit' | 'miss';
   };
+}
+
+// 定义时间单位类型
+interface TimeUnit {
+  label: string;
+  value: string;
+  multiplier: number;
 }
 
 // 4. Mock数据和常量
 const MOCK_DATA_CONFIG = {
   locations: [
-    '中国|北京',
-    '中国|上海',
-    '中国|广州',
-    '中国|深圳',
-    '中国|杭州',
-    '美国|纽约',
-    '美国|洛杉矶',
-    '英国|伦敦',
-    '法国|巴黎',
-    '德国|柏林'
+    '中国 | 北京',
+    '中国 | 上海',
+    '中国 | 广州',
+    '中国 | 深圳',
+    '中国 | 杭州',
+    '美国 | 纽约',
+    '美国 | 洛杉矶',
+    '英国 | 伦敦',
+    '法国 | 巴黎',
+    '德国 | 柏林'
   ],
   intelTypes: ['僵尸网络', '恶意软件', 'DDoS攻击', '漏洞利用', '暴力破解', '钓鱼攻击'],
   threatLevels: ['高危', '中危', '低危'],
@@ -114,8 +123,68 @@ const generateMockData = (): AttackLog[] => {
   // 生成一个随机的IP地址，格式为 "x.x.x.x"
   const getRandomIp = () => Array.from({ length: 4 }, () => getRandomNumber(0, 255)).join('.');
 
-  return Array.from({ length: 100 }, (_, index) => ({
-    key: String(index + 1),
+  // 首先生成一条 DNS 类型的记录
+  const dnsRecord: AttackLog = {
+    key: '1',
+    time: dayjs().subtract(getRandomNumber(0, 24), 'hour').format('YYYY-MM-DD HH:mm:ss'),
+    attackIp: getRandomIp(),
+    location: getRandomItem(MOCK_DATA_CONFIG.locations),
+    targetIp: `192.168.${getRandomNumber(0, 255)}.${getRandomNumber(0, 255)}`,
+    targetPort: '53', // DNS 默认端口
+    intelType: '僵尸网络', // 或其他类型
+    threatLevel: getRandomItem(MOCK_DATA_CONFIG.threatLevels),
+    action: getRandomItem(MOCK_DATA_CONFIG.actions),
+    intelSource: getRandomItem(MOCK_DATA_CONFIG.intelSources),
+    lastAttackUnit: getRandomNumber(0, 1) ? `${getRandomNumber(1, 24)}小时前` : `${getRandomNumber(1, 60)}分钟前`,
+    requestInfo: {
+      protocol: 'dns',
+      url: '',
+      dnsName: `subdomain${getRandomNumber(1, 100)}.example.com`,
+      headers: {
+        'User-Agent': 'DNS Client',
+        'Accept': '*/*',
+        'Content-Type': 'application/dns-message',
+        'X-Forwarded-For': getRandomIp(),
+        'Host': 'dns.example.com',
+        'Connection': 'keep-alive',
+        'Accept-Encoding': 'gzip, deflate, br',
+        'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
+      },
+      body: {
+        payload: 'Base64编码的DNS请求内容...',
+        size: `${getRandomNumber(50, 200)}bytes`,
+        type: 'DNS查询',
+        timestamp: new Date().toISOString()
+      }
+    },
+    responseInfo: {
+      headers: {
+        'Content-Type': 'application/dns-message',
+        'Server': 'DNS Server/1.0',
+        'Date': new Date().toUTCString(),
+        'Content-Length': String(getRandomNumber(100, 500))
+      },
+      statusCode: 200,
+      body: {
+        status: 200,
+        message: 'DNS Response',
+        data: 'Base64编码的DNS响应内容...'
+      }
+    },
+    localVerification: {
+      ruleName: 'DNS异常检测',
+      protocolNumber: '323-2',
+      protocolType: 'DNS',
+      attackType: 'DNS隧道攻击',
+      malformedPacketLength: getRandomNumber(100, 1000),
+      attackFeatures: '特征1：异常DNS查询',
+      aiDetection: Math.random() < 0.5 ? 'hit' : 'miss' as 'hit' | 'miss'
+    }
+  };
+
+  // 然后生成剩余的随机记录
+  const remainingRecords = Array.from({ length: 99 }, (_, index) => ({
+    key: String(index + 2),
     time: dayjs().subtract(getRandomNumber(0, 24), 'hour').format('YYYY-MM-DD HH:mm:ss'),
     attackIp: getRandomIp(),
     location: getRandomItem(MOCK_DATA_CONFIG.locations),
@@ -127,14 +196,14 @@ const generateMockData = (): AttackLog[] => {
     intelSource: getRandomItem(MOCK_DATA_CONFIG.intelSources),
     lastAttackUnit: getRandomNumber(0, 1) ? `${getRandomNumber(1, 24)}小时前` : `${getRandomNumber(1, 60)}分钟前`,
     requestInfo: {
-      protocol: ['http', 'https', 'dns', 'ftp', 'smtp'][Math.floor(Math.random() * 5)],
+      protocol: ['http', 'https', 'ftp', 'smtp'][Math.floor(Math.random() * 4)],
       url: `example.com/api/endpoint/${Math.floor(Math.random() * 1000)}`,
       dnsName: `subdomain${Math.floor(Math.random() * 100)}.example.com`,
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
         'Accept': 'application/json',
         'Content-Type': 'application/json',
-        'X-Forwarded-For': `${Math.floor(Math.random() * 256)}.${Math.floor(Math.random() * 256)}.${Math.floor(Math.random() * 256)}.${Math.floor(Math.random() * 256)}`,
+        'X-Forwarded-For': getRandomIp(),
         'Host': 'example.com',
         'Connection': 'keep-alive',
         'Accept-Encoding': 'gzip, deflate, br',
@@ -167,9 +236,13 @@ const generateMockData = (): AttackLog[] => {
       protocolType: 'HTTPS',
       attackType: ['SQL注入', 'XSS攻击', '命令注入', 'WebShell'][Math.floor(Math.random() * 4)],
       malformedPacketLength: Math.floor(Math.random() * 1000),
-      attackFeatures: ['特征1：异常字符串', '特征2：恶意代码片段', '特征3：非法请求参数'][Math.floor(Math.random() * 3)]
+      attackFeatures: ['特征1：异常字符串', '特征2：恶意代码片段', '特征3：非法请求参数'][Math.floor(Math.random() * 3)],
+      aiDetection: Math.random() < 0.5 ? 'hit' : 'miss' as 'hit' | 'miss'
     }
   }));
+
+  // 将 DNS 记录和其他记录合并
+  return [dnsRecord, ...remainingRecords];
 };
 
 const FILTER_OPTIONS = {
@@ -190,6 +263,18 @@ const getFlagComponent = (country: string) => {
   return componentMap[country];
 };
 
+// 在文件顶部其他辅助函数旁边添加
+const getProtocolColor = (protocol: string) => {
+  const colors: Record<string, string> = {
+    'http': 'blue',
+    'https': 'green',
+    'dns': 'orange',
+    'ftp': 'purple',
+    'smtp': 'cyan',
+  };
+  return colors[protocol?.toLowerCase()] || 'default';
+};
+
 // 5. 组件定义
 const AttackLogs: React.FC = () => {
   // 状态定义
@@ -204,9 +289,14 @@ const AttackLogs: React.FC = () => {
     isIpDrawerVisible: false,
     isChartsExpanded: false,
   });
-  const [setSelectedLog] = useState<any>(null);
+  const [selectedLog, setSelectedLog] = useState<any>(null);
   const [favoriteIps, setFavoriteIps] = useState<string[]>([]);
   const [mockData, setMockData] = useState<AttackLog[]>([]);
+  const [timeModalVisible, setTimeModalVisible] = useState(false);
+  const [listType, setListType] = useState<'black' | 'white'>('black');
+  const [duration, setDuration] = useState<number>(0);
+  const [timeUnit, setTimeUnit] = useState<string>('hour');
+  const prevDurationRef = useRef<number>(0);
 
   const locationOptions = [
     {
@@ -398,7 +488,7 @@ const AttackLogs: React.FC = () => {
           const colors = {
             '高危': 'red',
             '中危': 'orange',
-            '低危': 'blue',
+            '低危': 'green',
           };
           return <Tag color={colors[text as keyof typeof colors]}>{text}</Tag>;
         },
@@ -501,6 +591,42 @@ const AttackLogs: React.FC = () => {
   // 筛选操作后的模拟数据
   const filteredData = filterData(mockData); // 使用保存的mockData
 
+  // 添加时间单位常量
+  const timeUnits: TimeUnit[] = [
+    { label: '分钟', value: 'minute', multiplier: 60 },
+    { label: '小时', value: 'hour', multiplier: 3600 },
+    { label: '天', value: 'day', multiplier: 86400 },
+    { label: '月', value: 'month', multiplier: 2592000 },
+    { label: '永久', value: 'forever', multiplier: -1 }
+  ];
+
+  // 优化时间单位切换的处理函数
+  const handleTimeUnitChange = useCallback((value: string | number) => {
+    const newTimeUnit = value.toString();
+
+    if (newTimeUnit === 'forever') {
+      prevDurationRef.current = duration;
+    } else if (timeUnit === 'forever') {
+      prevDurationRef.current = duration;
+    }
+
+    setTimeUnit(newTimeUnit);
+  }, [timeUnit, duration]);
+
+  const handleConfirmAddToList = () => {
+    const selectedUnit = timeUnits.find(unit => unit.value === timeUnit);
+    let totalSeconds = 0;
+
+    if (selectedUnit?.value === 'forever') {
+      totalSeconds = -1;
+    } else if (selectedUnit) {
+      totalSeconds = duration * selectedUnit.multiplier;
+    }
+
+    message.success(`已将IP ${selectedLog?.attackIp} 添加到${listType === 'black' ? '黑' : '白'}名单，时长：${totalSeconds === -1 ? '永久' : `${duration}${selectedUnit?.label}`}`);
+    setTimeModalVisible(false);
+  };
+
   // 渲染函数
   const renderFilterForm = () => (
     <Form form={form} onFinish={handleFilter} style={{ marginBottom: 24 }}>
@@ -601,14 +727,25 @@ const AttackLogs: React.FC = () => {
     <div>
       <AttackTrendCard
         trendData={[
-          { date: '2024年8月7日', high: 934, medium: 1498, low: 3065 },
-          { date: '2024年8月6日', high: 856, medium: 1389, low: 2987 },
-          { date: '2024年8月5日', high: 912, medium: 1456, low: 3123 }
+          { date: '2025年1月7日', high: 934, medium: 1498, low: 3065 },
+          { date: '2025年1月8日', high: 856, medium: 1389, low: 2987 },
+          { date: '2025年1月9日', high: 912, medium: 1456, low: 3123 },
+          { date: '2025年1月10日', high: 934, medium: 1498, low: 3065 },
+          { date: '2025年1月11日', high: 856, medium: 1389, low: 2987 },
+          { date: '2025年1月12日', high: 912, medium: 1456, low: 3123 },
+          { date: '2025年1月13日', high: 934, medium: 1498, low: 3065 },
         ]}
         intelTypeData={[
-          { type: '注入攻击', count: 2345, percentage: 23.45 },
-          { type: 'XSS攻击', count: 1234, percentage: 12.34 },
-          { type: '暴力破解', count: 987, percentage: 9.87 }
+          { type: '注入攻击', count: 3567, percentage: 35.67 },
+          { type: 'XSS攻击', count: 2845, percentage: 28.45 },
+          { type: '暴力破解', count: 1789, percentage: 17.89 },
+          { type: '僵尸网络', count: 1234, percentage: 12.34 },
+          { type: '漏洞利用', count: 565, percentage: 5.65 },
+          { type: '其他攻击', count: 432, percentage: 4.32 },
+          { type: 'SQL注入', count: 298, percentage: 2.98 },
+          { type: '命令注入', count: 256, percentage: 2.56 },
+          { type: '文件包含', count: 189, percentage: 1.89 },
+          { type: '目录遍历', count: 145, percentage: 1.45 }
         ]}
       />
 
@@ -679,8 +816,8 @@ const AttackLogs: React.FC = () => {
               title: '操作',
               key: 'action',
               render: () => (
-                <Button 
-                  type="link" 
+                <Button
+                  type="link"
                   danger
                 >
                   删除
@@ -695,7 +832,7 @@ const AttackLogs: React.FC = () => {
               type: '攻击IP'
             },
             {
-              key: '2', 
+              key: '2',
               ip: '10.0.0.123',
               type: '被攻击IP'
             },
@@ -737,6 +874,329 @@ const AttackLogs: React.FC = () => {
             />
           </Form.Item>
         </Form>
+      </Modal>
+
+      <Drawer
+        title={
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <Typography.Title level={4} style={{ margin: 0, fontSize: '18px' }}>攻击日志详情</Typography.Title>
+          </div>
+        }
+        placement="right"
+        width="clamp(800px, 50%, 100%)"
+        onClose={() => setSelectedLog(null)}
+        open={!!selectedLog}
+      >
+        <Tabs
+          items={[
+            {
+              key: 'logInfo',
+              label: '日志信息',
+              children: (
+                <Space direction="vertical" style={{ width: '100%' }} size="large">
+                  <Card title="告警信息详情">
+                    <AttackPathVisualization
+                      attackerInfo={{
+                        ip: selectedLog?.attackIp || '',
+                        time: selectedLog?.time || '',
+                        location: selectedLog?.location || '',
+                      }}
+                      deviceInfo={{
+                        intelType: selectedLog?.intelType || '',
+                        rule: selectedLog?.rule || '未知规则',
+                        intelSource: selectedLog?.intelSource || '',
+                      }}
+                      victimInfo={{
+                        ip: selectedLog?.targetIp || '',
+                        port: selectedLog?.targetPort || '',
+                        assetGroup: selectedLog?.assetGroup || '默认资产组',
+                      }}
+                      threatLevel={selectedLog?.threatLevel || ''}
+                      action={selectedLog?.action || ''}
+                      onAddToBlacklist={(ip) => {
+                        setSelectedLog({ ...selectedLog, attackIp: ip });
+                        setListType('black');
+                        setTimeModalVisible(true);
+                      }}
+                      onAddToWhitelist={(ip) => {
+                        setSelectedLog({ ...selectedLog, attackIp: ip });
+                        setListType('white');
+                        setTimeModalVisible(true);
+                      }}
+                    />
+                  </Card>
+
+                  <Card title="请求地址">
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'space-between' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <Tag color={getProtocolColor(selectedLog?.requestInfo?.protocol || '')}>
+                          {selectedLog?.requestInfo?.protocol || 'unknown'}
+                        </Tag>
+                        <Typography.Text copyable>
+                          {selectedLog?.requestInfo?.url || selectedLog?.requestInfo?.dnsName || selectedLog?.targetIp || ''}
+                        </Typography.Text>
+                        {selectedLog?.responseInfo?.statusCode && (
+                          <Tag
+                            color={
+                              selectedLog.responseInfo.statusCode < 300 ? 'success' :
+                                selectedLog.responseInfo.statusCode < 400 ? 'warning' :
+                                  'error'
+                            }
+                          >
+                            {selectedLog.responseInfo.statusCode}
+                          </Tag>
+                        )}
+                      </div>
+                      <Button type="link">下载PCAP包</Button>
+                    </div>
+                  </Card>
+
+                  {(selectedLog?.dnsResponse || selectedLog?.requestInfo?.protocol === 'dns') && (
+                    <Card title="DNS响应">
+                      <Tabs
+                        items={[
+                          {
+                            key: 'header',
+                            label: '报文头',
+                            children: (
+                              <Descriptions bordered column={2} size="small">
+                                <Descriptions.Item label="报文标识">
+                                  {selectedLog?.dnsResponse?.header.id}
+                                </Descriptions.Item>
+                                <Descriptions.Item label="响应标志">
+                                  {selectedLog?.dnsResponse?.header.qr ? '响应' : '查询'}
+                                </Descriptions.Item>
+                                <Descriptions.Item label="操作码">
+                                  {selectedLog?.dnsResponse?.header.opcode}
+                                </Descriptions.Item>
+                                <Descriptions.Item label="权威应答">
+                                  {selectedLog?.dnsResponse?.header.aa ? '是' : '否'}
+                                </Descriptions.Item>
+                                <Descriptions.Item label="截断标志">
+                                  {selectedLog?.dnsResponse?.header.tc ? '是' : '否'}
+                                </Descriptions.Item>
+                                <Descriptions.Item label="期望递归">
+                                  {selectedLog?.dnsResponse?.header.rd ? '是' : '否'}
+                                </Descriptions.Item>
+                                <Descriptions.Item label="递归可用">
+                                  {selectedLog?.dnsResponse?.header.ra ? '是' : '否'}
+                                </Descriptions.Item>
+                                <Descriptions.Item label="返回码">
+                                  {selectedLog?.dnsResponse?.header.rcode}
+                                </Descriptions.Item>
+                                <Descriptions.Item label="问题数">
+                                  {selectedLog?.dnsResponse?.header.qdcount}
+                                </Descriptions.Item>
+                                <Descriptions.Item label="回答数">
+                                  {selectedLog?.dnsResponse?.header.ancount}
+                                </Descriptions.Item>
+                                <Descriptions.Item label="授权数">
+                                  {selectedLog?.dnsResponse?.header.nscount}
+                                </Descriptions.Item>
+                                <Descriptions.Item label="附加数">
+                                  {selectedLog?.dnsResponse?.header.arcount}
+                                </Descriptions.Item>
+                              </Descriptions>
+                            ),
+                          },
+                          {
+                            key: 'answers',
+                            label: '应答记录',
+                            children: (
+                              <Table
+                                dataSource={selectedLog?.dnsResponse?.answers.map((item: { name: string; type: string; ttl: number; data: string }, index: number) => ({ ...item, key: index }))}
+                                columns={[
+                                  { title: '域名', dataIndex: 'name', key: 'name' },
+                                  { title: '记录类型', dataIndex: 'type', key: 'type' },
+                                  { title: 'TTL', dataIndex: 'ttl', key: 'ttl' },
+                                  { title: '记录值', dataIndex: 'data', key: 'data' },
+                                ]}
+                                pagination={false}
+                                size="small"
+                              />
+                            ),
+                          },
+                          {
+                            key: 'authority',
+                            label: '权威记录',
+                            children: (
+                              <Table
+                                dataSource={selectedLog?.dnsResponse?.authority.map((item: { name: string; type: string; ttl: number; data: string }, index: number) => ({ ...item, key: index }))}
+                                columns={[
+                                  { title: '域名', dataIndex: 'name', key: 'name' },
+                                  { title: '记录类型', dataIndex: 'type', key: 'type' },
+                                  { title: 'TTL', dataIndex: 'ttl', key: 'ttl' },
+                                  { title: '记录值', dataIndex: 'data', key: 'data' },
+                                ]}
+                                pagination={false}
+                                size="small"
+                              />
+                            ),
+                          },
+                          {
+                            key: 'additional',
+                            label: '附加记录',
+                            children: (
+                              <Table
+                                dataSource={selectedLog?.dnsResponse?.additional.map((item: { name: string; type: string; ttl: number; data: string }, index: number) => ({ ...item, key: index }))}
+                                columns={[
+                                  { title: '域名', dataIndex: 'name', key: 'name' },
+                                  { title: '记录类型', dataIndex: 'type', key: 'type' },
+                                  { title: 'TTL', dataIndex: 'ttl', key: 'ttl' },
+                                  { title: '记录值', dataIndex: 'data', key: 'data' },
+                                ]}
+                                pagination={false}
+                                size="small"
+                              />
+                            ),
+                          },
+                        ]}
+                      />
+                    </Card>
+                  )}
+
+                  {selectedLog?.requestInfo && (
+                    <Card title="请求信息">
+                      <Tabs
+                        items={[
+                          {
+                            key: 'headers',
+                            label: '请求头',
+                            children: (
+                              <Table
+                                columns={[
+                                  { title: '名称', dataIndex: 'name', key: 'name' },
+                                  { title: '值', dataIndex: 'value', key: 'value' },
+                                ]}
+                                dataSource={Object.entries(selectedLog.requestInfo.headers).map(([key, value], index: number) => ({
+                                  key: index,
+                                  name: key,
+                                  value: value
+                                }))}
+                                pagination={false}
+                                size="small"
+                              />
+                            ),
+                          },
+                          {
+                            key: 'body',
+                            label: '请求体',
+                            children: (
+                              <pre style={{ whiteSpace: 'pre-wrap', wordWrap: 'break-word' }}>
+                                {selectedLog.requestInfo.body ? JSON.stringify(selectedLog.requestInfo.body, null, 2) : ''}
+                              </pre>
+                            ),
+                          },
+                          {
+                            key: 'params',
+                            label: '请求参数',
+                            children: <Empty description="暂无数据" />,
+                          },
+                        ]}
+                      />
+                    </Card>
+                  )}
+
+                  {selectedLog?.responseInfo && (
+                    <Card title="响应信息">
+                      <Tabs
+                        items={[
+                          {
+                            key: 'headers',
+                            label: '响应头',
+                            children: (
+                              <Table
+                                columns={[
+                                  { title: '名称', dataIndex: 'name', key: 'name' },
+                                  { title: '值', dataIndex: 'value', key: 'value' },
+                                ]}
+                                dataSource={Object.entries(selectedLog.responseInfo.headers).map(([key, value], index: number) => ({
+                                  key: index,
+                                  name: key,
+                                  value: value
+                                }))}
+                                pagination={false}
+                                size="small"
+                              />
+                            ),
+                          },
+                          {
+                            key: 'body',
+                            label: '响应体',
+                            children: (
+                              <pre style={{ whiteSpace: 'pre-wrap', wordWrap: 'break-word' }}>
+                                {selectedLog.responseInfo.body ? JSON.stringify(selectedLog.responseInfo.body, null, 2) : ''}
+                              </pre>
+                            ),
+                          },
+                        ]}
+                      />
+                    </Card>
+                  )}
+
+                  {selectedLog?.localVerification && (
+                    <Card title="二次本地校准">
+                      <Descriptions column={2}>
+                        <Descriptions.Item label="规则名称">{selectedLog.localVerification.ruleName}</Descriptions.Item>
+                        <Descriptions.Item label="规则号">{selectedLog.localVerification.protocolNumber}</Descriptions.Item>
+                        <Descriptions.Item label="协议类型">{selectedLog.localVerification.protocolType}</Descriptions.Item>
+                        <Descriptions.Item label="攻击类型">{selectedLog.localVerification.attackType}</Descriptions.Item>
+                        <Descriptions.Item label="畸形包长度">{selectedLog.localVerification.malformedPacketLength}</Descriptions.Item>
+                        <Descriptions.Item label="攻击特征">{selectedLog.localVerification.attackFeatures}</Descriptions.Item>
+                        <Descriptions.Item label="AI检测引擎">
+                          {selectedLog.localVerification.aiDetection === 'hit' ? '命中' : '未命中'}
+                        </Descriptions.Item>
+                      </Descriptions>
+                    </Card>
+                  )}
+                </Space>
+              ),
+            },
+            {
+              key: 'ipTrace',
+              label: 'IP溯源',
+              children: <Empty description="暂无数据" />,
+            },
+          ]}
+        />
+      </Drawer>
+
+      <Modal
+        title={`添加到${listType === 'black' ? '黑' : '白'}名单`}
+        open={timeModalVisible}
+        onOk={handleConfirmAddToList}
+        onCancel={() => setTimeModalVisible(false)}
+        okText="确认"
+        cancelText="取消"
+        centered
+        style={{ top: '20px' }}
+      >
+        <Space direction="vertical" style={{ width: '100%' }} size="large">
+          <div>
+            <Typography.Text>IP地址：{selectedLog?.attackIp}</Typography.Text>
+          </div>
+          <Space direction="vertical" size="middle" style={{ width: '100%' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <InputNumber
+                min={0}
+                value={duration}
+                onChange={(value) => setDuration(value || 0)}
+                style={{ flex: 1 }}
+                disabled={timeUnit === 'forever'}
+              />
+              <Radio.Group
+                value={timeUnit}
+                onChange={(e) => handleTimeUnitChange(e.target.value)}
+                optionType="button"
+                buttonStyle="solid"
+                options={timeUnits.map(unit => ({
+                  label: unit.label,
+                  value: unit.value
+                }))}
+              />
+            </div>
+          </Space>
+        </Space>
       </Modal>
     </div>
   );
