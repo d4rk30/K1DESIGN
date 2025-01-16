@@ -83,7 +83,7 @@ const CollapsedTrendDisplay: React.FC<{
   isFading: boolean;
 }> = ({ data, date, isFading }) => (
   <div className={`${styles.content} ${isFading ? styles['fade-out'] : ''}`}
-    style={{ display: 'flex', alignItems: 'center', gap: '32px' }}>
+    style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
     <span style={{ fontSize: '14px', color: '#666', marginRight: '8px' }}>{date}</span>
     {['high', 'medium', 'low'].map(level => (
       <Tag key={level}
@@ -102,7 +102,7 @@ const CollapsedIntelDisplay: React.FC<{
   isFading: boolean;
 }> = ({ data, startIndex, displayCount, isFading }) => (
   <div className={`${styles.content} ${isFading ? styles['fade-out'] : ''}`}
-    style={{ display: 'flex', gap: '48px', minWidth: 0, flex: 1 }}>
+    style={{ display: 'flex', gap: '1%', minWidth: 0, flex: 1 }}>
     {data.slice(startIndex, startIndex + displayCount).map((item, index) => (
       <div key={`${item.type}-${index}`}
         style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0, flexShrink: 0 }}>
@@ -141,7 +141,7 @@ const ExpandedTrendChart: React.FC<{
   // 计算最大值，并向上取整到最近的500的倍数
   const maxValue = Math.max(...data.map(item => Math.max(item.high, item.medium, item.low)));
   const roundedMax = Math.ceil(maxValue / 500) * 500;
-  
+
   const option = {
     ...CHART_CONFIG,
     legend: {

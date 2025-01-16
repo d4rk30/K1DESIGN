@@ -64,3 +64,43 @@ h2 {
 .ant-modal-header {
   margin-bottom: 16px !important;
 }
+
+/* 攻击日志表格样式 */
+.attack-logs-table {
+  position: relative;
+}
+
+.attack-logs-table .ant-table-container {
+  z-index: auto;
+}
+
+.attack-logs-table .ant-table-cell-fix-right {
+  background: #fff;
+}
+
+.attack-logs-table .ant-table-cell {
+  white-space: nowrap;
+}
+
+.attack-logs-table .ant-table-body {
+  overflow-y: auto !important;
+}
+
+.attack-logs-table .ant-table-header {
+  margin-bottom: 0 !important;
+  overflow: hidden !important;
+}
+
+.attack-logs-table .ant-table-sticky-scroll {
+  display: none !important;
+}
+
+.attack-logs-table .ant-table-cell-fix-left,
+.attack-logs-table .ant-table-cell-fix-right {
+  z-index: 2;
+}
+
+.attack-logs-table .ant-table-header .ant-table-cell-fix-left,
+.attack-logs-table .ant-table-header .ant-table-cell-fix-right {
+  z-index: 3;
+}

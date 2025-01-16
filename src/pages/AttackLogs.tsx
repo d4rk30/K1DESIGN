@@ -471,7 +471,7 @@ const AttackLogs: React.FC = () => {
             {
                 title: '归属地',
                 dataIndex: 'location',
-                width: 200,
+                width: 160,
                 ellipsis: true,
                 render: (text: string) => {
                     const country = text.split('|')[0].trim();
@@ -487,12 +487,22 @@ const AttackLogs: React.FC = () => {
             {
                 title: '被攻击IP',
                 dataIndex: 'targetIp',
-                width: 280,
                 render: (text: string) => (
-                    <Space>
-                        <Typography.Text copyable>{text}</Typography.Text>
-                        <Tag color="blue">内部资产</Tag>
-                    </Space>
+                    <div style={{ display: 'flex', alignItems: 'center', width: '100%' }}>
+                        <Button
+                            type="link"
+                            style={{ padding: 0, minWidth: 32, marginRight: 8 }}
+                            icon={favoriteIps.includes(text) ? <StarFilled style={{ color: '#faad14' }} /> : <StarOutlined />}
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                addToFavorites(text, 'target');
+                            }}
+                        />
+                        <Space>
+                            <Typography.Text copyable>{text}</Typography.Text>
+                            <Tag color="blue">内部资产</Tag>
+                        </Space>
+                    </div>
                 )
             },
             {
@@ -659,7 +669,7 @@ const AttackLogs: React.FC = () => {
     const renderFilterForm = () => (
         <Form form={form} onFinish={handleFilter} style={{ marginBottom: 24 }}>
             <Row gutter={[16, 16]}>
-                <Col span={6}>
+                <Col span={4}>
                     <Form.Item name="quickSearch" style={{ marginBottom: 0 }}>
                         <LabelSelect
                             label="快捷搜索"
@@ -668,7 +678,7 @@ const AttackLogs: React.FC = () => {
                         </LabelSelect>
                     </Form.Item>
                 </Col>
-                <Col span={6}>
+                <Col span={4}>
                     <Form.Item name="intelType" style={{ marginBottom: 0 }}>
                         <LabelSelect
                             label="情报类型"
@@ -678,7 +688,7 @@ const AttackLogs: React.FC = () => {
                         />
                     </Form.Item>
                 </Col>
-                <Col span={6}>
+                <Col span={4}>
                     <Form.Item name="intelSource" style={{ marginBottom: 0 }}>
                         <LabelSelect
                             label="情报源"
@@ -688,7 +698,7 @@ const AttackLogs: React.FC = () => {
                         />
                     </Form.Item>
                 </Col>
-                <Col span={6}>
+                <Col span={4}>
                     <Form.Item name="action" style={{ marginBottom: 0 }}>
                         <LabelSelect
                             label="处理动作"
@@ -698,7 +708,7 @@ const AttackLogs: React.FC = () => {
                         />
                     </Form.Item>
                 </Col>
-                <Col span={6}>
+                <Col span={4}>
                     <Form.Item name="attackIp" style={{ marginBottom: 0 }}>
                         <LabelInput
                             label="攻击IP"
@@ -707,7 +717,7 @@ const AttackLogs: React.FC = () => {
                         />
                     </Form.Item>
                 </Col>
-                <Col span={6}>
+                <Col span={4}>
                     <Form.Item name="targetIp" style={{ marginBottom: 0 }}>
                         <LabelInput
                             label="被攻击IP"
@@ -716,7 +726,7 @@ const AttackLogs: React.FC = () => {
                         />
                     </Form.Item>
                 </Col>
-                <Col span={6}>
+                <Col span={8}>
                     <Form.Item name="location" style={{ marginBottom: 0 }}>
                         <LabelCascader
                             label="归属地"
@@ -725,7 +735,7 @@ const AttackLogs: React.FC = () => {
                         />
                     </Form.Item>
                 </Col>
-                <Col span={6} style={{ display: 'flex', alignItems: 'flex-end' }}>
+                <Col span={8} style={{ display: 'flex', alignItems: 'flex-end' }}>
                     <Form.Item style={{ marginBottom: 0 }}>
                         <Space>
                             <Button type="primary" htmlType="submit" icon={<SearchOutlined />}>
@@ -778,7 +788,13 @@ const AttackLogs: React.FC = () => {
             />
 
             {/* 筛选和表格区域 */}
-            <Card style={{ backgroundColor: 'white' }}>
+            <Card
+                style={{
+                    backgroundColor: 'white',
+                    position: 'relative',
+                    zIndex: 1
+                }}
+            >
                 {renderFilterForm()}
                 {/* 条件渲染按钮 */}
                 {selectedRows.length > 0 && (
@@ -790,22 +806,29 @@ const AttackLogs: React.FC = () => {
                     </div>
                 )}
 
-                <Table
-                    columns={columns}
-                    dataSource={filteredData}
-                    rowSelection={{
-                        selectedRowKeys: selectedRows.map(row => row.key),
-                        onChange: (_, rows) => setSelectedRows(rows),
-                    }}
-                    scroll={{ x: true }}
-                    pagination={{
-                        total: filteredData.length,
-                        pageSize: 10,
-                        showSizeChanger: true,
-                        showQuickJumper: true,
-                        showTotal: (total) => `共 ${total} 条记录`,
-                    }}
-                />
+                <div style={{ position: 'relative' }}>
+                    <Table
+                        columns={columns}
+                        dataSource={filteredData}
+                        rowSelection={{
+                            selectedRowKeys: selectedRows.map(row => row.key),
+                            onChange: (_, rows) => setSelectedRows(rows),
+                            columnWidth: 50
+                        }}
+                        scroll={{
+                            x: 1820,
+                            scrollToFirstRowOnChange: true
+                        }}
+                        pagination={{
+                            total: filteredData.length,
+                            pageSize: 10,
+                            showSizeChanger: true,
+                            showQuickJumper: true,
+                            showTotal: (total) => `共 ${total} 条记录`,
+                        }}
+                        className="attack-logs-table"
+                    />
+                </div>
             </Card>
 
             {/* 添加 IP收藏夹抽屉组件 */}
