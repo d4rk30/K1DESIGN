@@ -107,7 +107,7 @@ const MainLayout = () => {
         },
         {
             key: 'threat-intelligence',
-            icon: <RadarChartOutlined />,
+            icon: <InfoCircleOutlined />,
             label: '威胁情报',
             children: [
                 {

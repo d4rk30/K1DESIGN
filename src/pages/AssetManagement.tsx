@@ -152,7 +152,6 @@ const AssetManagement: React.FC = () => {
         okText="确定"
         cancelText="取消"
         className="asset-group-modal"
-        centered
       >
         <Form
           form={form}

@@ -1347,7 +1347,6 @@ const ThreatIntelligenceDetail: React.FC = () => {
                 open={feedbackVisible}
                 onCancel={() => setFeedbackVisible(false)}
                 footer={null}
-                centered
                 width={480}
             >
                 <Form

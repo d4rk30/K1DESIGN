@@ -249,8 +249,9 @@ const PasswordPolicy: React.FC = () => {
         {
             title: '操作',
             key: 'action',
+            width: 150,
             render: (_: any, record: PolicyData) => (
-                <Space size="middle">
+                <Space>
                     <Button type="link" onClick={() => showEditModal(record)}>编辑</Button>
                     <Button type="link" danger onClick={() => handleDelete(record)}>删除</Button>
                 </Space>

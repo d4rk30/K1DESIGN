@@ -20,6 +20,7 @@ import SyslogConfig from './pages/SyslogConfig';
 import PasswordPolicy from './pages/PasswordPolicy';
 import AttackLogs from './pages/AttackLogs';
 import ExternalLogs from './pages/ExternalLogs';
+import BlackWhiteList from './pages/BlackWhiteList';
 import dayjs from 'dayjs';
 import 'dayjs/locale/zh-cn';
 
@@ -49,6 +50,7 @@ const App: React.FC = () => {
             <Route path="asset-management/:groupId" element={<AssetList />} />
             <Route path="syslog-config" element={<SyslogConfig />} />
             <Route path="external-logs" element={<ExternalLogs />} />
+            <Route path="blackwhite-list" element={<BlackWhiteList />} />
             <Route path="*" element={<UnderDevelopment />} />
           </Route>
         </Routes>

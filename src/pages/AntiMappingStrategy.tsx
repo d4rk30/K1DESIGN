@@ -64,7 +64,6 @@ const AntiMappingStrategy: React.FC = () => {
             title: '状态',
             dataIndex: 'status',
             key: 'status',
-            width: 120,
             render: (status: boolean, record) => (
                 <Switch
                     checked={status}
@@ -75,9 +74,9 @@ const AntiMappingStrategy: React.FC = () => {
         {
             title: '操作',
             key: 'action',
-            width: 240,
+            width: 230,
             render: (_, record) => (
-                <Space size="middle">
+                <Space>
                     <Button
                         type="link"
                         onClick={() => handleEdit(record)}

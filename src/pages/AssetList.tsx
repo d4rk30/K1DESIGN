@@ -397,7 +397,6 @@ const AssetList: React.FC = () => {
                 onCancel={handleCancel}
                 okText="确定"
                 cancelText="取消"
-                centered
             >
                 <Form
                     form={form}
@@ -531,7 +530,6 @@ const AssetList: React.FC = () => {
                 open={isImportModalVisible}
                 onCancel={handleImportCancel}
                 footer={null}
-                centered
             >
                 <div style={{ marginBottom: 16 }}>
                     <Dragger {...uploadProps}>
