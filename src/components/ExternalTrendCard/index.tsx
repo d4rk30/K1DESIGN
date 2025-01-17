@@ -64,8 +64,8 @@ const CollapsedTrendDisplay: React.FC<{
   isFading: boolean;
 }> = ({ data, date, isFading }) => (
   <div className={`${styles.content} ${isFading ? styles['fade-out'] : ''}`}
-    style={{ display: 'flex', alignItems: 'center', gap: '32px' }}>
-    <span style={{ fontSize: '14px', color: '#666', marginRight: '8px' }}>{date}</span>
+    style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
+    <span style={{ fontSize: '14px', color: '#666' }}>{date}</span>
     <Tag color="blue">攻击次数：{data.count}</Tag>
   </div>
 );
@@ -78,7 +78,7 @@ const CollapsedIntelDisplay: React.FC<{
   isFading: boolean;
 }> = ({ data, startIndex, displayCount, isFading }) => (
   <div className={`${styles.content} ${isFading ? styles['fade-out'] : ''}`}
-    style={{ display: 'flex', gap: '48px', minWidth: 0, flex: 1 }}>
+    style={{ display: 'flex', justifyContent: 'space-between', minWidth: 0, flex: 1, padding: '0 24px' }}>
     {data.slice(startIndex, startIndex + displayCount).map((item, index) => (
       <div key={`${item.type}-${index}`}
         style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0, flexShrink: 0 }}>
@@ -116,10 +116,10 @@ const ExpandedTrendChart: React.FC<{
 }> = ({ data }) => {
   const option = {
     grid: {
-      left: '0px',
-      right: '0px',
-      top: '16px',
-      bottom: '8px'
+      left: '48px',
+      right: '20px',
+      top: '30px',
+      bottom: '40px'
     },
     tooltip: {
       trigger: 'axis'
@@ -170,10 +170,10 @@ const ExpandedIntelChart: React.FC<{
 }> = ({ data }) => {
   const option = {
     grid: {
-      left: '0px',
-      right: '0px',
-      top: '16px',
-      bottom: '8px'
+      left: '48px',
+      right: '20px',
+      top: '30px',
+      bottom: '40px'
     },
     tooltip: {
       trigger: 'axis'
@@ -207,7 +207,7 @@ const ExpandedIntelChart: React.FC<{
   return (
     <>
       <div style={{ marginBottom: '8px' }}>
-        <span style={{ fontWeight: 500, fontSize: '14px', color: '#000000' }}>情报类型分布</span>
+        <span style={{ fontWeight: 500, fontSize: '14px', color: '#000000' }}>情报类型分布TOP10</span>
       </div>
       <ReactECharts
         option={option}
@@ -261,7 +261,7 @@ const ExternalTrendCard: React.FC<AttackTrendCardProps> = ({
                   flexShrink: 0
                 }}
               >
-                <span style={{ fontWeight: 500, fontSize: '14px', color: '#000000', marginRight: '8px' }}>攻击趋势</span>
+                <span style={{ fontWeight: 500, fontSize: '14px', color: '#000000', marginRight: '16px' }}>外联趋势</span>
                 <CollapsedTrendDisplay
                   data={trendData[0]}
                   date={trendData[0].date}
