@@ -449,9 +449,17 @@ const AttackLogs: React.FC = () => {
                         addToFavorites(ip, type);
                     }}
                 />
-                <Typography.Text copyable style={{ width: type === 'attack' ? 160 : 180 }} ellipsis>
+                <Typography.Link
+                    copyable
+                    style={{ width: type === 'attack' ? 160 : 180 }}
+                    ellipsis
+                    onClick={() => {
+                        const route = type === 'attack' ? '/attack-ip-analysis' : '/attacked-ip-analysis';
+                        window.location.href = `${route}?ip=${ip}`;
+                    }}
+                >
                     {ip}
-                </Typography.Text>
+                </Typography.Link>
             </div>
         );
 
@@ -499,7 +507,14 @@ const AttackLogs: React.FC = () => {
                             }}
                         />
                         <Space>
-                            <Typography.Text copyable>{text}</Typography.Text>
+                            <Typography.Link
+                                copyable
+                                onClick={() => {
+                                    window.location.href = `/attacked-ip-analysis?ip=${text}`;
+                                }}
+                            >
+                                {text}
+                            </Typography.Link>
                             <Tag color="blue">内部资产</Tag>
                         </Space>
                     </div>

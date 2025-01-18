@@ -135,6 +135,7 @@ const AssetManagement: React.FC = () => {
       <Table
         columns={columns}
         dataSource={data}
+        rowKey="id"
         pagination={{
           total: data.length,
           pageSize: 10,

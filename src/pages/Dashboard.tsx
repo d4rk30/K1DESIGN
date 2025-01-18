@@ -632,7 +632,7 @@ const TrendCard = ({
                             {title}
                         </span>
                     </div>
-                    <div 
+                    <div
                         onClick={handleViewDetails}
                         style={{
                             fontSize: '12px',
@@ -1463,7 +1463,7 @@ const Dashboard = () => {
                     <Col span={12}>
                         <ReactECharts
                             option={getChartOptions('line', {
-                                title: '资产暴露面趋势',
+                                title: '测绘流量趋势',
                                 xData: ['00:00', '03:00', '06:00', '09:00', '12:00', '15:00', '18:00', '21:00'],
                                 yData: [420, 400, 380, 450, 520, 480, 460, 500],
                                 lineColor: '#1890ff',
@@ -1497,7 +1497,7 @@ const Dashboard = () => {
                             WebkitBackgroundClip: 'text',
                             WebkitTextFillColor: 'transparent'
                         }}>
-                            暴露面分析
+                            威胁分析
                         </span>
                     </div>
                 </div>

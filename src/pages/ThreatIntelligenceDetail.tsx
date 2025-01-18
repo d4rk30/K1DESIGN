@@ -1007,7 +1007,7 @@ const ThreatIntelligenceDetail: React.FC = () => {
                                     }}>
                                         <ApartmentOutlined style={{ color: '#fff', fontSize: 16 }} />
                                     </div>
-                                    <span style={{ color: '#999', marginRight: 8 }}>解析记录</span>
+                                    <span style={{ color: '#999', marginRight: 8 }}>相关域名</span>
                                     <span style={{ color: '#1890ff', fontSize: 20, fontWeight: 500 }}>3</span>
                                 </div>
                             </Col>
@@ -1025,7 +1025,7 @@ const ThreatIntelligenceDetail: React.FC = () => {
                                     }}>
                                         <GlobalOutlined style={{ color: '#fff', fontSize: 16 }} />
                                     </div>
-                                    <span style={{ color: '#999', marginRight: 8 }}>子域名</span>
+                                    <span style={{ color: '#999', marginRight: 8 }}>开放端口</span>
                                     <span style={{ color: '#1890ff', fontSize: 20, fontWeight: 500 }}>4</span>
                                 </div>
                             </Col>
@@ -1061,7 +1061,7 @@ const ThreatIntelligenceDetail: React.FC = () => {
                                     }}>
                                         <LinkOutlined style={{ color: '#fff', fontSize: 16 }} />
                                     </div>
-                                    <span style={{ color: '#999', marginRight: 8 }}>反查域名</span>
+                                    <span style={{ color: '#999', marginRight: 8 }}>同C段信息</span>
                                     <span style={{ color: '#1890ff', fontSize: 20, fontWeight: 500 }}>4</span>
                                 </div>
                             </Col>
@@ -1091,11 +1091,11 @@ const ThreatIntelligenceDetail: React.FC = () => {
                                         <Space size={36} align="center">
                                             <Space align="center">
                                                 <span style={{ fontSize: 24, fontWeight: 500, display: 'flex', alignItems: 'center' }}>
-                                                    87.231.212.111
+                                                    pro.csocools.com
                                                     <CopyOutlined
                                                         style={{ cursor: 'pointer', color: '#1890ff', fontSize: 14, marginLeft: 8 }}
                                                         onClick={() => {
-                                                            navigator.clipboard.writeText('87.231.212.111');
+                                                            navigator.clipboard.writeText('pro.csocools.com');
                                                             message.success('IP已复制到剪贴板');
                                                         }}
                                                     />
@@ -1127,7 +1127,7 @@ const ThreatIntelligenceDetail: React.FC = () => {
                                         }}>
                                             <ApartmentOutlined style={{ color: '#fff', fontSize: 16 }} />
                                         </div>
-                                        <span style={{ color: '#999', marginRight: 8 }}>相关域名：</span>
+                                        <span style={{ color: '#999', marginRight: 8 }}>解析记录</span>
                                         <span style={{ color: '#1890ff', fontSize: 20, fontWeight: 500 }}>4</span>
                                     </div>
                                 </Col>
@@ -1145,7 +1145,7 @@ const ThreatIntelligenceDetail: React.FC = () => {
                                         }}>
                                             <GlobalOutlined style={{ color: '#fff', fontSize: 16 }} />
                                         </div>
-                                        <span style={{ color: '#999', marginRight: 8 }}>开放端口：</span>
+                                        <span style={{ color: '#999', marginRight: 8 }}>子域名</span>
                                         <span style={{ color: '#1890ff', fontSize: 20, fontWeight: 500 }}>3</span>
                                     </div>
                                 </Col>
@@ -1163,7 +1163,7 @@ const ThreatIntelligenceDetail: React.FC = () => {
                                         }}>
                                             <ApiOutlined style={{ color: '#fff', fontSize: 16 }} />
                                         </div>
-                                        <span style={{ color: '#999', marginRight: 8 }}>通信样本：</span>
+                                        <span style={{ color: '#999', marginRight: 8 }}>通信样本</span>
                                         <span style={{ color: '#1890ff', fontSize: 20, fontWeight: 500 }}>4</span>
                                     </div>
                                 </Col>
@@ -1181,7 +1181,7 @@ const ThreatIntelligenceDetail: React.FC = () => {
                                         }}>
                                             <LinkOutlined style={{ color: '#fff', fontSize: 16 }} />
                                         </div>
-                                        <span style={{ color: '#999', marginRight: 8 }}>同C段信息：</span>
+                                        <span style={{ color: '#999', marginRight: 8 }}>反查域名</span>
                                         <span style={{ color: '#1890ff', fontSize: 20, fontWeight: 500 }}>4</span>
                                     </div>
                                 </Col>
@@ -1254,8 +1254,8 @@ const ThreatIntelligenceDetail: React.FC = () => {
                                                 },
                                                 { label: '置信度', value: '高' },
                                                 { label: '活跃度', value: index <= 1 ? '高' : '低' },
-                                                { label: '运营商', value: index === 1 ? '未知' : 'EstNOC OY' },
-                                                { label: 'ANS', value: '206804' },
+                                                { label: '注册商', value: index === 1 ? '未知' : 'Godaddy' },
+                                                { label: '注册邮箱', value: '已经设置隐私保护' },
                                                 { label: '情报类型', value: '跨站脚本攻击' },
                                                 { label: '情报归属', value: '公有情报源' },
                                                 { label: '经纬度信息', value: '30.34324,343.3434' },

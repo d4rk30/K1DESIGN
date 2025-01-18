@@ -78,9 +78,9 @@ const SyslogConfig: React.FC = () => {
     };
 
     // 添加一个类型定义，列举所有可能的字段名
-    type FieldName = 
-        | 'attack_threatLevel' 
-        | 'attack_actions' 
+    type FieldName =
+        | 'attack_threatLevel'
+        | 'attack_actions'
         | 'attack_threatTypes'
         | 'external_actions'
         | 'external_hitTypes'
@@ -253,324 +253,333 @@ const SyslogConfig: React.FC = () => {
 
                 <div style={{ marginBottom: 16 }}>筛选配置</div>
 
-                <Collapse 
-                    defaultActiveKey={['1', '2', '3', '4', '5']} 
+                <Collapse
+                    defaultActiveKey={['1', '2', '3', '4', '5']}
                     style={{ marginBottom: 24 }}
                     className="custom-collapse"
-                >
-                    <Collapse.Panel
-                        header={
-                            <div style={{
-                                display: 'flex',
-                                justifyContent: 'space-between',
-                                alignItems: 'center',
-                                width: '100%',
-                                padding: '4px 0'
-                            }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                    <span>攻击监测日志</span>
-                                    <Tooltip title="是否传输攻击监测日志作为syslog，可以根据条件进行选择">
-                                        <QuestionCircleOutlined style={{ color: '#999' }} />
-                                    </Tooltip>
+                    items={[
+                        {
+                            key: '1',
+                            label: (
+                                <div style={{
+                                    display: 'flex',
+                                    justifyContent: 'space-between',
+                                    alignItems: 'center',
+                                    width: '100%',
+                                    padding: '4px 0'
+                                }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                        <span>攻击监测日志</span>
+                                        <Tooltip title="是否传输攻击监测日志作为syslog，可以根据条件进行选择">
+                                            <QuestionCircleOutlined style={{ color: '#999' }} />
+                                        </Tooltip>
+                                    </div>
+                                    <Button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleModeChange('1');
+                                        }}
+                                    >
+                                        {panelModes['1'] ? '反选' : '全选'}
+                                    </Button>
                                 </div>
-                                <Button
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleModeChange('1');
-                                    }}
-                                >
-                                    {panelModes['1'] ? '反选' : '全选'}
-                                </Button>
-                            </div>
-                        }
-                        key="1"
-                    >
-                        <Form.Item
-                            name="attack_threatLevel"
-                            label="威胁等级"
-                            layout="horizontal"
-                            wrapperCol={{ style: { marginLeft: 16 } }}
-                        >
-                            <Checkbox.Group>
-                                <Checkbox value="high">高危</Checkbox>
-                                <Checkbox value="medium">中危</Checkbox>
-                                <Checkbox value="low">低危</Checkbox>
-                            </Checkbox.Group>
-                        </Form.Item>
+                            ),
+                            children: (
+                                <>
+                                    <Form.Item
+                                        name="attack_threatLevel"
+                                        label="威胁等级"
+                                        layout="horizontal"
+                                        wrapperCol={{ style: { marginLeft: 16 } }}
+                                    >
+                                        <Checkbox.Group>
+                                            <Checkbox value="high">高危</Checkbox>
+                                            <Checkbox value="medium">中危</Checkbox>
+                                            <Checkbox value="low">低危</Checkbox>
+                                        </Checkbox.Group>
+                                    </Form.Item>
 
-                        <Form.Item
-                            name="attack_actions"
-                            label="处理动作"
-                            layout="horizontal"
-                            wrapperCol={{ style: { marginLeft: 16 } }}
-                        >
-                            <Checkbox.Group>
-                                <Checkbox value="block">阻断</Checkbox>
-                                <Checkbox value="monitor">监控</Checkbox>
-                            </Checkbox.Group>
-                        </Form.Item>
+                                    <Form.Item
+                                        name="attack_actions"
+                                        label="处理动作"
+                                        layout="horizontal"
+                                        wrapperCol={{ style: { marginLeft: 16 } }}
+                                    >
+                                        <Checkbox.Group>
+                                            <Checkbox value="block">阻断</Checkbox>
+                                            <Checkbox value="monitor">监控</Checkbox>
+                                        </Checkbox.Group>
+                                    </Form.Item>
 
-                        <Form.Item
-                            name="attack_threatTypes"
-                            label="情报类型"
-                            layout="horizontal"
-                            wrapperCol={{ style: { marginLeft: 16 } }}
-                        >
-                            <Checkbox.Group style={{ width: '100%', marginTop: 6 }}>
-                                <Row gutter={[16, 16]}>
-                                    <Col span={4}><Checkbox value="scanProtection">扫描防护</Checkbox></Col>
-                                    <Col span={4}><Checkbox value="webCrawler">网络爬虫</Checkbox></Col>
-                                    <Col span={4}><Checkbox value="commandInjection">命令注入</Checkbox></Col>
-                                    <Col span={4}><Checkbox value="codeInjection">代码注入</Checkbox></Col>
-                                    <Col span={4}><Checkbox value="sqlInjection">SQL注入</Checkbox></Col>
-                                    <Col span={4}><Checkbox value="ldapInjection">LDAP注入</Checkbox></Col>
+                                    <Form.Item
+                                        name="attack_threatTypes"
+                                        label="情报类型"
+                                        layout="horizontal"
+                                        wrapperCol={{ style: { marginLeft: 16 } }}
+                                    >
+                                        <Checkbox.Group style={{ width: '100%', marginTop: 6 }}>
+                                            <Row gutter={[16, 16]}>
+                                                <Col span={4}><Checkbox value="scanProtection">扫描防护</Checkbox></Col>
+                                                <Col span={4}><Checkbox value="webCrawler">网络爬虫</Checkbox></Col>
+                                                <Col span={4}><Checkbox value="commandInjection">命令注入</Checkbox></Col>
+                                                <Col span={4}><Checkbox value="codeInjection">代码注入</Checkbox></Col>
+                                                <Col span={4}><Checkbox value="sqlInjection">SQL注入</Checkbox></Col>
+                                                <Col span={4}><Checkbox value="ldapInjection">LDAP注入</Checkbox></Col>
 
-                                    <Col span={4}><Checkbox value="xpathInjection">XPATH注入</Checkbox></Col>
-                                    <Col span={4}><Checkbox value="xmlInjection">XML注入</Checkbox></Col>
-                                    <Col span={4}><Checkbox value="ssiInjection">SSI注入</Checkbox></Col>
-                                    <Col span={4}><Checkbox value="xss">跨站脚本攻击</Checkbox></Col>
-                                    <Col span={4}><Checkbox value="componentVulnerability">组件漏洞攻击</Checkbox></Col>
-                                    <Col span={4}><Checkbox value="unauthorizedAccess">未授权访问</Checkbox></Col>
+                                                <Col span={4}><Checkbox value="xpathInjection">XPATH注入</Checkbox></Col>
+                                                <Col span={4}><Checkbox value="xmlInjection">XML注入</Checkbox></Col>
+                                                <Col span={4}><Checkbox value="ssiInjection">SSI注入</Checkbox></Col>
+                                                <Col span={4}><Checkbox value="xss">跨站脚本攻击</Checkbox></Col>
+                                                <Col span={4}><Checkbox value="componentVulnerability">组件漏洞攻击</Checkbox></Col>
+                                                <Col span={4}><Checkbox value="unauthorizedAccess">未授权访问</Checkbox></Col>
 
-                                    <Col span={4}><Checkbox value="authVulnerability">认证和授权漏洞</Checkbox></Col>
-                                    <Col span={4}><Checkbox value="deserializationVulnerability">反序列化漏洞</Checkbox></Col>
-                                    <Col span={4}><Checkbox value="webshell">webshell</Checkbox></Col>
-                                    <Col span={4}><Checkbox value="fileInclusion">文件包含</Checkbox></Col>
-                                    <Col span={4}><Checkbox value="hostScanAttack">主机扫描攻击</Checkbox></Col>
-                                    <Col span={4}><Checkbox value="privilegeEscalation">主机权限提升</Checkbox></Col>
+                                                <Col span={4}><Checkbox value="authVulnerability">认证和授权漏洞</Checkbox></Col>
+                                                <Col span={4}><Checkbox value="deserializationVulnerability">反序列化漏洞</Checkbox></Col>
+                                                <Col span={4}><Checkbox value="webshell">webshell</Checkbox></Col>
+                                                <Col span={4}><Checkbox value="fileInclusion">文件包含</Checkbox></Col>
+                                                <Col span={4}><Checkbox value="hostScanAttack">主机扫描攻击</Checkbox></Col>
+                                                <Col span={4}><Checkbox value="privilegeEscalation">主机权限提升</Checkbox></Col>
 
-                                    <Col span={4}><Checkbox value="osVulnerability">操作系统漏洞</Checkbox></Col>
-                                    <Col span={4}><Checkbox value="appVulnerability">应用程序漏洞</Checkbox></Col>
-                                    <Col span={4}><Checkbox value="webAppVulnerability">WEB应用漏洞</Checkbox></Col>
-                                    <Col span={4}><Checkbox value="dbVulnerability">数据库漏洞</Checkbox></Col>
-                                    <Col span={4}><Checkbox value="networkDeviceVulnerability">网络设备漏洞</Checkbox></Col>
-                                    <Col span={4}><Checkbox value="securityProductVulnerability">安全产品漏洞</Checkbox></Col>
-                                    <Col span={4}><Checkbox value="smartDeviceVulnerability">智能设备漏洞</Checkbox></Col>
-                                    <Col span={4}><Checkbox value="blockchainVulnerability">区块链漏洞</Checkbox></Col>
-                                    <Col span={4}><Checkbox value="icsVulnerability">工业控制系统漏洞</Checkbox></Col>
-                                    <Col span={4}><Checkbox value="appBruteforce">应用程序暴力破解攻击</Checkbox></Col>
-                                    <Col span={4}><Checkbox value="osBruteforce">操作系统暴力破解攻击</Checkbox></Col>
-                                    <Col span={4}><Checkbox value="networkDeviceBruteforce">网络设备暴力破解攻击</Checkbox></Col>
-                                    <Col span={4}><Checkbox value="dbBruteforce">数据库暴力破解</Checkbox></Col>
-                                    <Col span={4}><Checkbox value="covertTunnel">隐蔽隧道</Checkbox></Col>
-                                    <Col span={4}><Checkbox value="backdoorAttack">后门攻击</Checkbox></Col>
-                                    <Col span={4}><Checkbox value="trojanWormAttack">木马蠕虫攻击</Checkbox></Col>
-                                    <Col span={4}><Checkbox value="dnsMaliciousRequest">DNS恶意请求攻击</Checkbox></Col>
-                                    <Col span={4}><Checkbox value="sensitiveInfoLeak">敏感信息泄露</Checkbox></Col>
-                                    <Col span={4}><Checkbox value="hackerToolFeature">黑客工具特征</Checkbox></Col>
-                                    <Col span={4}><Checkbox value="hostCompromise">主机失陷</Checkbox></Col>
-                                    <Col span={4}><Checkbox value="abnormalConnection">异常连接</Checkbox></Col>
-                                    <Col span={4}><Checkbox value="zeroDay">未公开漏洞攻击</Checkbox></Col>
-                                    <Col span={4}><Checkbox value="httpRequestSmuggling">HTTP请求走私</Checkbox></Col>
-                                    <Col span={4}><Checkbox value="cryptojacking">挖矿行为</Checkbox></Col>
-                                    <Col span={4}><Checkbox value="sessionHijacking">会话劫持</Checkbox></Col>
-                                    <Col span={4}><Checkbox value="appLayerDos">应用层拒绝服务攻击</Checkbox></Col>
-                                    <Col span={4}><Checkbox value="networkLayerDos">网络层拒绝服务攻击</Checkbox></Col>
-                                    <Col span={4}><Checkbox value="tempEmailComm">临时Email邮箱通信</Checkbox></Col>
-                                </Row>
-                            </Checkbox.Group>
-                        </Form.Item>
-
-                    </Collapse.Panel>
-
-                    <Collapse.Panel
-                        header={
-                            <div style={{
-                                display: 'flex',
-                                justifyContent: 'space-between',
-                                alignItems: 'center',
-                                width: '100%',
-                                padding: '4px 0'
-                            }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                    <span>外来检测日志</span>
-                                    <Tooltip title="是否传输外联检测日志作为syslog，可以根据条件进行选择">
-                                        <QuestionCircleOutlined style={{ color: '#999' }} />
-                                    </Tooltip>
+                                                <Col span={4}><Checkbox value="osVulnerability">操作系统漏洞</Checkbox></Col>
+                                                <Col span={4}><Checkbox value="appVulnerability">应用程序漏洞</Checkbox></Col>
+                                                <Col span={4}><Checkbox value="webAppVulnerability">WEB应用漏洞</Checkbox></Col>
+                                                <Col span={4}><Checkbox value="dbVulnerability">数据库漏洞</Checkbox></Col>
+                                                <Col span={4}><Checkbox value="networkDeviceVulnerability">网络设备漏洞</Checkbox></Col>
+                                                <Col span={4}><Checkbox value="securityProductVulnerability">安全产品漏洞</Checkbox></Col>
+                                                <Col span={4}><Checkbox value="smartDeviceVulnerability">智能设备漏洞</Checkbox></Col>
+                                                <Col span={4}><Checkbox value="blockchainVulnerability">区块链漏洞</Checkbox></Col>
+                                                <Col span={4}><Checkbox value="icsVulnerability">工业控制系统漏洞</Checkbox></Col>
+                                                <Col span={4}><Checkbox value="appBruteforce">应用程序暴力破解攻击</Checkbox></Col>
+                                                <Col span={4}><Checkbox value="osBruteforce">操作系统暴力破解攻击</Checkbox></Col>
+                                                <Col span={4}><Checkbox value="networkDeviceBruteforce">网络设备暴力破解攻击</Checkbox></Col>
+                                                <Col span={4}><Checkbox value="dbBruteforce">数据库暴力破解</Checkbox></Col>
+                                                <Col span={4}><Checkbox value="covertTunnel">隐蔽隧道</Checkbox></Col>
+                                                <Col span={4}><Checkbox value="backdoorAttack">后门攻击</Checkbox></Col>
+                                                <Col span={4}><Checkbox value="trojanWormAttack">木马蠕虫攻击</Checkbox></Col>
+                                                <Col span={4}><Checkbox value="dnsMaliciousRequest">DNS恶意请求攻击</Checkbox></Col>
+                                                <Col span={4}><Checkbox value="sensitiveInfoLeak">敏感信息泄露</Checkbox></Col>
+                                                <Col span={4}><Checkbox value="hackerToolFeature">黑客工具特征</Checkbox></Col>
+                                                <Col span={4}><Checkbox value="hostCompromise">主机失陷</Checkbox></Col>
+                                                <Col span={4}><Checkbox value="abnormalConnection">异常连接</Checkbox></Col>
+                                                <Col span={4}><Checkbox value="zeroDay">未公开漏洞攻击</Checkbox></Col>
+                                                <Col span={4}><Checkbox value="httpRequestSmuggling">HTTP请求走私</Checkbox></Col>
+                                                <Col span={4}><Checkbox value="cryptojacking">挖矿行为</Checkbox></Col>
+                                                <Col span={4}><Checkbox value="sessionHijacking">会话劫持</Checkbox></Col>
+                                                <Col span={4}><Checkbox value="appLayerDos">应用层拒绝服务攻击</Checkbox></Col>
+                                                <Col span={4}><Checkbox value="networkLayerDos">网络层拒绝服务攻击</Checkbox></Col>
+                                                <Col span={4}><Checkbox value="tempEmailComm">临时Email邮箱通信</Checkbox></Col>
+                                            </Row>
+                                        </Checkbox.Group>
+                                    </Form.Item>
+                                </>
+                            )
+                        },
+                        {
+                            key: '2',
+                            label: (
+                                <div style={{
+                                    display: 'flex',
+                                    justifyContent: 'space-between',
+                                    alignItems: 'center',
+                                    width: '100%',
+                                    padding: '4px 0'
+                                }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                        <span>外来检测日志</span>
+                                        <Tooltip title="是否传输外联检测日志作为syslog，可以根据条件进行选择">
+                                            <QuestionCircleOutlined style={{ color: '#999' }} />
+                                        </Tooltip>
+                                    </div>
+                                    <Button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleModeChange('2');
+                                        }}
+                                    >
+                                        {panelModes['2'] ? '反选' : '全选'}
+                                    </Button>
                                 </div>
-                                <Button
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleModeChange('2');
-                                    }}
-                                >
-                                    {panelModes['2'] ? '反选' : '全选'}
-                                </Button>
-                            </div>
-                        }
-                        key="2"
-                    >
-                        <Form.Item
-                            name="external_actions"
-                            label="处理动作"
-                            layout="horizontal"
-                            wrapperCol={{ style: { marginLeft: 16 } }}
-                        >
-                            <Checkbox.Group>
-                                <Checkbox value="block">阻断</Checkbox>
-                                <Checkbox value="monitor">监控</Checkbox>
-                            </Checkbox.Group>
-                        </Form.Item>
+                            ),
+                            children: (
+                                <>
+                                    <Form.Item
+                                        name="external_actions"
+                                        label="处理动作"
+                                        layout="horizontal"
+                                        wrapperCol={{ style: { marginLeft: 16 } }}
+                                    >
+                                        <Checkbox.Group>
+                                            <Checkbox value="block">阻断</Checkbox>
+                                            <Checkbox value="monitor">监控</Checkbox>
+                                        </Checkbox.Group>
+                                    </Form.Item>
 
-                        <Form.Item
-                            name="external_hitTypes"
-                            label="命中类型"
-                            layout="horizontal"
-                            wrapperCol={{ style: { marginLeft: 16 } }}
-                        >
-                            <Checkbox.Group>
-                                <Checkbox value="ipIntel">IP情报</Checkbox>
-                                <Checkbox value="urlIntel">URL情报</Checkbox>
-                                <Checkbox value="domainIntel">域名情报</Checkbox>
-                            </Checkbox.Group>
-                        </Form.Item>
-                    </Collapse.Panel>
-
-                    <Collapse.Panel
-                        header={
-                            <div style={{
-                                display: 'flex',
-                                justifyContent: 'space-between',
-                                alignItems: 'center',
-                                width: '100%',
-                                padding: '4px 0'
-                            }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                    <span>应用隐身日志</span>
-                                    <Tooltip title="是否传输应用隐身日志作为syslog，可以根据条件进行选择">
-                                        <QuestionCircleOutlined style={{ color: '#999' }} />
-                                    </Tooltip>
+                                    <Form.Item
+                                        name="external_hitTypes"
+                                        label="命中类型"
+                                        layout="horizontal"
+                                        wrapperCol={{ style: { marginLeft: 16 } }}
+                                    >
+                                        <Checkbox.Group>
+                                            <Checkbox value="ipIntel">IP情报</Checkbox>
+                                            <Checkbox value="urlIntel">URL情报</Checkbox>
+                                            <Checkbox value="domainIntel">域名情报</Checkbox>
+                                        </Checkbox.Group>
+                                    </Form.Item>
+                                </>
+                            )
+                        },
+                        {
+                            key: '3',
+                            label: (
+                                <div style={{
+                                    display: 'flex',
+                                    justifyContent: 'space-between',
+                                    alignItems: 'center',
+                                    width: '100%',
+                                    padding: '4px 0'
+                                }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                        <span>应用隐身日志</span>
+                                        <Tooltip title="是否传输应用隐身日志作为syslog，可以根据条件进行选择">
+                                            <QuestionCircleOutlined style={{ color: '#999' }} />
+                                        </Tooltip>
+                                    </div>
+                                    <Button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleModeChange('3');
+                                        }}
+                                    >
+                                        {panelModes['3'] ? '反选' : '全选'}
+                                    </Button>
                                 </div>
-                                <Button
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleModeChange('3');
-                                    }}
-                                >
-                                    {panelModes['3'] ? '反选' : '全选'}
-                                </Button>
-                            </div>
-                        }
-                        key="3"
-                    >
-                        <Form.Item
-                            name="app_actions"
-                            label="处理动作"
-                            layout="horizontal"
-                            wrapperCol={{ style: { marginLeft: 16 } }}
-                        >
-                            <Checkbox.Group>
-                                <Checkbox value="pass">阻断</Checkbox>
-                                <Checkbox value="monitor">监控</Checkbox>
-                            </Checkbox.Group>
-                        </Form.Item>
+                            ),
+                            children: (
+                                <>
+                                    <Form.Item
+                                        name="app_actions"
+                                        label="处理动作"
+                                        layout="horizontal"
+                                        wrapperCol={{ style: { marginLeft: 16 } }}
+                                    >
+                                        <Checkbox.Group>
+                                            <Checkbox value="pass">阻断</Checkbox>
+                                            <Checkbox value="monitor">监控</Checkbox>
+                                        </Checkbox.Group>
+                                    </Form.Item>
 
-                        <Form.Item
-                            name="app_logTypes"
-                            label="日志类型"
-                            layout="horizontal"
-                            wrapperCol={{ style: { marginLeft: 16 } }}
-                        >
-                            <Checkbox.Group>
-                                <Checkbox value="validationPass">校验通过</Checkbox>
-                                <Checkbox value="validationFail">校验未通过</Checkbox>
-                                <Checkbox value="unauthorized">未授权访问</Checkbox>
-                            </Checkbox.Group>
-                        </Form.Item>
-                    </Collapse.Panel>
-
-                    <Collapse.Panel
-                        header={
-                            <div style={{
-                                display: 'flex',
-                                justifyContent: 'space-between',
-                                alignItems: 'center',
-                                width: '100%',
-                                padding: '4px 0'
-                            }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                    <span>反测绘日志</span>
-                                    <Tooltip title="是否传输反测绘日志作为syslog，可以根据条件进行选择">
-                                        <QuestionCircleOutlined style={{ color: '#999' }} />
-                                    </Tooltip>
+                                    <Form.Item
+                                        name="app_logTypes"
+                                        label="日志类型"
+                                        layout="horizontal"
+                                        wrapperCol={{ style: { marginLeft: 16 } }}
+                                    >
+                                        <Checkbox.Group>
+                                            <Checkbox value="validationPass">校验通过</Checkbox>
+                                            <Checkbox value="validationFail">校验未通过</Checkbox>
+                                            <Checkbox value="unauthorized">未授权访问</Checkbox>
+                                        </Checkbox.Group>
+                                    </Form.Item>
+                                </>
+                            )
+                        },
+                        {
+                            key: '4',
+                            label: (
+                                <div style={{
+                                    display: 'flex',
+                                    justifyContent: 'space-between',
+                                    alignItems: 'center',
+                                    width: '100%',
+                                    padding: '4px 0'
+                                }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                        <span>反测绘日志</span>
+                                        <Tooltip title="是否传输反测绘日志作为syslog，可以根据条件进行选择">
+                                            <QuestionCircleOutlined style={{ color: '#999' }} />
+                                        </Tooltip>
+                                    </div>
+                                    <Button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleModeChange('4');
+                                        }}
+                                    >
+                                        {panelModes['4'] ? '反选' : '全选'}
+                                    </Button>
                                 </div>
-                                <Button
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleModeChange('4');
-                                    }}
-                                >
-                                    {panelModes['4'] ? '反选' : '全选'}
-                                </Button>
-                            </div>
-                        }
-                        key="4"
-                    >
-                        <Form.Item
-                            name="mapping_actions"
-                            label="处理动作"
-                            layout="horizontal"
-                            wrapperCol={{ style: { marginLeft: 16 } }}
-                        >
-                            <Checkbox.Group>
-                                <Checkbox value="pass">阻断</Checkbox>
-                                <Checkbox value="monitor">监控</Checkbox>
-                            </Checkbox.Group>
-                        </Form.Item>
+                            ),
+                            children: (
+                                <>
+                                    <Form.Item
+                                        name="mapping_actions"
+                                        label="处理动作"
+                                        layout="horizontal"
+                                        wrapperCol={{ style: { marginLeft: 16 } }}
+                                    >
+                                        <Checkbox.Group>
+                                            <Checkbox value="pass">阻断</Checkbox>
+                                            <Checkbox value="monitor">监控</Checkbox>
+                                        </Checkbox.Group>
+                                    </Form.Item>
 
-                        <Form.Item
-                            name="mapping_severityLevels"
-                            label="严重级别"
-                            layout="horizontal"
-                            wrapperCol={{ style: { marginLeft: 16 } }}
-                        >
-                            <Checkbox.Group>
-                                <Checkbox value="high">高级</Checkbox>
-                                <Checkbox value="medium">中级</Checkbox>
-                                <Checkbox value="low">低级</Checkbox>
-                            </Checkbox.Group>
-                        </Form.Item>
-                    </Collapse.Panel>
-
-                    <Collapse.Panel
-                        header={
-                            <div style={{
-                                display: 'flex',
-                                justifyContent: 'space-between',
-                                alignItems: 'center',
-                                width: '100%',
-                                padding: '4px 0'
-                            }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                    <span>弱口令登录日志</span>
-                                    <Tooltip title="是否传输弱口令登录日作为syslog，可以根据条件进行选择">
-                                        <QuestionCircleOutlined style={{ color: '#999' }} />
-                                    </Tooltip>
+                                    <Form.Item
+                                        name="mapping_severityLevels"
+                                        label="严重级别"
+                                        layout="horizontal"
+                                        wrapperCol={{ style: { marginLeft: 16 } }}
+                                    >
+                                        <Checkbox.Group>
+                                            <Checkbox value="high">高级</Checkbox>
+                                            <Checkbox value="medium">中级</Checkbox>
+                                            <Checkbox value="low">低级</Checkbox>
+                                        </Checkbox.Group>
+                                    </Form.Item>
+                                </>
+                            )
+                        },
+                        {
+                            key: '5',
+                            label: (
+                                <div style={{
+                                    display: 'flex',
+                                    justifyContent: 'space-between',
+                                    alignItems: 'center',
+                                    width: '100%',
+                                    padding: '4px 0'
+                                }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                        <span>弱口令登录日志</span>
+                                        <Tooltip title="是否传输弱口令登录日作为syslog，可以根据条件进行选择">
+                                            <QuestionCircleOutlined style={{ color: '#999' }} />
+                                        </Tooltip>
+                                    </div>
+                                    <Button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleModeChange('5');
+                                        }}
+                                    >
+                                        {panelModes['5'] ? '反选' : '全选'}
+                                    </Button>
                                 </div>
-                                <Button
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleModeChange('5');
-                                    }}
+                            ),
+                            children: (
+                                <Form.Item
+                                    name="weakPassword_actions"
+                                    label="弱口令登录日志"
+                                    layout="horizontal"
+                                    wrapperCol={{ style: { marginLeft: 16 } }}
                                 >
-                                    {panelModes['5'] ? '反选' : '全选'}
-                                </Button>
-                            </div>
+                                    <Checkbox.Group>
+                                        <Checkbox value="pass"></Checkbox>
+                                    </Checkbox.Group>
+                                </Form.Item>
+                            )
                         }
-                        key="5"
-                    >
-                        <Form.Item
-                            name="weakPassword_actions"
-                            label="弱口令登录日志"
-                            layout="horizontal"
-                            wrapperCol={{ style: { marginLeft: 16 } }}
-                        >
-                            <Checkbox.Group>
-                                <Checkbox value="pass"></Checkbox>
-                            </Checkbox.Group>
-                        </Form.Item>
-                    </Collapse.Panel>
-                </Collapse>
+                    ]}
+                />
 
 
                 {/* 表单操作按钮区域 */}

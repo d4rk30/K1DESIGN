@@ -106,7 +106,7 @@ const ThreatIntelligenceTrace: React.FC = () => {
                     left: 0,
                     right: 0,
                 }}>
-                    云端情报支持:公安部第一研究所
+                    云端情报支持：公安部第一研究所
                 </div>
             </div>
         </div>
