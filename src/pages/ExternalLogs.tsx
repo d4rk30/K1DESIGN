@@ -7,6 +7,7 @@ import LabelSelect from '@/components/LabelSelect';
 import LabelInput from '@/components/LabelInput';
 import ExternalPathVisualization from '@/components/ExternalPathVisualization';
 import ExternalTrendCard from '@/components/ExternalTrendCard';
+import { useNavigate } from 'react-router-dom';
 
 // 2. 类型定义
 // 定义筛选条件的类型
@@ -248,6 +249,7 @@ const FILTER_OPTIONS = {
 
 // 5. 组件定义
 const ExternalLogs: React.FC = () => {
+    const navigate = useNavigate();
     // 状态定义
     const [selectedRows, setSelectedRows] = useState<any[]>([]);
     const [filterValues, setFilterValues] = useState<FilterValues>({});
@@ -345,7 +347,30 @@ const ExternalLogs: React.FC = () => {
                 title: '受控主机',
                 dataIndex: 'controlledHost',
                 width: 280,
-                render: (ip: string) => renderIpColumn(ip, 'attack', true, true),
+                render: (ip: string) => {
+                    const renderIpWithLink = (ip: string, type: 'attack' | 'target', showStar = true, showAssetTag = false) => (
+                        <div style={{ display: 'flex', alignItems: 'center', width: '100%' }}>
+                            {showStar && (
+                                <Button
+                                    type="link"
+                                    style={{ padding: 0, minWidth: 32, marginRight: 8 }}
+                                    icon={favoriteIps.includes(ip) ? <StarFilled style={{ color: '#faad14' }} /> : <StarOutlined />}
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        addToFavorites(ip, type);
+                                    }}
+                                />
+                            )}
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0, flex: 1 }}>
+                                <Typography.Link onClick={() => navigate('/controlled-host')} copyable>
+                                    {ip}
+                                </Typography.Link>
+                                {showAssetTag && <Tag color="blue" style={{ whiteSpace: 'nowrap' }}>全局资产</Tag>}
+                            </div>
+                        </div>
+                    );
+                    return renderIpWithLink(ip, 'attack', true, true);
+                },
             },
             {
                 title: '源端口',
