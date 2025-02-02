@@ -1,7 +1,9 @@
 import React from 'react';
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { ConfigProvider } from 'antd';
 import zhCN from 'antd/locale/zh_CN';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import dayjs from 'dayjs';
+import 'dayjs/locale/zh-cn';
 import MainLayout from './layouts/MainLayout';
 import Dashboard from './pages/Dashboard';
 import License from './pages/License';
@@ -21,10 +23,9 @@ import PasswordPolicy from './pages/PasswordPolicy';
 import AttackLogs from './pages/AttackLogs';
 import ExternalLogs from './pages/ExternalLogs';
 import BlackWhiteList from './pages/BlackWhiteList';
-import dayjs from 'dayjs';
-import 'dayjs/locale/zh-cn';
+import FalsePositive from './pages/FalsePositive';
 
-// 在 App 组件之前设置 dayjs 的语言
+// Set dayjs locale
 dayjs.locale('zh-cn');
 
 const App: React.FC = () => {
@@ -34,23 +35,38 @@ const App: React.FC = () => {
         <Routes>
           <Route path="/" element={<MainLayout />}>
             <Route index element={<Navigate to="/home" replace />} />
+
+            {/* 系统概览 */}
             <Route path="dashboard" element={<Dashboard />} />
+
+            {/* 攻击日志 */}
             <Route path="attack-logs" element={<AttackLogs />} />
-            <Route path="license" element={<License />} />
+
+            {/* 反探测 */}
             <Route path="anti-mapping-logs" element={<AntiMappingLog />} />
             <Route path="anti-mapping-sources" element={<AntiMappingSources />} />
             <Route path="anti-mapping-assets" element={<AntiMappingAssets />} />
             <Route path="anti-mapping-policy" element={<AntiMappingStrategy />} />
-            <Route path="reports" element={<Reports />} />
-            <Route path="password-policy" element={<PasswordPolicy />} />
+
+            {/* 威胁情报 */}
             <Route path="threat-intelligence-trace" element={<ThreatIntelligenceTrace />} />
             <Route path="threat-intelligence-trace/detail" element={<ThreatIntelligenceDetail />} />
             <Route path="public-intelligence" element={<PublicIntelligence />} />
+
+            {/* 资产管理 */}
             <Route path="asset-management" element={<AssetManagement />} />
             <Route path="asset-management/:groupId" element={<AssetList />} />
-            <Route path="syslog-config" element={<SyslogConfig />} />
+
+            {/* 系统管理 */}
+            <Route path="reports" element={<Reports />} />
             <Route path="external-logs" element={<ExternalLogs />} />
             <Route path="blackwhite-list" element={<BlackWhiteList />} />
+            <Route path="false-positive" element={<FalsePositive />} />
+            <Route path="password-policy" element={<PasswordPolicy />} />
+            <Route path="syslog-config" element={<SyslogConfig />} />
+            <Route path="license" element={<License />} />
+
+            {/* 404 页面 */}
             <Route path="*" element={<UnderDevelopment />} />
           </Route>
         </Routes>
