@@ -60,7 +60,7 @@ const mockData: ReportRecord[] = [
     {
         key: '3',
         name: '威胁情报月度分析报告',
-        module: '威胁情报',
+        module: '弱口令登录告警',
         createTime: '2024-01-01 00:00:00',
         progress: 100,
         exportType: 'manual',
@@ -113,7 +113,7 @@ const mockConfigs: ReportConfig[] = [
         cycle: {
             type: 'monthly',
         },
-        modules: ['威胁情报'],
+        modules: ['弱口令登录告警'],
         format: 'html',
         enabled: false,
     },
@@ -436,7 +436,7 @@ const Reports: React.FC = () => {
                                     options={[
                                         { label: '攻击监测告警', value: '攻击监测告警' },
                                         { label: '外联检测告警', value: '外联检测告警' },
-                                        { label: '威胁情报', value: '威胁情报' },
+                                        { label: '弱口令登录告警', value: '弱口令登录告警' },
                                         { label: '反测绘告警', value: '反测绘告警' }
                                     ]}
                                 />
