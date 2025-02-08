@@ -113,7 +113,7 @@ const FalsePositive: React.FC = () => {
             render: (result: string | null) => {
                 if (result === 'approved') return <Tag color="success">通过</Tag>;
                 if (result === 'rejected') return <Tag color="error">拒绝</Tag>;
-                return <Tag>-</Tag>;
+                return <Tag>未反馈</Tag>;
             },
         },
         {
@@ -225,6 +225,7 @@ const FalsePositive: React.FC = () => {
                                 <Option value="all">全部</Option>
                                 <Option value="approved">通过</Option>
                                 <Option value="rejected">拒绝</Option>
+                                <Option value="null">未反馈</Option>
                             </LabelSelect>
                         </Form.Item>
                     </Col>
@@ -291,7 +292,17 @@ const FalsePositive: React.FC = () => {
                                 children: (
                                     <>
                                         <div style={{ marginBottom: 16 }}>{currentRecord.feedbackTime}</div>
-                                        <div style={{ color: '#666666' }}>提交误报反馈：{currentRecord.content}</div>
+                                        <div style={{ color: '#666666', marginBottom: 16 }}>情报内容：{currentRecord.content}</div>
+                                        <div style={{ color: '#666666', marginBottom: 16 }}>
+                                            反馈内容：当前情报为我司正常业务，请移除。
+                                        </div>
+                                        <div style={{ color: '#666666', marginBottom: 16, display: 'flex', alignItems: 'flex-start' }}>
+                                            <span style={{ marginRight: 16 }}>附件：</span>
+                                            <Space direction="vertical">
+                                                <a href="#">业务说明文档.pdf</a>
+                                                <a href="#">系统截图.png</a>
+                                            </Space>
+                                        </div>
                                     </>
                                 )
                             },

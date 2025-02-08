@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { Card, Row, Col, Table, Tag, Space, Button, Input, message, Modal, Form } from 'antd';
+import { Card, Row, Col, Table, Tag, Space, Button, Input, message, Modal, Form, Upload } from 'antd';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { SearchOutlined, ReloadOutlined, CalendarOutlined, UpOutlined, DownOutlined, CopyOutlined, ApartmentOutlined, GlobalOutlined, ApiOutlined, LinkOutlined } from '@ant-design/icons';
+import { SearchOutlined, ReloadOutlined, CalendarOutlined, UpOutlined, DownOutlined, CopyOutlined, ApartmentOutlined, GlobalOutlined, ApiOutlined, LinkOutlined, InboxOutlined } from '@ant-design/icons';
 import LabelSelect from '@/components/LabelSelect';
 import { US, CN, GB, FR, DE, RU } from 'country-flag-icons/react/3x2';
 import LabelInput from '@/components/LabelInput';
 import LabelTextArea from '@/components/LabelTextArea';
+import type { UploadFile, UploadProps } from 'antd';
 
 const ThreatIntelligenceDetail: React.FC = () => {
     const location = useLocation();
@@ -14,6 +15,7 @@ const ThreatIntelligenceDetail: React.FC = () => {
     const [activeTabKey, setActiveTabKey] = useState<string>(queryType === 'attack' ? 'parse' : 'dnsRecords');
     const [feedbackVisible, setFeedbackVisible] = useState(false);
     const [feedbackForm] = Form.useForm();
+    const [fileList, setFileList] = useState<UploadFile[]>([]);
 
     const attackTabs = [
         { key: 'parse', tab: '解析信息' },
@@ -865,11 +867,49 @@ const ThreatIntelligenceDetail: React.FC = () => {
         return componentMap[country];
     };
 
+    const uploadProps: UploadProps = {
+        fileList,
+        onChange: ({ fileList: newFileList }) => {
+            setFileList(newFileList);
+        },
+        beforeUpload: (file) => {
+            const isValidType = [
+                'image/jpeg',
+                'image/png',
+                'image/gif',
+                'application/pdf',
+                'application/msword',
+                'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+            ].includes(file.type);
+
+            if (!isValidType) {
+                message.error('只支持上传图片、PDF和Word文件！');
+                return Upload.LIST_IGNORE;
+            }
+
+            if (fileList.length >= 5) {
+                message.error('最多只能上传5个文件！');
+                return Upload.LIST_IGNORE;
+            }
+
+            const isLt10M = file.size / 1024 / 1024 < 10;
+            if (!isLt10M) {
+                message.error('文件大小不能超过10MB！');
+                return Upload.LIST_IGNORE;
+            }
+
+            return false; // 阻止自动上传
+        },
+        multiple: true,
+    };
+
     const handleFeedback = async (values: any) => {
         console.log('Feedback values:', values);
+        console.log('Uploaded files:', fileList);
         message.success('反馈提交成功');
         setFeedbackVisible(false);
         feedbackForm.resetFields();
+        setFileList([]); // 清空文件列表
     };
 
     const renderAttackContent = () => (
@@ -1345,7 +1385,11 @@ const ThreatIntelligenceDetail: React.FC = () => {
             <Modal
                 title="误报反馈"
                 open={feedbackVisible}
-                onCancel={() => setFeedbackVisible(false)}
+                onCancel={() => {
+                    setFeedbackVisible(false);
+                    setFileList([]); // 关闭时清空文件列表
+                    feedbackForm.resetFields();
+                }}
                 footer={null}
                 width={480}
             >
@@ -1374,9 +1418,34 @@ const ThreatIntelligenceDetail: React.FC = () => {
                             rows={4}
                         />
                     </Form.Item>
+                    <Form.Item
+                        name="attachments"
+                        labelCol={{ style: { width: '80px' } }}
+                    >
+                        <Upload.Dragger {...uploadProps}>
+                            <p className="ant-upload-drag-icon">
+                                <InboxOutlined />
+                            </p>
+                            <p className="ant-upload-text">
+                                上传附件
+                            </p>
+                            <p className="ant-upload-hint" style={{
+                                color: '#999',
+                                fontSize: 12,
+                                paddingLeft: 16,
+                                paddingRight: 16
+                            }}>
+                                支持png、jpg、jpeg、gif、pdf、docx、doc格式，最多上传5个文件，单个文件不超过5MB。
+                            </p>
+                        </Upload.Dragger>
+                    </Form.Item>
                     <Form.Item style={{ marginBottom: 0, textAlign: 'right' }}>
                         <Space>
-                            <Button onClick={() => setFeedbackVisible(false)}>
+                            <Button onClick={() => {
+                                setFeedbackVisible(false);
+                                setFileList([]); // 关闭时清空文件列表
+                                feedbackForm.resetFields();
+                            }}>
                                 取消
                             </Button>
                             <Button type="primary" htmlType="submit">
