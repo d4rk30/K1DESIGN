@@ -850,7 +850,7 @@ const ExternalLogs: React.FC = () => {
             <Drawer
                 title={
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                        <Typography.Title level={4} style={{ margin: 0, fontSize: '18px' }}>攻击日志详情</Typography.Title>
+                        <Typography.Title level={4} style={{ margin: 0, fontSize: '18px' }}>外联日志详情</Typography.Title>
                     </div>
                 }
                 placement="right"

@@ -20,11 +20,10 @@ export default defineConfig({
       output: {
         chunkFileNames: 'js/[name]-[hash].js',
         entryFileNames: 'js/[name]-[hash].js',
-        assetFileNames: ({name}) => {
-          if (/\.css$/.test(name ?? '')) {
-            return 'css/[name]-[hash][extname]'
-          }
-          return '[name]-[hash][extname]'
+        assetFileNames: (assetInfo) => {
+          const info = assetInfo.source?.toString() || '';
+          const isCss = info.includes('sourceMappingURL') && info.includes('/*');
+          return isCss ? 'css/[name]-[hash][extname]' : '[name]-[hash][extname]'
         }
       }
     },
