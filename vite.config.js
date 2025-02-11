@@ -19,12 +19,11 @@ export default defineConfig({
             output: {
                 chunkFileNames: 'js/[name]-[hash].js',
                 entryFileNames: 'js/[name]-[hash].js',
-                assetFileNames: function (_a) {
-                    var name = _a.name;
-                    if (/\.css$/.test(name !== null && name !== void 0 ? name : '')) {
-                        return 'css/[name]-[hash][extname]';
-                    }
-                    return '[name]-[hash][extname]';
+                assetFileNames: function (assetInfo) {
+                    var _a;
+                    var info = ((_a = assetInfo.source) === null || _a === void 0 ? void 0 : _a.toString()) || '';
+                    var isCss = info.includes('sourceMappingURL') && info.includes('/*');
+                    return isCss ? 'css/[name]-[hash][extname]' : '[name]-[hash][extname]';
                 }
             }
         },
