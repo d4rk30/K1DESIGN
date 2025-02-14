@@ -1396,6 +1396,9 @@ const ThreatIntelligenceDetail: React.FC = () => {
                 <Form
                     form={feedbackForm}
                     onFinish={handleFeedback}
+                    initialValues={{
+                        intelContent: location.state?.type === 'attack' ? '192.168.1.109' : 'pro.csocools.com'
+                    }}
                 >
                     <Form.Item
                         name="intelContent"
@@ -1405,6 +1408,7 @@ const ThreatIntelligenceDetail: React.FC = () => {
                             label="情报内容"
                             required
                             placeholder="请输入情报内容"
+                            disabled
                         />
                     </Form.Item>
                     <Form.Item

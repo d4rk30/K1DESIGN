@@ -24,7 +24,7 @@ import AttackLogs from './pages/AttackLogs';
 import ExternalLogs from './pages/ExternalLogs';
 import BlackWhiteList from './pages/BlackWhiteList';
 import FalsePositive from './pages/FalsePositive';
-
+import NoData from './pages/ThreatIntelligenceDetailNoData';
 // Set dayjs locale
 dayjs.locale('zh-cn');
 
@@ -34,7 +34,7 @@ const App: React.FC = () => {
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<MainLayout />}>
-            <Route index element={<Navigate to="/home" replace />} />
+            <Route index element={<Navigate to="/dashboard" replace />} />
 
             {/* 系统概览 */}
             <Route path="dashboard" element={<Dashboard />} />
@@ -49,8 +49,11 @@ const App: React.FC = () => {
             <Route path="anti-mapping-policy" element={<AntiMappingStrategy />} />
 
             {/* 威胁情报 */}
-            <Route path="threat-intelligence-trace" element={<ThreatIntelligenceTrace />} />
-            <Route path="threat-intelligence-trace/detail" element={<ThreatIntelligenceDetail />} />
+            <Route path="threat-intelligence-trace">
+              <Route index element={<ThreatIntelligenceTrace />} />
+              <Route path="detail" element={<ThreatIntelligenceDetail />} />
+              <Route path="nodata" element={<NoData />} />
+            </Route>
             <Route path="public-intelligence" element={<PublicIntelligence />} />
 
             {/* 资产管理 */}
@@ -71,7 +74,7 @@ const App: React.FC = () => {
           </Route>
         </Routes>
       </BrowserRouter>
-    </ConfigProvider>
+    </ConfigProvider >
   );
 };
 

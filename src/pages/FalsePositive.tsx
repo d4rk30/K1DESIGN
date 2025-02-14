@@ -319,6 +319,12 @@ const FalsePositive: React.FC = () => {
                                         <div style={{ color: '#666666', marginBottom: 16 }}>
                                             处理意见：已经确认为XX场所误报，已从情报库中移除。
                                         </div>
+                                        <div style={{ color: '#666666', marginBottom: 16, display: 'flex', alignItems: 'flex-start' }}>
+                                            <span style={{ marginRight: 16 }}>附件：</span>
+                                            <Space direction="vertical">
+                                                <a href="#">误报证明.pdf</a>
+                                            </Space>
+                                        </div>
                                     </>
                                 )
                             }

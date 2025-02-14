@@ -340,6 +340,7 @@ const MainLayout = () => {
         return items;
     }, [location.pathname, location.state, menuItems, navigate]);
 
+    //仪表盘页面中面包屑显示最近更新时间
     const renderUpdateTime = () => {
         const pathname = location.pathname.substring(1);
         if (pathname === 'dashboard') {
@@ -366,6 +367,7 @@ const MainLayout = () => {
         return null;
     };
 
+    //面包屑显示时间选择器
     const renderAntiMappingControls = () => {
         const pathname = location.pathname.substring(1);
         const antiMappingPages = [
