@@ -42,7 +42,7 @@ const NoData: React.FC = () => {
                     <Card styles={{ body: { padding: '24px' } }}>
                         <Empty
                             image={Empty.PRESENTED_IMAGE_SIMPLE}
-                            description="暂无相关情报数据"
+                            description="暂无相关 192.168.1.109 情报数据"
                             style={{ margin: '40px 0' }}
                         >
                         </Empty>
