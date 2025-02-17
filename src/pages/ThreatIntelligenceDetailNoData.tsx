@@ -1,11 +1,8 @@
 import React from 'react';
 import { Card, Row, Col, Button, Input, Space, Empty } from 'antd';
-import { useNavigate } from 'react-router-dom';
 
 // 修改组件名称为 NoData
 const NoData: React.FC = () => {
-    const navigate = useNavigate();
-
     return (
         <div>
             <Row gutter={[24, 24]}>
