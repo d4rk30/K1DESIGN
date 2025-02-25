@@ -14,6 +14,7 @@ import AttackPathVisualization from '@/components/AttackPathVisualization';
 // 定义筛选条件的类型
 interface FilterValues {
     intelType?: string;  // 情报类型
+    threatLevel?: string; // 威胁等级
     intelSource?: string; // 情报源
     action?: string;      // 处理动作
     attackIp?: string;    // 攻击IP
@@ -271,6 +272,7 @@ const generateMockData = (): AttackLog[] => {
 
 const FILTER_OPTIONS = {
     intelType: MOCK_DATA_CONFIG.intelTypes,
+    threatLevel: MOCK_DATA_CONFIG.threatLevels,
     action: MOCK_DATA_CONFIG.actions,
     intelSource: MOCK_DATA_CONFIG.intelSources,
 };
@@ -704,6 +706,16 @@ const AttackLogs: React.FC = () => {
                     </Form.Item>
                 </Col>
                 <Col span={4}>
+                    <Form.Item name="threatLevel" style={{ marginBottom: 0 }}>
+                        <LabelSelect
+                            label="威胁等级"
+                            allowClear
+                            placeholder="请选择威胁等级"
+                            options={FILTER_OPTIONS.threatLevel.map(item => ({ label: item, value: item }))}
+                        />
+                    </Form.Item>
+                </Col>
+                <Col span={4}>
                     <Form.Item name="intelSource" style={{ marginBottom: 0 }}>
                         <LabelSelect
                             label="情报源"
@@ -741,7 +753,7 @@ const AttackLogs: React.FC = () => {
                         />
                     </Form.Item>
                 </Col>
-                <Col span={8}>
+                <Col span={4}>
                     <Form.Item name="location" style={{ marginBottom: 0 }}>
                         <LabelCascader
                             label="归属地"
