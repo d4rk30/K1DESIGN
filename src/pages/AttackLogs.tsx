@@ -1219,7 +1219,6 @@ const AttackLogs: React.FC = () => {
                                                 <Descriptions.Item label="规则号">{selectedLog.localVerification.protocolNumber}</Descriptions.Item>
                                                 <Descriptions.Item label="协议类型">{selectedLog.localVerification.protocolType}</Descriptions.Item>
                                                 <Descriptions.Item label="攻击类型">{selectedLog.localVerification.attackType}</Descriptions.Item>
-                                                <Descriptions.Item label="畸形包长度">{selectedLog.localVerification.malformedPacketLength}</Descriptions.Item>
                                                 <Descriptions.Item label="攻击特征">{selectedLog.localVerification.attackFeatures}</Descriptions.Item>
                                                 <Descriptions.Item label="AI检测引擎">
                                                     {selectedLog.localVerification.aiDetection === 'hit' ? '命中' : '未命中'}
