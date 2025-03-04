@@ -112,42 +112,42 @@ const AntiMappingStrategy: React.FC = () => {
     const commercialPlatforms = [
         {
             key: '1',
-            name: 'DayDayMap',
-            status: true,
-            level: 'high',
-            action: 'block'
-        },
-        {
-            key: '2',
             name: 'FOFA',
             status: true,
             level: 'high',
             action: 'block'
         },
         {
-            key: '3',
+            key: '2',
             name: 'Shodan',
             status: true,
             level: 'medium',
             action: 'monitor'
         },
         {
-            key: '4',
+            key: '3',
             name: 'ZoomEye',
             status: true,
             level: 'high',
             action: 'block'
         },
         {
-            key: '5',
+            key: '4',
             name: '360Quake',
             status: true,
             level: 'medium',
             action: 'monitor'
         },
         {
-            key: '6',
+            key: '5',
             name: 'Censys',
+            status: true,
+            level: 'medium',
+            action: 'monitor'
+        },
+        {
+            key: '6',
+            name: 'Binary Edge',
             status: true,
             level: 'medium',
             action: 'monitor'
