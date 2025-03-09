@@ -25,6 +25,8 @@ import ExternalLogs from './pages/ExternalLogs';
 import BlackWhiteList from './pages/BlackWhiteList';
 import FalsePositive from './pages/FalsePositive';
 import NoData from './pages/ThreatIntelligenceDetailNoData';
+import AttackIpAnalysis from './pages/AttackIpAnalysis';
+import AttackedIpAnalysis from './pages/AttackedIpAnalysis';
 // Set dayjs locale
 dayjs.locale('zh-cn');
 
@@ -41,6 +43,8 @@ const App: React.FC = () => {
 
             {/* 攻击日志 */}
             <Route path="attack-logs" element={<AttackLogs />} />
+            <Route path="attack-ip-analysis" element={<AttackIpAnalysis />} />
+            <Route path="attacked-ip-analysis" element={<AttackedIpAnalysis />} />
 
             {/* 反探测 */}
             <Route path="anti-mapping-logs" element={<AntiMappingLog />} />
