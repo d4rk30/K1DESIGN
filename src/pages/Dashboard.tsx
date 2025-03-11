@@ -2,7 +2,7 @@ import { Card, Row, Col, Space, Tooltip } from 'antd';
 import {
     AlertOutlined, GlobalOutlined,
     DesktopOutlined, TeamOutlined, BugOutlined,
-    DatabaseOutlined, SecurityScanOutlined,
+    SecurityScanOutlined,
     RiseOutlined, RightOutlined, ExclamationCircleOutlined
 } from '@ant-design/icons';
 import ReactECharts from 'echarts-for-react';
@@ -807,7 +807,7 @@ const Dashboard = () => {
         <div>
 
             <Row gutter={[24, 24]}>
-                <Col span={6}>
+                <Col span={7}>
                     <TrendCard
                         title="攻击态势"
                         titleColor="#1890ff"
@@ -831,7 +831,7 @@ const Dashboard = () => {
                         ]}
                     />
                 </Col>
-                <Col span={6}>
+                <Col span={7}>
                     <TrendCard
                         title="外联态势"
                         titleColor="#52c41a"
@@ -855,7 +855,7 @@ const Dashboard = () => {
                         ]}
                     />
                 </Col>
-                <Col span={12}>
+                <Col span={10}>
                     <Card>
                         {/* 标题区域 - 统一风格 */}
                         <div style={{
@@ -892,14 +892,6 @@ const Dashboard = () => {
                                     icon: <DesktopOutlined />,
                                     color: '#1890ff',
                                     trend: '+12%',
-                                    trendType: 'up'
-                                },
-                                {
-                                    title: '高精准情报',
-                                    value: mockData.securityData.preciseIntel,
-                                    icon: <DatabaseOutlined />,
-                                    color: '#52c41a',
-                                    trend: '+5%',
                                     trendType: 'up'
                                 },
                                 {
@@ -953,7 +945,7 @@ const Dashboard = () => {
                                     trendType: 'stable'
                                 },
                             ].map((item, index) => (
-                                <Col span={index < 3 ? 8 : 12} key={index}>
+                                <Col span={index < 2 ? 12 : 12} key={index}>
                                     <div style={{
                                         background: `linear-gradient(135deg, ${item.color}08, ${item.color}02)`,
                                         borderRadius: '12px',

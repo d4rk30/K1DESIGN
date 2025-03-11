@@ -49,7 +49,7 @@ const ThreatIntelligenceDetail: React.FC = () => {
             message.open({
                 content: (
                     <Space>
-                        情报正在溯源中
+                        溯源中...
                         <Spin size="small" />
                     </Space>
                 ),
