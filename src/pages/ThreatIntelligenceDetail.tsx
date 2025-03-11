@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Card, Row, Col, Table, Tag, Space, Button, Input, message, Modal, Form, Upload } from 'antd';
+import { Card, Row, Col, Table, Tag, Space, Button, Input, message, Modal, Form, Upload, Spin, Skeleton } from 'antd';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { SearchOutlined, ReloadOutlined, CalendarOutlined, UpOutlined, DownOutlined, CopyOutlined, ApartmentOutlined, GlobalOutlined, ApiOutlined, LinkOutlined, InboxOutlined } from '@ant-design/icons';
 import LabelSelect from '@/components/LabelSelect';
@@ -16,6 +16,9 @@ const ThreatIntelligenceDetail: React.FC = () => {
     const [feedbackVisible, setFeedbackVisible] = useState(false);
     const [feedbackForm] = Form.useForm();
     const [fileList, setFileList] = useState<UploadFile[]>([]);
+    const [messageShown, setMessageShown] = useState(false);
+    const [parseLoading, setParseLoading] = useState(true);
+    const [cardLoading, setCardLoading] = useState(true);
 
     const attackTabs = [
         { key: 'parse', tab: '外联黑域名' },
@@ -39,8 +42,47 @@ const ThreatIntelligenceDetail: React.FC = () => {
     useEffect(() => {
         if (!location.state?.type) {
             navigate('/threat-intelligence-trace');
+        } else if (!messageShown) {
+            // 显示全局提示消息
+            const key = 'loadingMessage';
+            message.open({
+                content: (
+                    <Space>
+                        情报正在溯源中
+                        <Spin size="small" />
+                    </Space>
+                ),
+                key,
+                duration: 3
+            });
+            setMessageShown(true);
+        }
+    }, [location.state, navigate, messageShown]);
+
+    useEffect(() => {
+        if (!location.state?.type) {
+            navigate('/threat-intelligence-trace');
+        } else {
+            // 模拟卡片数据加载
+            setCardLoading(true);
+            const timer = setTimeout(() => {
+                setCardLoading(false);
+            }, 2000);
+            return () => clearTimeout(timer);
         }
     }, [location.state, navigate]);
+
+    // 模拟数据加载
+    useEffect(() => {
+        if (activeTabKey === 'parse') {
+            setParseLoading(true);
+            // 模拟数据加载延迟
+            const timer = setTimeout(() => {
+                setParseLoading(false);
+            }, 2000);
+            return () => clearTimeout(timer);
+        }
+    }, [activeTabKey]);
 
     const handleTabChange = (key: string) => {
         setActiveTabKey(key);
@@ -489,21 +531,36 @@ const ThreatIntelligenceDetail: React.FC = () => {
         );
     };
 
+    const renderSkeletonRow = () => {
+        return {
+            key: Math.random(),
+            domain: <Skeleton.Input active size="small" block style={{ width: '100%', minWidth: 200 }} />,
+            threatLevel: <Skeleton.Input active size="small" block style={{ width: '100%', minWidth: 60 }} />,
+            firstParseTime: <Skeleton.Input active size="small" block style={{ width: '100%', minWidth: 150 }} />,
+            lastParseTime: <Skeleton.Input active size="small" block style={{ width: '100%', minWidth: 150 }} />
+        };
+    };
+
+    const skeletonData = Array(4).fill(null).map(renderSkeletonRow);
+
     const tabContents = {
-        // 攻击情报查询的tab内容
         parse: (
             <Table
+                loading={false}
                 columns={[
                     {
                         title: '域名',
                         dataIndex: 'domain',
                         key: 'domain',
+                        width: '30%'
                     },
                     {
                         title: '威胁等级',
                         dataIndex: 'threatLevel',
                         key: 'threatLevel',
+                        width: '15%',
                         render: (level) => {
+                            if (parseLoading) return level;
                             const colors: Record<string, string> = {
                                 '高危': 'red',
                                 '中危': 'orange',
@@ -516,41 +573,43 @@ const ThreatIntelligenceDetail: React.FC = () => {
                         title: '首次解析时间',
                         dataIndex: 'firstParseTime',
                         key: 'firstParseTime',
+                        width: '27.5%'
                     },
                     {
                         title: '最近解析时间',
                         dataIndex: 'lastParseTime',
                         key: 'lastParseTime',
+                        width: '27.5%'
                     }
                 ]}
-                dataSource={[
+                dataSource={parseLoading ? skeletonData : [
                     {
-                        key: '1',
-                        domain: 'malicious-domain1.com',
-                        threatLevel: '高危',
-                        firstParseTime: '2023-01-01 12:00:00',
-                        lastParseTime: '2023-12-01 15:30:00'
+                        key: 1,
+                        domain: <span>malicious-domain1.com</span>,
+                        threatLevel: <span>高危</span>,
+                        firstParseTime: <span>2023-01-01 12:00:00</span>,
+                        lastParseTime: <span>2023-12-01 15:30:00</span>
                     },
                     {
-                        key: '2',
-                        domain: 'suspicious-domain2.net',
-                        threatLevel: '中危',
-                        firstParseTime: '2023-02-15 09:20:00',
-                        lastParseTime: '2023-11-30 18:45:00'
+                        key: 2,
+                        domain: <span>suspicious-domain2.net</span>,
+                        threatLevel: <span>中危</span>,
+                        firstParseTime: <span>2023-02-15 09:20:00</span>,
+                        lastParseTime: <span>2023-11-30 18:45:00</span>
                     },
                     {
-                        key: '3',
-                        domain: 'risky-domain3.org',
-                        threatLevel: '高危',
-                        firstParseTime: '2023-03-20 14:10:00',
-                        lastParseTime: '2023-11-28 11:20:00'
+                        key: 3,
+                        domain: <span>risky-domain3.org</span>,
+                        threatLevel: <span>高危</span>,
+                        firstParseTime: <span>2023-03-20 14:10:00</span>,
+                        lastParseTime: <span>2023-11-28 11:20:00</span>
                     },
                     {
-                        key: '4',
-                        domain: 'unsafe-domain4.com',
-                        threatLevel: '低危',
-                        firstParseTime: '2023-04-05 16:40:00',
-                        lastParseTime: '2023-11-25 09:15:00'
+                        key: 4,
+                        domain: <span>unsafe-domain4.com</span>,
+                        threatLevel: <span>低危</span>,
+                        firstParseTime: <span>2023-04-05 16:40:00</span>,
+                        lastParseTime: <span>2023-11-25 09:15:00</span>
                     }
                 ]}
                 pagination={{
@@ -908,8 +967,8 @@ const ThreatIntelligenceDetail: React.FC = () => {
         console.log('Uploaded files:', fileList);
         message.success('反馈提交成功');
         setFeedbackVisible(false);
-        feedbackForm.resetFields();
         setFileList([]); // 清空文件列表
+        feedbackForm.resetFields();
     };
 
     const renderAttackContent = () => (
@@ -930,6 +989,7 @@ const ThreatIntelligenceDetail: React.FC = () => {
                                     <Space size={36} align="center">
                                         <Space align="center">
                                             <span style={{ fontSize: 24, fontWeight: 500, display: 'flex', alignItems: 'center' }}>
+
                                                 192.168.1.109
                                                 <CopyOutlined
                                                     style={{ cursor: 'pointer', color: '#1890ff', fontSize: 14, marginLeft: 8 }}
@@ -938,6 +998,7 @@ const ThreatIntelligenceDetail: React.FC = () => {
                                                         message.success('IP已复制到剪贴板');
                                                     }}
                                                 />
+
                                             </span>
                                         </Space>
                                     </Space>
@@ -950,10 +1011,12 @@ const ThreatIntelligenceDetail: React.FC = () => {
                             </Row>
                         </div>
                         <Space size={8} wrap>
+
                             <Tag color="blue">SQL注入</Tag>
                             <Tag color="blue">XSS攻击</Tag>
                             <Tag color="blue">DDoS攻击</Tag>
                             <Tag color="blue">暴力破解</Tag>
+
                         </Space>
                     </Col>
                     <Col span={24}>
@@ -961,7 +1024,9 @@ const ThreatIntelligenceDetail: React.FC = () => {
                             <Col xs={6}>
                                 <div style={{ display: 'flex' }}>
                                     <span style={{ color: '#999' }}>威胁等级：</span>
+
                                     <Tag color="red">高危</Tag>
+
                                 </div>
                             </Col>
                             <Col xs={6}>
@@ -991,13 +1056,21 @@ const ThreatIntelligenceDetail: React.FC = () => {
                             <Col xs={6}>
                                 <div style={{ display: 'flex' }}>
                                     <span style={{ color: '#999' }}>运营商：</span>
-                                    <span>EstNOC OY</span>
+                                    {cardLoading ? (
+                                        <Skeleton.Input active size="small" style={{ width: 120 }} />
+                                    ) : (
+                                        <span>EstNOC OY</span>
+                                    )}
                                 </div>
                             </Col>
                             <Col xs={6}>
                                 <div style={{ display: 'flex' }}>
                                     <span style={{ color: '#999' }}>ANS：</span>
-                                    <span>206804</span>
+                                    {cardLoading ? (
+                                        <Skeleton.Input active size="small" style={{ width: 120 }} />
+                                    ) : (
+                                        <span>206804</span>
+                                    )}
                                 </div>
                             </Col>
                             <Col xs={6}>
