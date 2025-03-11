@@ -19,6 +19,7 @@ const ThreatIntelligenceDetail: React.FC = () => {
     const [messageShown, setMessageShown] = useState(false);
     const [parseLoading, setParseLoading] = useState(true);
     const [cardLoading, setCardLoading] = useState(true);
+    const [forceLoading, setForceLoading] = useState(true);
 
     const attackTabs = [
         { key: 'parse', tab: '外联黑域名' },
@@ -72,15 +73,44 @@ const ThreatIntelligenceDetail: React.FC = () => {
         }
     }, [location.state, navigate]);
 
-    // 模拟数据加载
+    // 使用硬编码的方式确保骨架屏在生产环境中显示
+    useEffect(() => {
+        // 强制显示骨架屏
+        setParseLoading(true);
+        setCardLoading(true);
+        setForceLoading(true);
+
+        // 使用 window.setTimeout 而不是 setTimeout，避免被优化
+        const timer = window.setTimeout(() => {
+            setParseLoading(false);
+            setCardLoading(false);
+            setForceLoading(false);
+        }, 2000);
+
+        // 确保清理函数不会被优化掉
+        return () => {
+            window.clearTimeout(timer);
+            // 重置状态
+            setParseLoading(true);
+            setCardLoading(true);
+            setForceLoading(true);
+        };
+    }, [location.pathname, location.search]); // 使用路径和查询参数作为依赖
+
+    // 标签页切换时的加载效果
     useEffect(() => {
         if (activeTabKey === 'parse') {
             setParseLoading(true);
-            // 模拟数据加载延迟
-            const timer = setTimeout(() => {
+
+            // 使用 window.setTimeout 避免被优化
+            const tabTimer = window.setTimeout(() => {
                 setParseLoading(false);
             }, 2000);
-            return () => clearTimeout(timer);
+
+            return () => {
+                window.clearTimeout(tabTimer);
+                setParseLoading(true);
+            };
         }
     }, [activeTabKey]);
 
@@ -582,7 +612,7 @@ const ThreatIntelligenceDetail: React.FC = () => {
                         width: '27.5%'
                     }
                 ]}
-                dataSource={parseLoading ? skeletonData : [
+                dataSource={(parseLoading || forceLoading) ? skeletonData : [
                     {
                         key: 1,
                         domain: <span>malicious-domain1.com</span>,
@@ -1056,7 +1086,7 @@ const ThreatIntelligenceDetail: React.FC = () => {
                             <Col xs={6}>
                                 <div style={{ display: 'flex' }}>
                                     <span style={{ color: '#999' }}>运营商：</span>
-                                    {cardLoading ? (
+                                    {(cardLoading || forceLoading) ? (
                                         <Skeleton.Input active size="small" style={{ width: 120 }} />
                                     ) : (
                                         <span>EstNOC OY</span>
@@ -1066,7 +1096,7 @@ const ThreatIntelligenceDetail: React.FC = () => {
                             <Col xs={6}>
                                 <div style={{ display: 'flex' }}>
                                     <span style={{ color: '#999' }}>ANS：</span>
-                                    {cardLoading ? (
+                                    {(cardLoading || forceLoading) ? (
                                         <Skeleton.Input active size="small" style={{ width: 120 }} />
                                     ) : (
                                         <span>206804</span>
