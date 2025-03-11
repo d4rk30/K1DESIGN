@@ -18,12 +18,12 @@ const ThreatIntelligenceDetail: React.FC = () => {
     const [fileList, setFileList] = useState<UploadFile[]>([]);
 
     const attackTabs = [
-        { key: 'parse', tab: '解析信息' },
+        { key: 'parse', tab: '外联黑域名' },
         { key: 'attackTrace', tab: '攻击实时轨迹' },
         { key: 'ipWhois', tab: 'IP WHOIS' },
         { key: 'fingerprint', tab: '指纹信息' },
         { key: 'ports', tab: '端口信息' },
-        { key: 'samples', tab: '通信样本' },
+        // { key: 'samples', tab: '通信样本' }, // 在攻击详情中不显示通信样本
         { key: 'sameSegment', tab: '同C段信息' }
     ];
 
@@ -32,7 +32,7 @@ const ThreatIntelligenceDetail: React.FC = () => {
         { key: 'whois', tab: 'WHOIS' },
         { key: 'fingerprint', tab: '指纹信息' },
         { key: 'subdomains', tab: '子域名' },
-        { key: 'samples', tab: '通信样本' },
+        { key: 'samples', tab: '通信样本' }, // 在外联详情中保留通信样本
         { key: 'reverseDomain', tab: '反查域名' }
     ];
 
@@ -1047,25 +1047,7 @@ const ThreatIntelligenceDetail: React.FC = () => {
                                     }}>
                                         <ApartmentOutlined style={{ color: '#fff', fontSize: 16 }} />
                                     </div>
-                                    <span style={{ color: '#999', marginRight: 8 }}>相关域名</span>
-                                    <span style={{ color: '#1890ff', fontSize: 20, fontWeight: 500 }}>3</span>
-                                </div>
-                            </Col>
-                            <Col span={6}>
-                                <div style={{ display: 'flex', alignItems: 'center' }}>
-                                    <div style={{
-                                        width: 32,
-                                        height: 32,
-                                        borderRadius: '50%',
-                                        backgroundColor: '#1890ff',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        marginRight: 8
-                                    }}>
-                                        <GlobalOutlined style={{ color: '#fff', fontSize: 16 }} />
-                                    </div>
-                                    <span style={{ color: '#999', marginRight: 8 }}>开放端口</span>
+                                    <span style={{ color: '#999', marginRight: 8 }}>外联黑域名</span>
                                     <span style={{ color: '#1890ff', fontSize: 20, fontWeight: 500 }}>4</span>
                                 </div>
                             </Col>
@@ -1083,10 +1065,29 @@ const ThreatIntelligenceDetail: React.FC = () => {
                                     }}>
                                         <ApiOutlined style={{ color: '#fff', fontSize: 16 }} />
                                     </div>
-                                    <span style={{ color: '#999', marginRight: 8 }}>通信样本</span>
-                                    <span style={{ color: '#1890ff', fontSize: 20, fontWeight: 500 }}>4</span>
+                                    <span style={{ color: '#999', marginRight: 8 }}>攻击实时轨迹</span>
+                                    <span style={{ color: '#1890ff', fontSize: 20, fontWeight: 500 }}>3</span>
                                 </div>
                             </Col>
+                            <Col span={6}>
+                                <div style={{ display: 'flex', alignItems: 'center' }}>
+                                    <div style={{
+                                        width: 32,
+                                        height: 32,
+                                        borderRadius: '50%',
+                                        backgroundColor: '#1890ff',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        marginRight: 8
+                                    }}>
+                                        <GlobalOutlined style={{ color: '#fff', fontSize: 16 }} />
+                                    </div>
+                                    <span style={{ color: '#999', marginRight: 8 }}>端口信息</span>
+                                    <span style={{ color: '#1890ff', fontSize: 20, fontWeight: 500 }}>10</span>
+                                </div>
+                            </Col>
+
                             <Col span={6}>
                                 <div style={{ display: 'flex', alignItems: 'center' }}>
                                     <div style={{
@@ -1167,8 +1168,8 @@ const ThreatIntelligenceDetail: React.FC = () => {
                                         }}>
                                             <ApartmentOutlined style={{ color: '#fff', fontSize: 16 }} />
                                         </div>
-                                        <span style={{ color: '#999', marginRight: 8 }}>解析记录</span>
-                                        <span style={{ color: '#1890ff', fontSize: 20, fontWeight: 500 }}>4</span>
+                                        <span style={{ color: '#999', marginRight: 8 }}>DNS解析记录</span>
+                                        <span style={{ color: '#1890ff', fontSize: 20, fontWeight: 500 }}>2</span>
                                     </div>
                                 </Col>
                                 <Col span={6}>
@@ -1186,7 +1187,7 @@ const ThreatIntelligenceDetail: React.FC = () => {
                                             <GlobalOutlined style={{ color: '#fff', fontSize: 16 }} />
                                         </div>
                                         <span style={{ color: '#999', marginRight: 8 }}>子域名</span>
-                                        <span style={{ color: '#1890ff', fontSize: 20, fontWeight: 500 }}>3</span>
+                                        <span style={{ color: '#1890ff', fontSize: 20, fontWeight: 500 }}>4</span>
                                     </div>
                                 </Col>
                                 <Col span={6}>
