@@ -24,10 +24,8 @@ const ThreatIntelligenceDetail: React.FC = () => {
     const attackTabs = [
         { key: 'parse', tab: '外联黑域名' },
         { key: 'attackTrace', tab: '攻击实时轨迹' },
-        { key: 'ipWhois', tab: 'IP WHOIS' },
         { key: 'fingerprint', tab: '指纹信息' },
         { key: 'ports', tab: '端口信息' },
-        // { key: 'samples', tab: '通信样本' }, // 在攻击详情中不显示通信样本
         { key: 'sameSegment', tab: '同C段信息' }
     ];
 
@@ -35,9 +33,7 @@ const ThreatIntelligenceDetail: React.FC = () => {
         { key: 'dnsRecords', tab: 'DNS解析记录' },
         { key: 'whois', tab: 'WHOIS' },
         { key: 'fingerprint', tab: '指纹信息' },
-        { key: 'subdomains', tab: '子域名' },
-        { key: 'samples', tab: '通信样本' }, // 在外联详情中保留通信样本
-        { key: 'reverseDomain', tab: '反查域名' }
+        { key: 'subdomains', tab: '子域名' }
     ];
 
     useEffect(() => {
@@ -182,32 +178,6 @@ const ThreatIntelligenceDetail: React.FC = () => {
         return <RecordDisplay leftRecords={leftRecords} rightRecords={rightRecords} />;
     };
 
-    const renderIPWhois = () => {
-        const leftRecords = [
-            { label: 'admin_c:', value: 'IANA1-RIPE' },
-            { label: 'create_date:', value: '2019-01-07 10:49:20' },
-            { label: 'inetnum:', value: '82.156.0.0 - 82.157.255.255' },
-            { label: 'net_name:', value: 'NON-RIPE-NCC-MANAGED-ADDRESS-BLOCK' },
-            { label: 'mnt_by:', value: 'ALLOCATED UNSPECIFIED' },
-            { label: 'update_date:', value: '2019-01-07 10:49:20' }
-        ];
-
-        const rightRecords = [
-            { label: 'country:', value: 'EU # Country is really world wide' },
-            { label: 'descr:', value: 'IPv4 address block not managed by the RIPE NCC' },
-            { label: 'mnt_by:', value: 'RIPE-NCC-HM-MNT' },
-            { label: 'source:', value: 'RIPE' },
-            { label: 'tech_c:', value: 'IANA1-RIPE' }
-        ];
-
-        return <RecordDisplay
-            leftRecords={leftRecords}
-            rightRecords={rightRecords}
-            leftStartNumber={1}
-            rightStartNumber={7}
-        />;
-    };
-
     const renderWhois = () => {
         const leftRecords = [
             { label: '注册者:', value: 'REDACTED FOR PRIVACY' },
@@ -244,19 +214,19 @@ const ThreatIntelligenceDetail: React.FC = () => {
                         width: '30%',
                     },
                     {
-                        title: '解析IP',
-                        dataIndex: 'ip',
-                        key: 'ip',
+                        title: '威胁等级',
+                        dataIndex: 'threatLevel',
+                        key: 'threatLevel',
                         width: '20%',
                     },
                     {
-                        title: '首次解析时间',
+                        title: '创建时间',
                         dataIndex: 'firstParseTime',
                         key: 'firstParseTime',
                         width: '25%',
                     },
                     {
-                        title: '最近解析时间',
+                        title: '更新时间',
                         dataIndex: 'lastParseTime',
                         key: 'lastParseTime',
                         width: '25%',
@@ -266,107 +236,29 @@ const ThreatIntelligenceDetail: React.FC = () => {
                     {
                         key: '1',
                         domain: 'mail.example.com',
-                        ip: '192.168.1.10',
+                        threatLevel: <Tag color="red">高危</Tag>,
                         firstParseTime: '2024-01-15 08:30:00',
                         lastParseTime: '2024-02-29 10:15:23'
                     },
                     {
                         key: '2',
                         domain: 'api.example.com',
-                        ip: '192.168.1.11',
+                        threatLevel: <Tag color="orange">中危</Tag>,
                         firstParseTime: '2024-01-16 09:45:12',
                         lastParseTime: '2024-02-29 11:20:45'
                     },
                     {
                         key: '3',
                         domain: 'blog.example.com',
-                        ip: '192.168.1.12',
+                        threatLevel: <Tag color="red">高危</Tag>,
                         firstParseTime: '2024-01-17 14:22:33',
                         lastParseTime: '2024-02-29 09:05:18'
                     },
                     {
                         key: '4',
                         domain: 'dev.example.com',
-                        ip: '192.168.1.13',
+                        threatLevel: <Tag color="green">低危</Tag>,
                         firstParseTime: '2024-01-18 16:40:55',
-                        lastParseTime: '2024-02-29 08:30:42'
-                    }
-                ]}
-                pagination={{
-                    total: 4,
-                    pageSize: 10,
-                    showSizeChanger: true,
-                    showQuickJumper: true,
-                    showTotal: (total) => `共 ${total} 条记录`,
-                }}
-            />
-        );
-    };
-
-    const renderReverseDomain = () => {
-        return (
-            <Table
-                columns={[
-                    {
-                        title: '域名',
-                        dataIndex: 'domain',
-                        key: 'domain',
-                        width: '35%',
-                    },
-                    {
-                        title: '解析IP',
-                        dataIndex: 'ip',
-                        key: 'ip',
-                        width: '25%',
-                    },
-                    {
-                        title: '威胁等级',
-                        dataIndex: 'threatLevel',
-                        key: 'threatLevel',
-                        width: '15%',
-                        render: (level) => {
-                            const colors: Record<string, string> = {
-                                '高危': 'red',
-                                '中危': 'orange',
-                                '低危': 'green'
-                            };
-                            return <Tag color={colors[level as keyof typeof colors]}>{level}</Tag>;
-                        }
-                    },
-                    {
-                        title: '最近解析时间',
-                        dataIndex: 'lastParseTime',
-                        key: 'lastParseTime',
-                        width: '25%',
-                    }
-                ]}
-                dataSource={[
-                    {
-                        key: '1',
-                        domain: 'malicious-site1.com',
-                        ip: '192.168.1.100',
-                        threatLevel: '高危',
-                        lastParseTime: '2024-02-29 10:15:23'
-                    },
-                    {
-                        key: '2',
-                        domain: 'suspicious-domain2.net',
-                        ip: '192.168.1.101',
-                        threatLevel: '中危',
-                        lastParseTime: '2024-02-29 11:20:45'
-                    },
-                    {
-                        key: '3',
-                        domain: 'risky-website3.org',
-                        ip: '192.168.1.102',
-                        threatLevel: '高危',
-                        lastParseTime: '2024-02-29 09:05:18'
-                    },
-                    {
-                        key: '4',
-                        domain: 'potential-threat4.com',
-                        ip: '192.168.1.103',
-                        threatLevel: '低危',
                         lastParseTime: '2024-02-29 08:30:42'
                     }
                 ]}
@@ -588,25 +480,16 @@ const ThreatIntelligenceDetail: React.FC = () => {
                         title: '威胁等级',
                         dataIndex: 'threatLevel',
                         key: 'threatLevel',
-                        width: '15%',
-                        render: (level) => {
-                            if (parseLoading) return level;
-                            const colors: Record<string, string> = {
-                                '高危': 'red',
-                                '中危': 'orange',
-                                '低危': 'green'
-                            };
-                            return <Tag color={colors[level as keyof typeof colors]}>{level}</Tag>;
-                        }
+                        width: '15%'
                     },
                     {
-                        title: '首次解析时间',
+                        title: '创建时间',
                         dataIndex: 'firstParseTime',
                         key: 'firstParseTime',
                         width: '27.5%'
                     },
                     {
-                        title: '最近解析时间',
+                        title: '更新时间',
                         dataIndex: 'lastParseTime',
                         key: 'lastParseTime',
                         width: '27.5%'
@@ -616,28 +499,28 @@ const ThreatIntelligenceDetail: React.FC = () => {
                     {
                         key: 1,
                         domain: <span>malicious-domain1.com</span>,
-                        threatLevel: <span>高危</span>,
+                        threatLevel: <Tag color="red">高危</Tag>,
                         firstParseTime: <span>2023-01-01 12:00:00</span>,
                         lastParseTime: <span>2023-12-01 15:30:00</span>
                     },
                     {
                         key: 2,
                         domain: <span>suspicious-domain2.net</span>,
-                        threatLevel: <span>中危</span>,
+                        threatLevel: <Tag color="orange">中危</Tag>,
                         firstParseTime: <span>2023-02-15 09:20:00</span>,
                         lastParseTime: <span>2023-11-30 18:45:00</span>
                     },
                     {
                         key: 3,
                         domain: <span>risky-domain3.org</span>,
-                        threatLevel: <span>高危</span>,
+                        threatLevel: <Tag color="red">高危</Tag>,
                         firstParseTime: <span>2023-03-20 14:10:00</span>,
                         lastParseTime: <span>2023-11-28 11:20:00</span>
                     },
                     {
                         key: 4,
                         domain: <span>unsafe-domain4.com</span>,
-                        threatLevel: <span>低危</span>,
+                        threatLevel: <Tag color="green">低危</Tag>,
                         firstParseTime: <span>2023-04-05 16:40:00</span>,
                         lastParseTime: <span>2023-11-25 09:15:00</span>
                     }
@@ -767,9 +650,7 @@ const ThreatIntelligenceDetail: React.FC = () => {
         dnsRecords: renderDNSRecords(),
         whois: renderWhois(),
         subdomains: renderSubdomains(),
-        reverseDomain: renderReverseDomain(),
         // 攻击情报查询的其他tab内容
-        ipWhois: renderIPWhois(),
         fingerprint: renderFingerprint(),
         ports: renderPorts(),
         sameSegment: <Table
@@ -789,7 +670,7 @@ const ThreatIntelligenceDetail: React.FC = () => {
                             '中危': 'orange',
                             '低危': 'green'
                         };
-                        return <Tag color={colors[level as keyof typeof colors]}>{level}</Tag>;
+                        return <Tag color={colors[level]}>{level}</Tag>;
                     }
                 },
                 {
@@ -812,7 +693,7 @@ const ThreatIntelligenceDetail: React.FC = () => {
                     },
                 },
                 {
-                    title: '首次攻击时间',
+                    title: '创建时间',
                     dataIndex: 'firstAttackTime',
                     key: 'firstAttackTime',
                 },
@@ -870,68 +751,6 @@ const ThreatIntelligenceDetail: React.FC = () => {
                     },
                     firstAttackTime: '2023-11-20 08:40:00',
                     updateTime: '2023-12-02 09:15:00'
-                }
-            ]}
-            pagination={{
-                total: 4,
-                pageSize: 10,
-                showSizeChanger: true,
-                showQuickJumper: true,
-                showTotal: (total) => `共 ${total} 条记录`,
-            }}
-        />,
-        samples: <Table
-            columns={[
-                { title: '样本Hash', dataIndex: 'hash', key: 'hash' },
-                {
-                    title: '威胁等级',
-                    dataIndex: 'threatLevel',
-                    key: 'threatLevel',
-                    render: (level) => {
-                        const colors: Record<string, string> = {
-                            '高危': 'red',
-                            '中危': 'orange',
-                            '低危': 'green'
-                        };
-                        return <Tag color={colors[level as keyof typeof colors]}>{level}</Tag>;
-                    }
-                },
-                { title: '文件类型', dataIndex: 'fileType', key: 'fileType' },
-                { title: '文件大小', dataIndex: 'fileSize', key: 'fileSize' },
-                { title: '首次出现时间', dataIndex: 'firstSeenTime', key: 'firstSeenTime' }
-            ]}
-            dataSource={[
-                {
-                    key: '1',
-                    hash: 'e1a23c4d5f6789abcdef0123456789abcdef0123',
-                    threatLevel: '高危',
-                    fileType: 'EXE',
-                    fileSize: '2.5MB',
-                    firstSeenTime: '2023-12-01 15:30:00'
-                },
-                {
-                    key: '2',
-                    hash: 'f2b34d5e6789abcdef0123456789abcdef012345',
-                    threatLevel: '中危',
-                    fileType: 'DLL',
-                    fileSize: '1.8MB',
-                    firstSeenTime: '2023-11-30 18:45:00'
-                },
-                {
-                    key: '3',
-                    hash: 'a1b2c3d4e5f6789abcdef0123456789abcdef012',
-                    threatLevel: '高危',
-                    fileType: 'EXE',
-                    fileSize: '3.2MB',
-                    firstSeenTime: '2023-11-28 11:20:00'
-                },
-                {
-                    key: '4',
-                    hash: 'b2c3d4e5f6789abcdef0123456789abcdef01234',
-                    threatLevel: '低危',
-                    fileType: 'ZIP',
-                    fileSize: '5.1MB',
-                    firstSeenTime: '2023-11-25 09:15:00'
                 }
             ]}
             pagination={{
@@ -1068,7 +887,7 @@ const ThreatIntelligenceDetail: React.FC = () => {
                             <Col xs={6}>
                                 <div style={{ display: 'flex' }}>
                                     <span style={{ color: '#999' }}>活跃度：</span>
-                                    <span>高</span>
+                                    <span>中</span>
                                 </div>
                             </Col>
                             <Col xs={6}>
@@ -1095,7 +914,7 @@ const ThreatIntelligenceDetail: React.FC = () => {
                             </Col>
                             <Col xs={6}>
                                 <div style={{ display: 'flex' }}>
-                                    <span style={{ color: '#999' }}>ANS：</span>
+                                    <span style={{ color: '#999' }}>ASN：</span>
                                     {(cardLoading || forceLoading) ? (
                                         <Skeleton.Input active size="small" style={{ width: 120 }} />
                                     ) : (
@@ -1293,42 +1112,6 @@ const ThreatIntelligenceDetail: React.FC = () => {
                                         <span style={{ color: '#1890ff', fontSize: 20, fontWeight: 500 }}>4</span>
                                     </div>
                                 </Col>
-                                <Col span={6}>
-                                    <div style={{ display: 'flex', alignItems: 'center' }}>
-                                        <div style={{
-                                            width: 32,
-                                            height: 32,
-                                            borderRadius: '50%',
-                                            backgroundColor: '#1890ff',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'center',
-                                            marginRight: 8
-                                        }}>
-                                            <ApiOutlined style={{ color: '#fff', fontSize: 16 }} />
-                                        </div>
-                                        <span style={{ color: '#999', marginRight: 8 }}>通信样本</span>
-                                        <span style={{ color: '#1890ff', fontSize: 20, fontWeight: 500 }}>4</span>
-                                    </div>
-                                </Col>
-                                <Col span={6}>
-                                    <div style={{ display: 'flex', alignItems: 'center' }}>
-                                        <div style={{
-                                            width: 32,
-                                            height: 32,
-                                            borderRadius: '50%',
-                                            backgroundColor: '#1890ff',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'center',
-                                            marginRight: 8
-                                        }}>
-                                            <LinkOutlined style={{ color: '#fff', fontSize: 16 }} />
-                                        </div>
-                                        <span style={{ color: '#999', marginRight: 8 }}>反查域名</span>
-                                        <span style={{ color: '#1890ff', fontSize: 20, fontWeight: 500 }}>4</span>
-                                    </div>
-                                </Col>
                             </Row>
                         </Col>
                     </Row>
@@ -1397,9 +1180,6 @@ const ThreatIntelligenceDetail: React.FC = () => {
                                                         index === 1 ? <Tag color="green">低危</Tag> : <Tag color="orange">中危</Tag>
                                                 },
                                                 { label: '置信度', value: '高' },
-                                                { label: '活跃度', value: index <= 1 ? '高' : '低' },
-                                                { label: '注册商', value: index === 1 ? '未知' : 'Godaddy' },
-                                                { label: '注册邮箱', value: '已经设置隐私保护' },
                                                 { label: '情报类型', value: '跨站脚本攻击' },
                                                 { label: '情报归属', value: '公有情报源' },
                                                 { label: '经纬度信息', value: '30.34324,343.3434' },

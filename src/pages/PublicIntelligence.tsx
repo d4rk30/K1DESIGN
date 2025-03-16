@@ -27,7 +27,7 @@ const intelligenceSources: IntelligenceSource[] = [
     {
         title: '腾讯威胁情报',
         logoPath: '/images/腾讯.png',
-        description: '正向攻击情报',
+        description: '受控外联情报',
         status: 'disconnected',
     },
     {
@@ -39,7 +39,7 @@ const intelligenceSources: IntelligenceSource[] = [
     {
         title: '华为威胁情报',
         logoPath: '/images/华为.png',
-        description: '正向攻击情报',
+        description: '受控外联情报',
         status: 'connected',
     },
     {
