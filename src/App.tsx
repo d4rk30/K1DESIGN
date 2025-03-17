@@ -27,6 +27,7 @@ import FalsePositive from './pages/FalsePositive';
 import NoData from './pages/ThreatIntelligenceDetailNoData';
 import AttackIpAnalysis from './pages/AttackIpAnalysis';
 import AttackedIpAnalysis from './pages/AttackedIpAnalysis';
+import ThreatIntelligenceDetailV2 from './pages/ThreatIntelligenceDetailV2';
 // Set dayjs locale
 dayjs.locale('zh-cn');
 
@@ -57,6 +58,7 @@ const App: React.FC = () => {
               <Route index element={<ThreatIntelligenceTrace />} />
               <Route path="detail" element={<ThreatIntelligenceDetail />} />
               <Route path="nodata" element={<NoData />} />
+              <Route path="detailV2" element={<ThreatIntelligenceDetailV2 />} />
             </Route>
             <Route path="public-intelligence" element={<PublicIntelligence />} />
 
