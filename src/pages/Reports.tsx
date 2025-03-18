@@ -352,7 +352,7 @@ const Reports: React.FC = () => {
 
     const configColumns: TableColumnsType<ReportConfig> = [
         {
-            title: '配置名称',
+            title: '报表预设名称',
             dataIndex: 'name',
             key: 'name',
             width: 300,
@@ -709,12 +709,12 @@ const Reports: React.FC = () => {
                 >
                     <Form.Item
                         name="name"
-                        rules={[{ required: true, message: '请输入配置名称' }]}
+                        rules={[{ required: true, message: '请输入报表预设名称' }]}
                     >
                         <LabelInput
-                            label="配置名称"
+                            label="报表预设名称"
                             required
-                            placeholder="请输入配置名称"
+                            placeholder="请输入报表预设名称"
                         />
                     </Form.Item>
 
