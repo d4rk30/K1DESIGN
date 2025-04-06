@@ -159,7 +159,7 @@ const MainLayout = () => {
                     label: '黑白名单',
                 },
                 {
-                    key: 'anti-mapping-policy',
+                    key: 'anti-mapping-strategy',
                     label: '反测绘监测策略',
                 },
             ],
@@ -380,7 +380,7 @@ const MainLayout = () => {
             'external-target',
             'anti-mapping-logs',
             'anti-mapping-sources',
-            'anti-mapping-assets'
+            'anti-mapping-assets',
         ];
 
         if (antiMappingPages.includes(pathname)) {
