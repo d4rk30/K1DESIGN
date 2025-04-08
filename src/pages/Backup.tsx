@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Card, Table, Button, Space, Row, Col, Progress, Drawer, Switch, Form, Radio, Modal, Tag } from 'antd';
-import { SettingOutlined, ImportOutlined, SaveOutlined, DownloadOutlined, UploadOutlined } from '@ant-design/icons';
+import { SettingOutlined, ImportOutlined, SaveOutlined, UploadOutlined } from '@ant-design/icons';
 import { message } from 'antd';
 import LabelSelect from '@/components/LabelSelect';
 import LabelInput from '@/components/LabelInput';
