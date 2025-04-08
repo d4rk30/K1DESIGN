@@ -515,8 +515,8 @@ const Backup: React.FC = () => {
                         rules={[{ required: true, message: '请输入路径地址' }]}
                     >
                         <LabelInput
-                            label="路径地址"
-                            placeholder="请输入路径地址，如 /backup"
+                            label="导出路径"
+                            placeholder="请输入路径地址，如 /backup/log.db"
                         />
                     </Form.Item>
                     <Form.Item
@@ -690,17 +690,8 @@ const Backup: React.FC = () => {
                                 rules={[{ required: true, message: '请输入路径地址' }]}
                             >
                                 <LabelInput
-                                    label="路径地址"
-                                    placeholder="请输入路径地址，如 /backup"
-                                />
-                            </Form.Item>
-                            <Form.Item
-                                name="fileName"
-                                rules={[{ required: true, message: '请输入文件名称' }]}
-                            >
-                                <LabelInput
-                                    label="文件名称"
-                                    placeholder="请输入文件名称，如 cfg_20240406123000.db"
+                                    label="导入路径"
+                                    placeholder="请输入导入路径，如 /backup/log.db"
                                 />
                             </Form.Item>
                             <Form.Item
