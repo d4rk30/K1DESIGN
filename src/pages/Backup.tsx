@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Card, Table, Button, Space, Row, Col, Progress, Drawer, Switch, Form, Radio, Modal, Tag } from 'antd';
-import { SettingOutlined, ImportOutlined, SaveOutlined } from '@ant-design/icons';
+import { SettingOutlined, ImportOutlined, SaveOutlined, DownloadOutlined, UploadOutlined } from '@ant-design/icons';
 import { message } from 'antd';
 import LabelSelect from '@/components/LabelSelect';
 import LabelInput from '@/components/LabelInput';
@@ -8,6 +8,8 @@ const Backup: React.FC = () => {
     // 添加抽屉的显示状态控制
     const [drawerVisible, setDrawerVisible] = useState(false);
     const [exportModalVisible, setExportModalVisible] = useState(false);
+    const [importModalVisible, setImportModalVisible] = useState(false);
+    const [importStep, setImportStep] = useState<'select' | 'config'>('select');
     const [form] = Form.useForm();
 
     // 模拟表格数据
@@ -59,6 +61,16 @@ const Backup: React.FC = () => {
             backupMode: '全量',
             targetVersion: '8.2.2.25174-f00aee77',
             backupTime: '2024-04-06 12:42:33',
+            backupStatus: 'completed',
+            progress: 100
+        },
+        {
+            key: '6',
+            fileName: 'cfg_20240406123000.db',
+            backupModule: '策略配置备份',
+            backupMode: '全量',
+            targetVersion: '8.2.2.25174-f00aee77',
+            backupTime: '2024-04-06 12:30:00',
             backupStatus: 'completed',
             progress: 100
         }
@@ -123,8 +135,8 @@ const Backup: React.FC = () => {
                     </Button>
                     <Button
                         type="link"
-                        disabled={record.backupStatus !== 'completed'}
-                        onClick={() => setExportModalVisible(true)}
+                        disabled={record.backupStatus !== 'completed' || record.backupModule === '系统及策略配置备份'}
+                        onClick={() => handleExport(record)}
                     >
                         导出
                     </Button>
@@ -144,13 +156,36 @@ const Backup: React.FC = () => {
     // 在组件初始化时设置默认值
     useEffect(() => {
         form.setFieldsValue({
-            backupMode: 'ftp',
-            serverAddress: '192.168.1.100',
-            port: '21',
-            username: 'admin',
-            password: '123456'
+            backupMode: 'ftp'
         });
     }, [form]);
+
+    // 处理导出
+    const handleExport = (record: any) => {
+        if (record.backupModule === '策略配置备份') {
+            message.success('开始下载策略配置备份');
+        } else {
+            setExportModalVisible(true);
+        }
+    };
+
+    // 处理导入类型选择
+    const handleImportTypeSelect = (type: 'log' | 'policy') => {
+        if (type === 'policy') {
+            message.success('开始导入策略配置备份');
+            setImportModalVisible(false);
+        } else {
+            setImportStep('config');
+        }
+    };
+
+    // 处理模态框关闭
+    const handleModalClose = () => {
+        setExportModalVisible(false);
+        setImportModalVisible(false);
+        setImportStep('select');
+        form.resetFields();
+    };
 
     return (
         <div>
@@ -255,7 +290,7 @@ const Backup: React.FC = () => {
                         >
                             配置
                         </Button>
-                        <Button icon={<ImportOutlined />}>
+                        <Button icon={<ImportOutlined />} onClick={() => setImportModalVisible(true)}>
                             导入
                         </Button>
                         <Button type="primary" icon={<SaveOutlined />}>
@@ -397,65 +432,6 @@ const Backup: React.FC = () => {
                             </Form.Item>
                         </Form>
                     </Card>
-                    <Card title="导出配置">
-                        <Form
-                            layout="vertical"
-                        >
-                            <Form.Item
-                                name="backupMode"
-                                initialValue="full"
-                                rules={[{ required: true, message: '请选择导出方式' }]}
-                            >
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                                    <span style={{ width: '80px' }}>导出方式</span>
-                                    <Radio.Group
-                                        style={{ display: 'flex', flex: 1 }}
-                                        defaultValue="ftp"
-                                    >
-                                        <Radio value="ftp" style={{ flex: 1 }}>FTP</Radio>
-                                        <Radio value="sftp" style={{ flex: 1 }}>SFTP</Radio>
-                                    </Radio.Group>
-                                </div>
-                            </Form.Item>
-                            <Form.Item
-                                name="serverAddress"
-                                rules={[{ required: true, message: '请输入服务器地址' }]}
-                            >
-                                <LabelInput
-                                    label="服务器地址"
-                                    placeholder="请输入服务器地址，如 192.168.1.1"
-                                />
-                            </Form.Item>
-                            <Form.Item
-                                name="serverAddress"
-                                rules={[{ required: true, message: '请输入端口' }]}
-                            >
-                                <LabelInput
-                                    label="端口"
-                                    placeholder="请输入端口，如 21"
-                                />
-                            </Form.Item>
-                            <Form.Item
-                                name="username"
-                                rules={[{ required: true, message: '请输入用户名' }]}
-                            >
-                                <LabelInput
-                                    label="用户名"
-                                    placeholder="请输入用户名"
-                                />
-                            </Form.Item>
-                            <Form.Item
-                                style={{ marginBottom: 0 }}
-                                name="password"
-                                rules={[{ required: true, message: '请输入密码' }]}
-                            >
-                                <LabelInput
-                                    label="密码"
-                                    placeholder="请输入密码"
-                                />
-                            </Form.Item>
-                        </Form>
-                    </Card>
                 </Space>
                 <div style={{ display: 'flex', gap: '8px', marginTop: '24px' }}>
                     <Button
@@ -498,12 +474,10 @@ const Backup: React.FC = () => {
             </Drawer>
 
             <Modal
-                title="导出备份"
+                title="导出"
                 open={exportModalVisible}
-                onCancel={() => setExportModalVisible(false)}
+                onCancel={handleModalClose}
                 footer={null}
-                okText="确定"
-                cancelText="取消"
                 width={520}
             >
                 <Form
@@ -511,7 +485,8 @@ const Backup: React.FC = () => {
                     layout="vertical"
                     onFinish={(values) => {
                         console.log('表单提交值:', values);
-                        setExportModalVisible(false);
+                        message.success('开始导出告警日志备份');
+                        handleModalClose();
                     }}
                 >
                     <Form.Item
@@ -533,6 +508,15 @@ const Backup: React.FC = () => {
                         <LabelInput
                             label="服务器地址"
                             placeholder="请输入服务器地址，如 192.168.1.1"
+                        />
+                    </Form.Item>
+                    <Form.Item
+                        name="path"
+                        rules={[{ required: true, message: '请输入路径地址' }]}
+                    >
+                        <LabelInput
+                            label="路径地址"
+                            placeholder="请输入路径地址，如 /backup"
                         />
                     </Form.Item>
                     <Form.Item
@@ -565,13 +549,199 @@ const Backup: React.FC = () => {
                     </Form.Item>
                     <Form.Item style={{ marginBottom: 0, textAlign: 'right' }}>
                         <Space>
-                            <Button onClick={() => setExportModalVisible(false)}>取消</Button>
+                            <Button onClick={handleModalClose}>取消</Button>
                             <Button type="primary" htmlType="submit">
                                 确定
                             </Button>
                         </Space>
                     </Form.Item>
                 </Form>
+            </Modal>
+
+            <Modal
+                title="导入"
+                open={importModalVisible}
+                onCancel={handleModalClose}
+                footer={null}
+                width={520}
+            >
+                <style>
+                    {`
+                        .import-option-card:hover {
+                            border-color: #1890ff !important;
+                        }
+                    `}
+                </style>
+                {importStep === 'select' ? (
+                    <Space direction="vertical" style={{ width: '100%' }} size="middle">
+                        <Card
+                            hoverable
+                            style={{
+                                cursor: 'pointer',
+                                border: '1px solid #f0f0f0',
+                                transition: 'all 0.3s',
+                                borderRadius: '8px',
+                                boxShadow: 'none'
+                            }}
+                            className="import-option-card"
+                            bodyStyle={{ padding: '16px' }}
+                            onClick={() => handleImportTypeSelect('log')}
+                        >
+                            <div style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '16px'
+                            }}>
+                                <div style={{
+                                    width: '40px',
+                                    height: '40px',
+                                    borderRadius: '8px',
+                                    background: '#e6f7ff',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center'
+                                }}>
+                                    <ImportOutlined style={{ fontSize: '20px', color: '#1890ff' }} />
+                                </div>
+                                <div>
+                                    <div style={{ fontSize: '16px', fontWeight: 500, marginBottom: '4px' }}>
+                                        告警日志备份导入
+                                    </div>
+                                    <div style={{ color: 'rgba(0, 0, 0, 0.45)' }}>
+                                        支持FTP和SFTP方式导入告警日志备份文件
+                                    </div>
+                                </div>
+                            </div>
+                        </Card>
+                        <Card
+                            hoverable
+                            style={{
+                                cursor: 'pointer',
+                                border: '1px solid #f0f0f0',
+                                transition: 'all 0.3s',
+                                borderRadius: '8px',
+                                boxShadow: 'none'
+                            }}
+                            className="import-option-card"
+                            bodyStyle={{ padding: '16px' }}
+                            onClick={() => handleImportTypeSelect('policy')}
+                        >
+                            <div style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '16px'
+                            }}>
+                                <div style={{
+                                    width: '40px',
+                                    height: '40px',
+                                    borderRadius: '8px',
+                                    background: '#f6ffed',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center'
+                                }}>
+                                    <UploadOutlined style={{ fontSize: '20px', color: '#52c41a' }} />
+                                </div>
+                                <div>
+                                    <div style={{ fontSize: '16px', fontWeight: 500, marginBottom: '4px' }}>
+                                        策略配置备份导入
+                                    </div>
+                                    <div style={{ color: 'rgba(0, 0, 0, 0.45)' }}>
+                                        直接上传策略配置备份文件到系统
+                                    </div>
+                                </div>
+                            </div>
+                        </Card>
+                    </Space>
+                ) : (
+                    <>
+                        <Form
+                            form={form}
+                            layout="vertical"
+                            onFinish={(values) => {
+                                console.log('表单提交值:', values);
+                                message.success('开始导入告警日志备份');
+                                handleModalClose();
+                            }}
+                        >
+                            <Form.Item
+                                name="backupMode"
+                                rules={[{ required: true, message: '请选择导入方式' }]}
+                            >
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                                    <span style={{ width: '80px' }}>导入方式</span>
+                                    <Radio.Group style={{ display: 'flex', flex: 1 }} defaultValue="ftp">
+                                        <Radio value="ftp" style={{ flex: 1 }}>FTP</Radio>
+                                        <Radio value="sftp" style={{ flex: 1 }}>SFTP</Radio>
+                                    </Radio.Group>
+                                </div>
+                            </Form.Item>
+                            <Form.Item
+                                name="serverAddress"
+                                rules={[{ required: true, message: '请输入服务器地址' }]}
+                            >
+                                <LabelInput
+                                    label="服务器地址"
+                                    placeholder="请输入服务器地址，如 192.168.1.1"
+                                />
+                            </Form.Item>
+                            <Form.Item
+                                name="path"
+                                rules={[{ required: true, message: '请输入路径地址' }]}
+                            >
+                                <LabelInput
+                                    label="路径地址"
+                                    placeholder="请输入路径地址，如 /backup"
+                                />
+                            </Form.Item>
+                            <Form.Item
+                                name="fileName"
+                                rules={[{ required: true, message: '请输入文件名称' }]}
+                            >
+                                <LabelInput
+                                    label="文件名称"
+                                    placeholder="请输入文件名称，如 cfg_20240406123000.db"
+                                />
+                            </Form.Item>
+                            <Form.Item
+                                name="port"
+                                rules={[{ required: true, message: '请输入端口' }]}
+                            >
+                                <LabelInput
+                                    label="端口"
+                                    placeholder="请输入端口，如 21"
+                                />
+                            </Form.Item>
+                            <Form.Item
+                                name="username"
+                                rules={[{ required: true, message: '请输入用户名' }]}
+                            >
+                                <LabelInput
+                                    label="用户名"
+                                    placeholder="请输入用户名"
+                                />
+                            </Form.Item>
+                            <Form.Item
+                                name="password"
+                                rules={[{ required: true, message: '请输入密码' }]}
+                            >
+                                <LabelInput
+                                    label="密码"
+                                    placeholder="请输入密码"
+                                    type="password"
+                                />
+                            </Form.Item>
+                            <Form.Item style={{ marginBottom: 0, textAlign: 'right' }}>
+                                <Space>
+                                    <Button onClick={() => setImportStep('select')}>返回选择</Button>
+                                    <Button type="primary" htmlType="submit">
+                                        确定
+                                    </Button>
+                                </Space>
+                            </Form.Item>
+                        </Form>
+                    </>
+                )}
             </Modal>
         </div>
     );
