@@ -16,6 +16,7 @@ import {
     LogoutOutlined,
     LockOutlined,
     InfoCircleOutlined,
+    CloudUploadOutlined,
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import LabelRangePicker from '@/components/LabelRangePicker';
@@ -102,6 +103,21 @@ const MainLayout = () => {
                 {
                     key: 'anti-mapping-assets',
                     label: '测绘资产分析',
+                },
+            ],
+        },
+        {
+            key: 'outbound-traffic',
+            icon: <CloudUploadOutlined />,
+            label: '出境流量告警',
+            children: [
+                {
+                    key: 'outbound-logs',
+                    label: '出境流量日志',
+                },
+                {
+                    key: 'outbound-analysis',
+                    label: '出境流量分析',
                 },
             ],
         },
