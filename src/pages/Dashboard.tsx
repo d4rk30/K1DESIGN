@@ -358,7 +358,48 @@ const getChartOptions = (type: string, data: any) => {
         ...chartTheme,
         title: {
             ...chartTheme.title,
-            text: data.title
+            text: data.title,
+            top: 10,
+            left: 0
+        },
+        grid: {
+            left: '3%',
+            right: '4%',
+            bottom: '3%',
+            top: 70,
+            containLabel: true
+        },
+        yAxis: {
+            type: 'value',
+            name: data.yAxisName || '',
+            nameLocation: 'end',
+            nameTextStyle: {
+                color: '#666',
+                fontSize: 12,
+                padding: [0, 0, 0, -30],
+            },
+            axisLine: {
+                show: false
+            },
+            axisTick: {
+                show: false
+            },
+            axisLabel: {
+                color: '#666'
+            },
+            splitLine: {
+                lineStyle: {
+                    color: '#f0f0f0'
+                }
+            }
+        },
+        tooltip: {
+            backgroundColor: 'rgba(255, 255, 255, 0.9)',
+            borderColor: '#e1e1e1',
+            borderWidth: 1,
+            textStyle: {
+                color: '#666666'
+            }
         }
     };
 
@@ -374,15 +415,6 @@ const getChartOptions = (type: string, data: any) => {
                         interval: 0,
                         rotate: 30,
                         color: '#666'
-                    }
-                },
-                yAxis: {
-                    type: 'value',
-                    axisLine: {
-                        show: false
-                    },
-                    axisTick: {
-                        show: false
                     }
                 },
                 series: [{
@@ -523,23 +555,6 @@ const getChartOptions = (type: string, data: any) => {
                     },
                     axisLabel: {
                         color: '#666'
-                    }
-                },
-                yAxis: {
-                    type: 'value',
-                    axisLine: {
-                        show: false
-                    },
-                    axisTick: {
-                        show: false
-                    },
-                    axisLabel: {
-                        color: '#666'
-                    },
-                    splitLine: {
-                        lineStyle: {
-                            color: '#f0f0f0'
-                        }
                     }
                 },
                 series: [{
@@ -1074,7 +1089,8 @@ const Dashboard = () => {
                                 xData: ['103.235.46.12', '45.134.26.178', '91.242.217.54', '185.156.73.91', '194.26.135.75',
                                     '102.165.48.29', '43.154.89.234', '176.32.45.121', '89.248.167.131', '51.89.237.140'],
                                 yData: [1267, 983, 856, 742, 698, 634, 589, 543, 498, 456],
-                                isExternal: false
+                                isExternal: false,
+                                yAxisName: '（单位：次）'
                             })}
                             style={{ height: '300px' }}
                             notMerge={true}
@@ -1088,7 +1104,8 @@ const Dashboard = () => {
                                 xData: ['服务器集群', 'ERP系统', '邮件服务器', '数据库服务器', '文件服务器',
                                     'OA系统', '监控系统', 'DNS服务器', '代理服务器', '备份系统'],
                                 yData: [720, 650, 600, 580, 550, 500, 480, 450, 400, 380],
-                                isExternal: false
+                                isExternal: false,
+                                yAxisName: '（单位：次）'
                             })}
                             style={{ height: '300px' }}
                             theme="custom"
@@ -1225,7 +1242,8 @@ const Dashboard = () => {
                                 xData: ['103.235.46.12', '45.134.26.178', '91.242.217.54', '185.156.73.91', '194.26.135.75',
                                     '102.165.48.29', '43.154.89.234', '176.32.45.121', '89.248.167.131', '51.89.237.140'],
                                 yData: [1267, 983, 856, 742, 698, 634, 589, 543, 498, 456],
-                                isExternal: true
+                                isExternal: true,
+                                yAxisName: '（单位：次）'
                             })}
                             style={{ height: '300px' }}
                             notMerge={true}
@@ -1239,7 +1257,8 @@ const Dashboard = () => {
                                 xData: ['服务器集群', 'ERP系统', '邮件服务器', '数据库服务器', '文件服务器',
                                     'OA系统', '监控系统', 'DNS服务器', '代理服务器', '备份系统'],
                                 yData: [720, 650, 600, 580, 550, 500, 480, 450, 400, 380],
-                                isExternal: true
+                                isExternal: true,
+                                yAxisName: '（单位：次）'
                             })}
                             style={{ height: '300px' }}
                             theme="custom"
@@ -1399,7 +1418,8 @@ const Dashboard = () => {
                                 xData: ['00:00', '03:00', '06:00', '09:00', '12:00', '15:00', '18:00', '21:00'],
                                 yData: [300, 280, 250, 320, 420, 380, 350, 400],
                                 lineColor: '#722ed1',
-                                areaColor: 'rgba(114, 46, 209, 0.15)'
+                                areaColor: 'rgba(114, 46, 209, 0.15)',
+                                yAxisName: '（单位：次）'
                             })}
                             style={{ height: '300px' }}
                             theme="custom"
@@ -1412,7 +1432,8 @@ const Dashboard = () => {
                                 xData: ['00:00', '03:00', '06:00', '09:00', '12:00', '15:00', '18:00', '21:00'],
                                 yData: [280, 260, 240, 300, 380, 340, 320, 360],
                                 lineColor: '#13c2c2',
-                                areaColor: 'rgba(19, 194, 194, 0.15)'
+                                areaColor: 'rgba(19, 194, 194, 0.15)',
+                                yAxisName: '（单位：次）'
                             })}
                             style={{ height: '300px' }}
                             theme="custom"
@@ -1425,7 +1446,8 @@ const Dashboard = () => {
                                 xData: ['00:00', '03:00', '06:00', '09:00', '12:00', '15:00', '18:00', '21:00'],
                                 yData: [150, 180, 160, 200, 250, 220, 190, 210],
                                 lineColor: '#fa8c16',
-                                areaColor: 'rgba(250, 140, 22, 0.15)'
+                                areaColor: 'rgba(250, 140, 22, 0.15)',
+                                yAxisName: '（单位：Mbps）'
                             })}
                             style={{ height: '300px' }}
                             theme="custom"
@@ -1438,7 +1460,8 @@ const Dashboard = () => {
                                 xData: ['00:00', '03:00', '06:00', '09:00', '12:00', '15:00', '18:00', '21:00'],
                                 yData: [420, 400, 380, 450, 520, 480, 460, 500],
                                 lineColor: '#1890ff',
-                                areaColor: 'rgba(24, 144, 255, 0.15)'
+                                areaColor: 'rgba(24, 144, 255, 0.15)',
+                                yAxisName: '（单位：Mbps）'
                             })}
                             style={{ height: '300px' }}
                             theme="custom"

@@ -9,6 +9,7 @@ interface IntelligenceSource {
     logoPath: string;
     description: string;
     status: 'connected' | 'disconnected';
+    updateTime: string;
 }
 
 const intelligenceSources: IntelligenceSource[] = [
@@ -17,36 +18,42 @@ const intelligenceSources: IntelligenceSource[] = [
         logoPath: '/images/公安一所.png',
         description: '正向攻击情报',
         status: 'connected',
+        updateTime: '2024-04-08 15:30:00'
     },
     {
         title: '奇安信息威胁情报',
         logoPath: '/images/奇安信.png',
         description: '受控外联情报',
         status: 'connected',
+        updateTime: '2024-04-08 15:28:00'
     },
     {
         title: '腾讯威胁情报',
         logoPath: '/images/腾讯.png',
         description: '受控外联情报',
         status: 'disconnected',
+        updateTime: '2024-04-08 14:45:00'
     },
     {
         title: '360威胁情报',
         logoPath: '/images/360.png',
         description: '受控外联情报',
         status: 'connected',
+        updateTime: '2024-04-08 15:25:00'
     },
     {
         title: '华为威胁情报',
         logoPath: '/images/华为.png',
         description: '受控外联情报',
         status: 'connected',
+        updateTime: '2024-04-08 15:20:00'
     },
     {
         title: '阿里云威胁情报',
         logoPath: '/images/阿里.png',
         description: '受控外联情报',
         status: 'disconnected',
+        updateTime: '2024-04-08 14:30:00'
     },
 ];
 
@@ -100,7 +107,13 @@ const PublicIntelligence: React.FC = () => {
                                     description={
                                         <div>
                                             <div style={{ marginBottom: '8px' }}>{source.description}</div>
+                                            <div style={{
+                                                marginBottom: '12px',
+                                            }}>
+                                                更新时间: {source.updateTime}
+                                            </div>
                                             {renderStatus(source.status)}
+
                                         </div>
                                     }
                                 />

@@ -629,6 +629,15 @@ const ExternalLogs: React.FC = () => {
                     </Form.Item>
                 </Col>
                 <Col span={4}>
+                    <Form.Item name="sourcePort" style={{ marginBottom: 0 }}>
+                        <LabelInput
+                            label="源端口"
+                            placeholder="请输入源端口"
+                            allowClear
+                        />
+                    </Form.Item>
+                </Col>
+                <Col span={4}>
                     <Form.Item name="externalDomain" style={{ marginBottom: 0 }}>
                         <LabelInput
                             label="外联域名/URL"
@@ -642,6 +651,15 @@ const ExternalLogs: React.FC = () => {
                         <LabelInput
                             label="目的IP"
                             placeholder="请输入目的IP"
+                            allowClear
+                        />
+                    </Form.Item>
+                </Col>
+                <Col span={4}>
+                    <Form.Item name="destinationPort" style={{ marginBottom: 0 }}>
+                        <LabelInput
+                            label="目的端口"
+                            placeholder="请输入目的端口"
                             allowClear
                         />
                     </Form.Item>
