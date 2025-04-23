@@ -1304,6 +1304,7 @@ const ThreatIntelligenceDetail: React.FC = () => {
                     <Form.Item
                         name="attachments"
                         labelCol={{ style: { width: '80px' } }}
+                        rules={[{ required: true, message: '请上传附件' }]}
                     >
                         <Upload.Dragger {...uploadProps}>
                             <p className="ant-upload-drag-icon">
