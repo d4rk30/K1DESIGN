@@ -47,6 +47,7 @@ interface AttackLog {
         protocol: string;
         url: string;
         dnsName: string;
+        method: string;
         headers: {
             'User-Agent': string;
             'Accept': string;
@@ -165,6 +166,7 @@ const generateMockData = (): AttackLog[] => {
             protocol: 'dns',
             url: '',
             dnsName: `subdomain${getRandomNumber(1, 100)}.example.com`,
+            method: 'GET',
             headers: {
                 'User-Agent': 'DNS Client',
                 'Accept': '*/*',
@@ -221,9 +223,10 @@ const generateMockData = (): AttackLog[] => {
         intelSource: getRandomItem(MOCK_DATA_CONFIG.intelSources),
         lastAttackUnit: maskOrganizationName(getRandomItem(organizations)),
         requestInfo: {
-            protocol: ['http', 'https', 'ftp', 'smtp'][Math.floor(Math.random() * 4)],
+            protocol: ['http', 'https', 'dns', 'tcp', 'udp'][Math.floor(Math.random() * 5)],
             url: `example.com/api/endpoint/${Math.floor(Math.random() * 1000)}`,
             dnsName: `subdomain${Math.floor(Math.random() * 100)}.example.com`,
+            method: ['GET', 'POST', 'PUT', 'DELETE'][Math.floor(Math.random() * 4)],
             headers: {
                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
                 'Accept': 'application/json',
@@ -1010,10 +1013,15 @@ const AttackLogs: React.FC = () => {
                                                 <Tag color={getProtocolColor(selectedLog?.requestInfo?.protocol || '')}>
                                                     {selectedLog?.requestInfo?.protocol || 'unknown'}
                                                 </Tag>
+                                                {!['dns', 'tcp', 'udp'].includes(selectedLog?.requestInfo?.protocol || '') && (
+                                                    <Tag color="cyan">
+                                                        {selectedLog?.requestInfo?.method || 'GET'}
+                                                    </Tag>
+                                                )}
                                                 <Typography.Text copyable>
                                                     {selectedLog?.requestInfo?.url || selectedLog?.requestInfo?.dnsName || selectedLog?.targetIp || ''}
                                                 </Typography.Text>
-                                                {selectedLog?.responseInfo?.statusCode && (
+                                                {!['dns', 'tcp', 'udp'].includes(selectedLog?.requestInfo?.protocol || '') && selectedLog?.responseInfo?.statusCode && (
                                                     <Tag
                                                         color={
                                                             selectedLog.responseInfo.statusCode < 300 ? 'success' :

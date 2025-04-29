@@ -1,6 +1,6 @@
 // 1. 引入
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { Card, Table, Button, Space, Form, Row, Col, Modal, message, Typography, Tag, Drawer, Input, InputNumber, Radio, Empty, Tabs } from 'antd';
+import { Card, Table, Button, Space, Form, Row, Col, Modal, message, Typography, Tag, Drawer, Input, InputNumber, Radio, Empty, Tabs, Descriptions } from 'antd';
 import { StarOutlined, StarFilled, SearchOutlined, ReloadOutlined, SaveOutlined, ExportOutlined, DeleteOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import LabelSelect from '@/components/LabelSelect';
@@ -90,6 +90,25 @@ interface AttackLog {
         attackFeatures: string;
         aiDetection: 'hit' | 'miss';
     };
+    dnsResponse?: {
+        header: {
+            id: string;
+            qr: boolean;
+            opcode: string;
+            aa: boolean;
+            tc: boolean;
+            rd: boolean;
+            ra: boolean;
+            rcode: string;
+            qdcount: number;
+            ancount: number;
+            nscount: number;
+            arcount: number;
+        };
+        answers: { name: string; type: string; ttl: number; data: string }[];
+        authority: { name: string; type: string; ttl: number; data: string }[];
+        additional: { name: string; type: string; ttl: number; data: string }[];
+    };
 }
 
 // 定义时间单位类型
@@ -149,95 +168,136 @@ const generateMockData = (): AttackLog[] => {
         return contentTypes[Math.floor(Math.random() * contentTypes.length)];
     };
 
-    return Array.from({ length: 100 }, (_, index) => ({
-        key: String(index + 1),
-        time: dayjs().subtract(getRandomNumber(0, 24), 'hour').format('YYYY-MM-DD HH:mm:ss'),
-        controlledHost: getRandomIp(),
-        sourcePort: String(getRandomNumber(1024, 65535)),
-        externalDomain: getRandomDomain(),
-        nextHopDns: getRandomIp(),
-        destinationIp: getRandomIp(),
-        destinationPort: String(getRandomNumber(1, 65535)),
-        targetType: getRandomItem(targetTypes),
-        hitType: getRandomItem(hitTypes),
-        threatLevel: getRandomItem(MOCK_DATA_CONFIG.threatLevels),
-        action: getRandomItem(MOCK_DATA_CONFIG.actions),
-        intelSource: getRandomItem(MOCK_DATA_CONFIG.intelSources),
-        lastAttackUnit: getRandomNumber(0, 1) ? `${getRandomNumber(1, 24)}小时前` : `${getRandomNumber(1, 60)}分钟前`,
-        requestInfo: {
-            protocol: getRandomItem(['http', 'https']),
-            url: `https://${getRandomDomain()}/api/v1/${getRandomItem(['users', 'orders', 'products'])}`,
-            dnsName: getRandomDomain(),
-            headers: {
-                'User-Agent': getRandomUserAgent(),
-                'Accept': 'application/json, text/plain, */*',
-                'Content-Type': getRandomContentType(),
-                'X-Forwarded-For': getRandomIp(),
-                'Host': getRandomDomain(),
-                'Connection': 'keep-alive',
-                'Accept-Encoding': 'gzip, deflate, br',
-                'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
-                'X-Request-ID': `req-${Math.random().toString(36).substring(7)}`,
-                'Authorization': `Bearer ${Math.random().toString(36).substring(7)}`,
-                'Origin': `https://${getRandomDomain()}`,
-                'Referer': `https://${getRandomDomain()}/`,
+    return Array.from({ length: 100 }, (_, index) => {
+        // 确保第一条是DNS请求
+        const isFirstRecord = index === 0;
+        const protocol = isFirstRecord ? 'dns' : getRandomItem(['http', 'https', 'dns', 'tcp', 'udp']);
+
+        return {
+            key: String(index + 1),
+            time: dayjs().subtract(getRandomNumber(0, 24), 'hour').format('YYYY-MM-DD HH:mm:ss'),
+            controlledHost: getRandomIp(),
+            sourcePort: String(getRandomNumber(1024, 65535)),
+            externalDomain: getRandomDomain(),
+            nextHopDns: getRandomIp(),
+            destinationIp: getRandomIp(),
+            destinationPort: String(getRandomNumber(1, 65535)),
+            targetType: getRandomItem(targetTypes),
+            hitType: getRandomItem(hitTypes),
+            threatLevel: getRandomItem(MOCK_DATA_CONFIG.threatLevels),
+            action: getRandomItem(MOCK_DATA_CONFIG.actions),
+            intelSource: getRandomItem(MOCK_DATA_CONFIG.intelSources),
+            lastAttackUnit: getRandomNumber(0, 1) ? `${getRandomNumber(1, 24)}小时前` : `${getRandomNumber(1, 60)}分钟前`,
+            requestInfo: {
+                protocol,
+                url: `https://${getRandomDomain()}/api/v1/${getRandomItem(['users', 'orders', 'products'])}`,
+                dnsName: getRandomDomain(),
+                method: ['GET', 'POST', 'PUT', 'DELETE'][Math.floor(Math.random() * 4)],
+                headers: {
+                    'User-Agent': getRandomUserAgent(),
+                    'Accept': 'application/json, text/plain, */*',
+                    'Content-Type': getRandomContentType(),
+                    'X-Forwarded-For': getRandomIp(),
+                    'Host': getRandomDomain(),
+                    'Connection': 'keep-alive',
+                    'Accept-Encoding': 'gzip, deflate, br',
+                    'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
+                    'X-Request-ID': `req-${Math.random().toString(36).substring(7)}`,
+                    'Authorization': `Bearer ${Math.random().toString(36).substring(7)}`,
+                    'Origin': `https://${getRandomDomain()}`,
+                    'Referer': `https://${getRandomDomain()}/`,
+                },
+                body: {
+                    payload: JSON.stringify({
+                        action: getRandomItem(['login', 'getData', 'updateProfile', 'deleteRecord']),
+                        params: {
+                            userId: Math.floor(Math.random() * 10000),
+                            timestamp: new Date().toISOString(),
+                            data: {
+                                key1: Math.random().toString(36).substring(7),
+                                key2: Math.floor(Math.random() * 100),
+                                key3: getRandomItem(['value1', 'value2', 'value3']),
+                            }
+                        },
+                        signature: Math.random().toString(36).substring(7)
+                    }),
+                    size: `${Math.floor(Math.random() * 1000)}kb`,
+                    type: getRandomContentType(),
+                    timestamp: dayjs().subtract(getRandomNumber(0, 24), 'hour').format('YYYY-MM-DD HH:mm:ss')
+                }
             },
-            body: {
-                payload: JSON.stringify({
-                    action: getRandomItem(['login', 'getData', 'updateProfile', 'deleteRecord']),
-                    params: {
-                        userId: Math.floor(Math.random() * 10000),
-                        timestamp: new Date().toISOString(),
-                        data: {
-                            key1: Math.random().toString(36).substring(7),
-                            key2: Math.floor(Math.random() * 100),
-                            key3: getRandomItem(['value1', 'value2', 'value3']),
+            responseInfo: {
+                headers: {
+                    'Content-Type': getRandomContentType(),
+                    'Server': getRandomItem(['nginx/1.20.1', 'Apache/2.4.41', 'cloudflare']),
+                    'Date': dayjs().format('ddd, DD MMM YYYY HH:mm:ss GMT'),
+                    'Content-Length': String(Math.floor(Math.random() * 5000)),
+                    'X-Response-Time': `${Math.floor(Math.random() * 500)}ms`,
+                    'Cache-Control': 'no-cache, no-store, must-revalidate',
+                    'X-Frame-Options': 'SAMEORIGIN',
+                    'X-Content-Type-Options': 'nosniff',
+                    'Strict-Transport-Security': 'max-age=31536000; includeSubDomains'
+                },
+                statusCode: getRandomItem([200, 201, 400, 401, 403, 404, 500]),
+                body: {
+                    status: getRandomItem([0, 1, -1]),
+                    message: getRandomItem(['Success', 'Failed', 'Unauthorized', 'Server Error']),
+                    data: JSON.stringify({
+                        result: getRandomItem(['success', 'error']),
+                        errorCode: Math.floor(Math.random() * 1000),
+                        details: {
+                            id: Math.floor(Math.random() * 10000),
+                            timestamp: new Date().toISOString(),
+                            processingTime: `${Math.floor(Math.random() * 500)}ms`
                         }
-                    },
-                    signature: Math.random().toString(36).substring(7)
-                }),
-                size: `${Math.floor(Math.random() * 1000)}kb`,
-                type: getRandomContentType(),
-                timestamp: dayjs().subtract(getRandomNumber(0, 24), 'hour').format('YYYY-MM-DD HH:mm:ss')
-            }
-        },
-        responseInfo: {
-            headers: {
-                'Content-Type': getRandomContentType(),
-                'Server': getRandomItem(['nginx/1.20.1', 'Apache/2.4.41', 'cloudflare']),
-                'Date': dayjs().format('ddd, DD MMM YYYY HH:mm:ss GMT'),
-                'Content-Length': String(Math.floor(Math.random() * 5000)),
-                'X-Response-Time': `${Math.floor(Math.random() * 500)}ms`,
-                'Cache-Control': 'no-cache, no-store, must-revalidate',
-                'X-Frame-Options': 'SAMEORIGIN',
-                'X-Content-Type-Options': 'nosniff',
-                'Strict-Transport-Security': 'max-age=31536000; includeSubDomains'
+                    })
+                }
             },
-            statusCode: getRandomItem([200, 201, 400, 401, 403, 404, 500]),
-            body: {
-                status: getRandomItem([0, 1, -1]),
-                message: getRandomItem(['Success', 'Failed', 'Unauthorized', 'Server Error']),
-                data: JSON.stringify({
-                    result: getRandomItem(['success', 'error']),
-                    errorCode: Math.floor(Math.random() * 1000),
-                    details: {
-                        id: Math.floor(Math.random() * 10000),
-                        timestamp: new Date().toISOString(),
-                        processingTime: `${Math.floor(Math.random() * 500)}ms`
-                    }
-                })
+            localVerification: {
+                ruleName: '',
+                protocolNumber: '',
+                protocolType: '',
+                attackType: '',
+                malformedPacketLength: 0,
+                attackFeatures: '',
+                aiDetection: 'miss'
+            },
+            dnsResponse: {
+                header: {
+                    id: getRandomItem(['12345678', '23456789', '34567890']),
+                    qr: Math.random() > 0.5,
+                    opcode: getRandomItem(['QUERY', 'IQUERY', 'STATUS']),
+                    aa: Math.random() > 0.5,
+                    tc: Math.random() > 0.5,
+                    rd: Math.random() > 0.5,
+                    ra: Math.random() > 0.5,
+                    rcode: getRandomItem(['NOERROR', 'FORMERR', 'SERVFAIL', 'NXDOMAIN', 'NOTIMP']),
+                    qdcount: getRandomNumber(1, 10),
+                    ancount: getRandomNumber(0, 10),
+                    nscount: getRandomNumber(0, 10),
+                    arcount: getRandomNumber(0, 10)
+                },
+                answers: Array.from({ length: getRandomNumber(0, 5) }, () => ({
+                    name: getRandomItem(['example.com', 'subdomain.example.com', 'thirdlevel.example.com']),
+                    type: getRandomItem(['A', 'AAAA', 'CNAME', 'MX', 'NS', 'TXT']),
+                    ttl: getRandomNumber(100, 3600),
+                    data: getRandomIp()
+                })),
+                authority: Array.from({ length: getRandomNumber(0, 5) }, () => ({
+                    name: getRandomItem(['example.com', 'subdomain.example.com', 'thirdlevel.example.com']),
+                    type: getRandomItem(['NS', 'CNAME']),
+                    ttl: getRandomNumber(100, 3600),
+                    data: getRandomIp()
+                })),
+                additional: Array.from({ length: getRandomNumber(0, 5) }, () => ({
+                    name: getRandomItem(['example.com', 'subdomain.example.com', 'thirdlevel.example.com']),
+                    type: getRandomItem(['A', 'AAAA', 'CNAME', 'MX', 'NS', 'TXT']),
+                    ttl: getRandomNumber(100, 3600),
+                    data: getRandomIp()
+                }))
             }
-        },
-        localVerification: {
-            ruleName: '',
-            protocolNumber: '',
-            protocolType: '',
-            attackType: '',
-            malformedPacketLength: 0,
-            attackFeatures: '',
-            aiDetection: 'miss'
-        }
-    }));
+        };
+    });
 };
 
 const FILTER_OPTIONS = {
@@ -893,9 +953,115 @@ const ExternalLogs: React.FC = () => {
                                                 isForeign: true,
                                             }}
                                             protocol={selectedLog?.requestInfo?.protocol?.toUpperCase() || 'HTTP'}
-                                            url={selectedLog?.externalDomain || selectedLog?.requestInfo?.url || ''}
+                                            url={selectedLog?.requestInfo?.url || selectedLog?.externalDomain || ''}
+                                            method={!['dns', 'tcp', 'udp'].includes(selectedLog?.requestInfo?.protocol || '') ? selectedLog?.requestInfo?.method : undefined}
+                                            statusCode={!['dns', 'tcp', 'udp'].includes(selectedLog?.requestInfo?.protocol || '') ? selectedLog?.responseInfo?.statusCode : undefined}
                                         />
                                     </Card>
+
+                                    {(selectedLog?.dnsResponse || selectedLog?.requestInfo?.protocol === 'dns') && (
+                                        <Card title="DNS响应">
+                                            <Tabs
+                                                items={[
+                                                    {
+                                                        key: 'header',
+                                                        label: '报文头',
+                                                        children: (
+                                                            <Descriptions bordered column={2} size="small">
+                                                                <Descriptions.Item label="报文标识">
+                                                                    {selectedLog?.dnsResponse?.header.id}
+                                                                </Descriptions.Item>
+                                                                <Descriptions.Item label="响应标志">
+                                                                    {selectedLog?.dnsResponse?.header.qr ? '响应' : '查询'}
+                                                                </Descriptions.Item>
+                                                                <Descriptions.Item label="操作码">
+                                                                    {selectedLog?.dnsResponse?.header.opcode}
+                                                                </Descriptions.Item>
+                                                                <Descriptions.Item label="权威应答">
+                                                                    {selectedLog?.dnsResponse?.header.aa ? '是' : '否'}
+                                                                </Descriptions.Item>
+                                                                <Descriptions.Item label="截断标志">
+                                                                    {selectedLog?.dnsResponse?.header.tc ? '是' : '否'}
+                                                                </Descriptions.Item>
+                                                                <Descriptions.Item label="期望递归">
+                                                                    {selectedLog?.dnsResponse?.header.rd ? '是' : '否'}
+                                                                </Descriptions.Item>
+                                                                <Descriptions.Item label="递归可用">
+                                                                    {selectedLog?.dnsResponse?.header.ra ? '是' : '否'}
+                                                                </Descriptions.Item>
+                                                                <Descriptions.Item label="返回码">
+                                                                    {selectedLog?.dnsResponse?.header.rcode}
+                                                                </Descriptions.Item>
+                                                                <Descriptions.Item label="问题数">
+                                                                    {selectedLog?.dnsResponse?.header.qdcount}
+                                                                </Descriptions.Item>
+                                                                <Descriptions.Item label="回答数">
+                                                                    {selectedLog?.dnsResponse?.header.ancount}
+                                                                </Descriptions.Item>
+                                                                <Descriptions.Item label="授权数">
+                                                                    {selectedLog?.dnsResponse?.header.nscount}
+                                                                </Descriptions.Item>
+                                                                <Descriptions.Item label="附加数">
+                                                                    {selectedLog?.dnsResponse?.header.arcount}
+                                                                </Descriptions.Item>
+                                                            </Descriptions>
+                                                        ),
+                                                    },
+                                                    {
+                                                        key: 'answers',
+                                                        label: '应答记录',
+                                                        children: (
+                                                            <Table
+                                                                dataSource={selectedLog?.dnsResponse?.answers.map((item: { name: string; type: string; ttl: number; data: string }, index: number) => ({ ...item, key: index }))}
+                                                                columns={[
+                                                                    { title: '域名', dataIndex: 'name', key: 'name' },
+                                                                    { title: '记录类型', dataIndex: 'type', key: 'type' },
+                                                                    { title: 'TTL', dataIndex: 'ttl', key: 'ttl' },
+                                                                    { title: '记录值', dataIndex: 'data', key: 'data' },
+                                                                ]}
+                                                                pagination={false}
+                                                                size="small"
+                                                            />
+                                                        ),
+                                                    },
+                                                    {
+                                                        key: 'authority',
+                                                        label: '权威记录',
+                                                        children: (
+                                                            <Table
+                                                                dataSource={selectedLog?.dnsResponse?.authority.map((item: { name: string; type: string; ttl: number; data: string }, index: number) => ({ ...item, key: index }))}
+                                                                columns={[
+                                                                    { title: '域名', dataIndex: 'name', key: 'name' },
+                                                                    { title: '记录类型', dataIndex: 'type', key: 'type' },
+                                                                    { title: 'TTL', dataIndex: 'ttl', key: 'ttl' },
+                                                                    { title: '记录值', dataIndex: 'data', key: 'data' },
+                                                                ]}
+                                                                pagination={false}
+                                                                size="small"
+                                                            />
+                                                        ),
+                                                    },
+                                                    {
+                                                        key: 'additional',
+                                                        label: '附加记录',
+                                                        children: (
+                                                            <Table
+                                                                dataSource={selectedLog?.dnsResponse?.additional.map((item: { name: string; type: string; ttl: number; data: string }, index: number) => ({ ...item, key: index }))}
+                                                                columns={[
+                                                                    { title: '域名', dataIndex: 'name', key: 'name' },
+                                                                    { title: '记录类型', dataIndex: 'type', key: 'type' },
+                                                                    { title: 'TTL', dataIndex: 'ttl', key: 'ttl' },
+                                                                    { title: '记录值', dataIndex: 'data', key: 'data' },
+                                                                ]}
+                                                                pagination={false}
+                                                                size="small"
+                                                            />
+                                                        ),
+                                                    },
+                                                ]}
+                                            />
+                                        </Card>
+                                    )}
 
                                     {selectedLog?.requestInfo && (
                                         <Card title="请求信息">
@@ -933,6 +1099,43 @@ const ExternalLogs: React.FC = () => {
                                                         key: 'params',
                                                         label: '请求参数',
                                                         children: <Empty description="暂无数据" />,
+                                                    },
+                                                ]}
+                                            />
+                                        </Card>
+                                    )}
+
+                                    {selectedLog?.responseInfo && (
+                                        <Card title="响应信息">
+                                            <Tabs
+                                                items={[
+                                                    {
+                                                        key: 'headers',
+                                                        label: '响应头',
+                                                        children: (
+                                                            <Table
+                                                                columns={[
+                                                                    { title: '名称', dataIndex: 'name', key: 'name' },
+                                                                    { title: '值', dataIndex: 'value', key: 'value' },
+                                                                ]}
+                                                                dataSource={Object.entries(selectedLog.responseInfo.headers).map(([key, value], index: number) => ({
+                                                                    key: index,
+                                                                    name: key,
+                                                                    value: value
+                                                                }))}
+                                                                pagination={false}
+                                                                size="small"
+                                                            />
+                                                        ),
+                                                    },
+                                                    {
+                                                        key: 'body',
+                                                        label: '响应体',
+                                                        children: (
+                                                            <pre style={{ whiteSpace: 'pre-wrap', wordWrap: 'break-word' }}>
+                                                                {selectedLog.responseInfo.body ? JSON.stringify(selectedLog.responseInfo.body, null, 2) : ''}
+                                                            </pre>
+                                                        ),
                                                     },
                                                 ]}
                                             />

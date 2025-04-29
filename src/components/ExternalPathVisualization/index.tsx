@@ -12,6 +12,8 @@ interface ExternalConnectionPathVisualProps {
   };
   protocol: string;
   url: string;
+  method?: string;
+  statusCode?: number;
   onDownloadPcap?: () => void;
 }
 
@@ -20,14 +22,17 @@ const ExternalConnectionPathVisual: React.FC<ExternalConnectionPathVisualProps> 
   victimInfo,
   protocol,
   url,
+  method,
+  statusCode,
   onDownloadPcap
 }) => {
   const getProtocolColor = (protocol: string) => {
     const colors: Record<string, string> = {
       'HTTP': 'blue',
       'HTTPS': 'green',
-      'FTP': 'orange',
-      'DNS': 'purple'
+      'DNS': 'purple',
+      'TCP': 'default',
+      'UDP': 'default'
     };
     return colors[protocol.toUpperCase()] || 'default';
   };
@@ -36,6 +41,10 @@ const ExternalConnectionPathVisual: React.FC<ExternalConnectionPathVisualProps> 
     attacker: '/images/attack.png',
     device: '/images/device.png',
     victim: '/images/victim.png'
+  };
+
+  const isTransportLayer = (protocol: string) => {
+    return ['TCP', 'UDP'].includes(protocol.toUpperCase());
   };
 
   return (
@@ -50,12 +59,33 @@ const ExternalConnectionPathVisual: React.FC<ExternalConnectionPathVisualProps> 
             >
               {protocol.toUpperCase()}
             </Tag>
-            <Typography.Text
-              copyable
-              className={styles.urlText}
-            >
-              {url || '-'}
-            </Typography.Text>
+            {!isTransportLayer(protocol) && (
+              <div className={styles.urlSection}>
+                {!['DNS', 'TCP', 'UDP'].includes(protocol.toUpperCase()) && method && (
+                  <Tag color="cyan">
+                    {method}
+                  </Tag>
+                )}
+                <Typography.Text
+                  copyable={{ tooltips: false }}
+                  className={styles.urlText}
+                  style={{ margin: '0 4px' }}
+                >
+                  {url || '-'}
+                </Typography.Text>
+                {!['DNS', 'TCP', 'UDP'].includes(protocol.toUpperCase()) && statusCode && (
+                  <Tag
+                    color={
+                      statusCode < 300 ? 'success' :
+                        statusCode < 400 ? 'warning' :
+                          'error'
+                    }
+                  >
+                    {statusCode}
+                  </Tag>
+                )}
+              </div>
+            )}
           </div>
         </div>
 
@@ -75,14 +105,16 @@ const ExternalConnectionPathVisual: React.FC<ExternalConnectionPathVisualProps> 
         </div>
 
         {/* 中间下载按钮 */}
-        <div className={styles.centerSection}>
-          <Typography.Link
-            className={styles.downloadLink}
-            onClick={onDownloadPcap}
-          >
-            下载PCAP包
-          </Typography.Link>
-        </div>
+        {!isTransportLayer(protocol) && (
+          <div className={styles.centerSection}>
+            <Typography.Link
+              className={styles.downloadLink}
+              onClick={onDownloadPcap}
+            >
+              下载PCAP包
+            </Typography.Link>
+          </div>
+        )}
 
         {/* 目的IP信息 */}
         <div className={`${styles.nodeSection} ${styles.rightAlign}`}>
