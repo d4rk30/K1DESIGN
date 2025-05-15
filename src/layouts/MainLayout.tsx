@@ -186,6 +186,11 @@ const MainLayout = () => {
             label: '报表导出',
         },
         {
+            key: 'audit-logs',
+            icon: <InfoCircleOutlined />,
+            label: '审计日志',
+        },
+        {
             key: 'system',
             icon: <ToolOutlined />,
             label: '系统管理',
