@@ -1,0 +1,144 @@
+.pathWrapper {
+    padding-top: 10px;
+    position: relative;
+    min-height: 100px;
+}
+
+.pathContainer {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    position: relative;
+    padding: 0 20px;
+}
+
+.lineLayer {
+    position: absolute;
+    left: 20px;
+    right: 20px;
+    top: 32px;
+    height: 2px;
+    z-index: 1;
+}
+
+.outboundLine {
+    position: absolute;
+    left: 82px;
+    right: 82px;
+    height: 2px;
+}
+
+.protocolInfo {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    z-index: 3;
+}
+
+.protocolTag {
+    margin-bottom: 4px;
+    margin-top: -12px;
+}
+
+.urlSection {
+    margin-top: 8px;
+}
+
+.urlText {
+    font-size: 12px;
+    color: #666;
+    max-width: 300px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.trafficSection {
+    margin-top: 8px;
+}
+
+.trafficText {
+    font-size: 12px;
+    color: #666;
+}
+
+.nodeSection {
+    flex: 0 0 40%;
+    text-align: left;
+
+    &.rightAlign {
+        text-align: right;
+        margin-left: auto;
+        padding-left: 60px;
+    }
+}
+
+.iconWrapper {
+    width: 64px;
+    height: 64px;
+    background: #f0f2f5;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 20px;
+    position: relative;
+    z-index: 2;
+    margin-left: 50px;
+
+    &.rightAlign {
+        margin-left: auto;
+        margin-right: 50px;
+    }
+}
+
+.icon {
+    width: 32px;
+    height: 32px;
+}
+
+.outboundTag {
+    color: #ff7a00;
+    background-color: rgba(255, 122, 0, 0.1);
+    border: none;
+}
+
+.downloadLink {
+    font-size: 14px;
+    color: #1890ff;
+    cursor: pointer;
+    padding: 4px 15px;
+    border: 1px solid #1890ff;
+    border-radius: 2px;
+
+    &:hover {
+        color: #40a9ff;
+        border-color: #40a9ff;
+    }
+}
+
+.centerSection {
+    flex: 0 0 20%;
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+    margin-top: 20px;
+    padding-top: 64px;
+}
+
+.infoWrapper {
+    padding: 0 20px;
+
+    :global {
+        .ant-descriptions-item {
+            padding: 4px 0;
+        }
+
+        .ant-descriptions-item-label {
+            text-align: left;
+        }
+    }
+}

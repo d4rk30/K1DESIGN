@@ -421,6 +421,27 @@ const OutboundTrafficConfig: React.FC = () => {
                                         </Button>
                                     </Col>
                                 </Row>
+                                <div style={{
+                                    marginTop: '16px',
+                                    padding: '12px 16px',
+                                    background: '#e6f7ff',
+                                    border: '1px solid #91d5ff',
+                                    borderRadius: '4px'
+                                }}>
+                                    <div style={{
+                                        fontSize: '14px',
+                                        color: '#1890ff',
+                                        marginBottom: '8px',
+                                        fontWeight: 500
+                                    }}>说明：</div>
+                                    <div style={{
+                                        fontSize: '14px',
+                                        color: 'rgba(0, 0, 0, 0.65)',
+                                        lineHeight: '24px'
+                                    }}>
+                                        命中规则的出境流量显示为告警，不符合规则的出境流量显示为监控。传输层协议和应用协议为空情况，表示全部协议和应用协议。
+                                    </div>
+                                </div>
                             </>
                         )}
                     </Form.List>

@@ -1,9 +1,10 @@
-import { Card, Table, Button, Space, Tag, Input, Select, InputNumber, Row, Col, Form, Modal, message, Drawer, Typography, Tabs, Descriptions, Empty } from 'antd';
+import { Card, Table, Button, Space, Tag, Input, Select, InputNumber, Row, Col, Form, Modal, message, Drawer, Typography, Tabs, Descriptions, Empty, Radio } from 'antd';
 import { SearchOutlined, ReloadOutlined, SaveOutlined, StarOutlined, StarFilled } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import dayjs from 'dayjs';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import * as echarts from 'echarts';
+import OutboundTrafficVisual from '../components/OutboundTrafficVisualization';
 const { Option } = Select;
 
 interface DataType {
@@ -82,6 +83,13 @@ interface FavoriteIp {
     key: string;
 }
 
+// 时间单位接口
+interface TimeUnit {
+    label: string;
+    value: string;
+    multiplier: number;
+}
+
 const OutboundLogs: React.FC = () => {
     const chartRef = useRef<HTMLDivElement>(null);
     const chartInstance = useRef<echarts.ECharts | null>(null);
@@ -95,6 +103,12 @@ const OutboundLogs: React.FC = () => {
     const [isTrafficModalVisible, setIsTrafficModalVisible] = useState(false);
     const [selectedLog, setSelectedLog] = useState<DataType | null>(null);
     const [isDetailVisible, setIsDetailVisible] = useState(false);
+    const [timeModalVisible, setTimeModalVisible] = useState(false);
+    const [listType, setListType] = useState<'black' | 'white'>('black');
+    const [duration, setDuration] = useState<number>(0);
+    const [timeUnit, setTimeUnit] = useState<string>('hour');
+    const [targetIp, setTargetIp] = useState<string>('');
+    const prevDurationRef = useRef<number>(0);
 
     const columns: ColumnsType<DataType> = [
         {
@@ -185,7 +199,7 @@ const OutboundLogs: React.FC = () => {
             key: 'status',
             width: 80,
             render: (status: string) => {
-                let color = 'green';
+                let color = 'blue';
                 if (status === '告警') {
                     color = 'red';
                 }
@@ -274,27 +288,6 @@ const OutboundLogs: React.FC = () => {
             outboundTraffic: '0.001',
             applicationType: 'DNS',
             status: '告警',
-            requestInfo: {
-                protocol: 'dns',
-                url: '',
-                dnsName: 'example.com',
-                headers: {
-                    'User-Agent': '',
-                    'Accept': '',
-                    'Content-Type': '',
-                    'X-Forwarded-For': '',
-                    'Host': '',
-                    'Connection': '',
-                    'Accept-Encoding': '',
-                    'Accept-Language': '',
-                },
-                body: {
-                    payload: '',
-                    size: '0.001kb',
-                    type: 'dns',
-                    timestamp: '2024-04-08 10:01:00'
-                }
-            },
             dnsResponse: {
                 header: {
                     id: '12345',
@@ -498,6 +491,43 @@ const OutboundLogs: React.FC = () => {
         const savedIps = JSON.parse(localStorage.getItem('outboundFavoriteIps') || '[]') as FavoriteIp[];
         setFavoriteIps(savedIps.map(item => item.ip));
     }, []);
+
+    // 时间单位配置
+    const timeUnits: TimeUnit[] = [
+        { label: '小时', value: 'hour', multiplier: 3600 },
+        { label: '天', value: 'day', multiplier: 86400 },
+        { label: '周', value: 'week', multiplier: 604800 },
+        { label: '月', value: 'month', multiplier: 2592000 },
+        { label: '永久', value: 'forever', multiplier: -1 }
+    ];
+
+    // 处理时间单位变化
+    const handleTimeUnitChange = useCallback((value: string | number) => {
+        const newTimeUnit = value.toString();
+
+        if (newTimeUnit === 'forever') {
+            prevDurationRef.current = duration;
+        } else if (timeUnit === 'forever') {
+            prevDurationRef.current = duration;
+        }
+
+        setTimeUnit(newTimeUnit);
+    }, [timeUnit, duration]);
+
+    // 确认添加到黑白名单
+    const handleConfirmAddToList = () => {
+        const selectedUnit = timeUnits.find(unit => unit.value === timeUnit);
+        let totalSeconds = 0;
+
+        if (selectedUnit?.value === 'forever') {
+            totalSeconds = -1;
+        } else if (selectedUnit) {
+            totalSeconds = duration * selectedUnit.multiplier;
+        }
+
+        message.success(`已将IP ${targetIp} 添加到${listType === 'black' ? '黑' : '白'}名单，时长：${totalSeconds === -1 ? '永久' : `${duration}${selectedUnit?.label}`}`);
+        setTimeModalVisible(false);
+    };
 
 
 
@@ -870,41 +900,41 @@ const OutboundLogs: React.FC = () => {
                 open={isDetailVisible}
             >
                 <Space direction="vertical" style={{ width: '100%' }} size="large">
-                    <Card title="会话信息详情">
-                        <Descriptions bordered column={2} size="small">
-                            <Descriptions.Item label="源IP">
-                                <Typography.Text copyable>{selectedLog?.sourceIp}</Typography.Text>
-                            </Descriptions.Item>
-                            <Descriptions.Item label="目的IP">
-                                <Typography.Text copyable>{selectedLog?.destinationIp}</Typography.Text>
-                            </Descriptions.Item>
-                            <Descriptions.Item label="源端口">
-                                {selectedLog?.sourcePort}
-                            </Descriptions.Item>
-                            <Descriptions.Item label="目的端口">
-                                {selectedLog?.destinationPort}
-                            </Descriptions.Item>
-                            <Descriptions.Item label="协议">
-                                {selectedLog?.protocol}
-                            </Descriptions.Item>
-                            <Descriptions.Item label="应用类型">
-                                {selectedLog?.applicationType}
-                            </Descriptions.Item>
-                            <Descriptions.Item label="会话起始">
-                                {selectedLog?.sessionStart}
-                            </Descriptions.Item>
-                            <Descriptions.Item label="会话结束">
-                                {selectedLog?.sessionEnd}
-                            </Descriptions.Item>
-                            <Descriptions.Item label="出境流量">
-                                {selectedLog?.outboundTraffic} MB
-                            </Descriptions.Item>
-                            <Descriptions.Item label="状态">
-                                <Tag color={selectedLog?.status === '告警' ? 'red' : 'green'}>
-                                    {selectedLog?.status}
-                                </Tag>
-                            </Descriptions.Item>
-                        </Descriptions>
+                    <Card title={`${selectedLog?.status === '告警' ? '告警' : '监控'}信息详情`}>
+                        {selectedLog && (
+                            <OutboundTrafficVisual
+                                sourceInfo={{
+                                    ip: selectedLog.sourceIp,
+                                    port: selectedLog.sourcePort
+                                }}
+                                destinationInfo={{
+                                    ip: selectedLog.destinationIp,
+                                    port: selectedLog.destinationPort,
+                                    isForeign: true
+                                }}
+                                protocol={selectedLog.protocol}
+                                url={selectedLog.requestInfo?.url || ''}
+                                method={selectedLog.requestInfo?.method}
+                                statusCode={selectedLog.responseInfo?.statusCode}
+                                status={selectedLog.status}
+                                sessionStart={selectedLog.sessionStart}
+                                sessionEnd={selectedLog.sessionEnd}
+                                trafficSize={selectedLog.outboundTraffic ? `${selectedLog.outboundTraffic} MB` : undefined}
+                                onDownloadPcap={() => {
+                                    message.success('PCAP包下载已开始');
+                                }}
+                                onAddToBlacklist={(ip: string) => {
+                                    setTargetIp(ip);
+                                    setListType('black');
+                                    setTimeModalVisible(true);
+                                }}
+                                onAddToWhitelist={(ip: string) => {
+                                    setTargetIp(ip);
+                                    setListType('white');
+                                    setTimeModalVisible(true);
+                                }}
+                            />
+                        )}
                     </Card>
 
                     <Card title="外联情报匹配">
@@ -1187,6 +1217,45 @@ const OutboundLogs: React.FC = () => {
                     )}
                 </Space>
             </Drawer>
+
+            {/* 时间选择模态框 */}
+            <Modal
+                title={`添加到${listType === 'black' ? '黑' : '白'}名单`}
+                open={timeModalVisible}
+                onOk={handleConfirmAddToList}
+                onCancel={() => setTimeModalVisible(false)}
+                okText="确认"
+                cancelText="取消"
+                centered
+                style={{ top: '20px' }}
+            >
+                <Space direction="vertical" style={{ width: '100%' }} size="large">
+                    <div>
+                        <Typography.Text>IP地址：{targetIp}</Typography.Text>
+                    </div>
+                    <Space direction="vertical" size="middle" style={{ width: '100%' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <InputNumber
+                                min={0}
+                                value={duration}
+                                onChange={(value) => setDuration(value || 0)}
+                                style={{ flex: 1 }}
+                                disabled={timeUnit === 'forever'}
+                            />
+                            <Radio.Group
+                                value={timeUnit}
+                                onChange={(e) => handleTimeUnitChange(e.target.value)}
+                                optionType="button"
+                                buttonStyle="solid"
+                                options={timeUnits.map(unit => ({
+                                    label: unit.label,
+                                    value: unit.value
+                                }))}
+                            />
+                        </div>
+                    </Space>
+                </Space>
+            </Modal>
         </div>
     );
 };
