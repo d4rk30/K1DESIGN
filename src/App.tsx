@@ -23,6 +23,7 @@ import FalsePositive from './pages/FalsePositive';
 import PasswordPolicy from './pages/PasswordPolicy';
 import BlackWhiteList from './pages/BlackWhiteList';
 import AntiMappingStrategy from './pages/AntiMappingStrategy';
+import OutboundTrafficConfig from './pages/OutboundTrafficConfig';
 import Reports from './pages/Reports';
 import AssetManagement from './pages/AssetManagement';
 import AssetList from './pages/AssetList';
@@ -75,6 +76,7 @@ const App: React.FC = () => {
             <Route path="password-policy" element={<PasswordPolicy />} />
             <Route path="blackwhite-list" element={<BlackWhiteList />} />
             <Route path="anti-mapping-strategy" element={<AntiMappingStrategy />} />
+            <Route path="outbound-strategy" element={<OutboundTrafficConfig />} />
 
             {/* 报表导出 */}
             <Route path="reports" element={<Reports />} />

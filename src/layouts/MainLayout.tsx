@@ -115,10 +115,6 @@ const MainLayout = () => {
                     key: 'outbound-logs',
                     label: '出境流量日志',
                 },
-                {
-                    key: 'outbound-analysis',
-                    label: '出境流量分析',
-                },
             ],
         },
         {
@@ -177,6 +173,10 @@ const MainLayout = () => {
                 {
                     key: 'anti-mapping-strategy',
                     label: '反测绘监测策略',
+                },
+                {
+                    key: 'outbound-strategy',
+                    label: '出境流量策略',
                 },
             ],
         },
@@ -402,6 +402,7 @@ const MainLayout = () => {
             'anti-mapping-logs',
             'anti-mapping-sources',
             'anti-mapping-assets',
+            'outbound-logs',
         ];
 
         if (antiMappingPages.includes(pathname)) {

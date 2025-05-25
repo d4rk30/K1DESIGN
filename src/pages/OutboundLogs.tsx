@@ -1,80 +1,213 @@
-import { Card, Table, Button, Space, Tag, Input, DatePicker, Select } from 'antd';
-import { SearchOutlined, ReloadOutlined } from '@ant-design/icons';
+import { Card, Table, Button, Space, Tag, Input, Select, InputNumber, Row, Col, Form, Modal, message, Drawer, Typography, Tabs, Descriptions, Empty } from 'antd';
+import { SearchOutlined, ReloadOutlined, SaveOutlined, StarOutlined, StarFilled } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import dayjs from 'dayjs';
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import * as echarts from 'echarts';
-
-const { RangePicker } = DatePicker;
 const { Option } = Select;
 
 interface DataType {
     key: string;
-    time: string;
     sourceIp: string;
     destinationIp: string;
+    sourcePort: number;
     destinationPort: number;
     protocol: string;
-    traffic: string;
+    sessionStart: string;
+    sessionEnd: string;
+    outboundTraffic: string;
+    applicationType: string;
     status: string;
+    requestInfo?: {
+        protocol: string;
+        url: string;
+        dnsName: string;
+        method?: string;
+        headers: {
+            'User-Agent': string;
+            'Accept': string;
+            'Content-Type': string;
+            'X-Forwarded-For': string;
+            'Host': string;
+            'Connection': string;
+            'Accept-Encoding': string;
+            'Accept-Language': string;
+        };
+        body: {
+            payload: string;
+            size: string;
+            type: string;
+            timestamp: string;
+        };
+    };
+    responseInfo?: {
+        headers: {
+            'Content-Type': string;
+            'Server': string;
+            'Date': string;
+            'Content-Length': string;
+        };
+        statusCode: number;
+        body: {
+            status: number;
+            message: string;
+            data: string;
+        };
+    };
+    dnsResponse?: {
+        header: {
+            id: string;
+            qr: boolean;
+            opcode: string;
+            aa: boolean;
+            tc: boolean;
+            rd: boolean;
+            ra: boolean;
+            rcode: string;
+            qdcount: number;
+            ancount: number;
+            nscount: number;
+            arcount: number;
+        };
+        answers: { name: string; type: string; ttl: number; data: string }[];
+        authority: { name: string; type: string; ttl: number; data: string }[];
+        additional: { name: string; type: string; ttl: number; data: string }[];
+    };
+}
+
+// 添加收藏IP的类型定义
+interface FavoriteIp {
+    ip: string;
+    type: 'source' | 'destination';
+    key: string;
 }
 
 const OutboundLogs: React.FC = () => {
     const chartRef = useRef<HTMLDivElement>(null);
     const chartInstance = useRef<echarts.ECharts | null>(null);
     const timerRef = useRef<NodeJS.Timeout | null>(null);
+    const [form] = Form.useForm();
+    const [filterName, setFilterName] = useState('');
+    const [isFilterModalVisible, setIsFilterModalVisible] = useState(false);
+    const [isIpDrawerVisible, setIsIpDrawerVisible] = useState(false);
+    const [favoriteIps, setFavoriteIps] = useState<string[]>([]);
+    const [trafficRange, setTrafficRange] = useState<[number, number] | null>(null);
+    const [isTrafficModalVisible, setIsTrafficModalVisible] = useState(false);
+    const [selectedLog, setSelectedLog] = useState<DataType | null>(null);
+    const [isDetailVisible, setIsDetailVisible] = useState(false);
 
     const columns: ColumnsType<DataType> = [
-        {
-            title: '时间',
-            dataIndex: 'time',
-            key: 'time',
-            width: 180,
-        },
         {
             title: '源IP',
             dataIndex: 'sourceIp',
             key: 'sourceIp',
-            width: 150,
+            width: 140,
+            render: (ip: string) => (
+                <div style={{ display: 'flex', alignItems: 'center', width: '100%' }}>
+                    <Button
+                        type="link"
+                        style={{ padding: 0, minWidth: 32, marginRight: 8 }}
+                        icon={favoriteIps.includes(ip) ? <StarFilled style={{ color: '#faad14' }} /> : <StarOutlined />}
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            addToFavorites(ip, 'source');
+                        }}
+                    />
+                    <Typography.Text copyable>{ip}</Typography.Text>
+                </div>
+            ),
         },
         {
-            title: '目标IP',
+            title: '目的IP',
             dataIndex: 'destinationIp',
             key: 'destinationIp',
-            width: 150,
+            width: 140,
+            render: (ip: string) => (
+                <div style={{ display: 'flex', alignItems: 'center', width: '100%' }}>
+                    <Button
+                        type="link"
+                        style={{ padding: 0, minWidth: 32, marginRight: 8 }}
+                        icon={favoriteIps.includes(ip) ? <StarFilled style={{ color: '#faad14' }} /> : <StarOutlined />}
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            addToFavorites(ip, 'destination');
+                        }}
+                    />
+                    <Typography.Text copyable>{ip}</Typography.Text>
+                </div>
+            ),
         },
         {
-            title: '目标端口',
+            title: '源端口',
+            dataIndex: 'sourcePort',
+            key: 'sourcePort',
+            width: 80,
+        },
+        {
+            title: '目的端口',
             dataIndex: 'destinationPort',
             key: 'destinationPort',
-            width: 120,
+            width: 80,
         },
         {
             title: '协议',
             dataIndex: 'protocol',
             key: 'protocol',
-            width: 100,
+            width: 80,
         },
         {
-            title: '流量大小',
-            dataIndex: 'traffic',
-            key: 'traffic',
+            title: '会话起始',
+            dataIndex: 'sessionStart',
+            key: 'sessionStart',
+            width: 150,
+        },
+        {
+            title: '会话结束',
+            dataIndex: 'sessionEnd',
+            key: 'sessionEnd',
+            width: 150,
+        },
+        {
+            title: '出境流量(MB)',
+            dataIndex: 'outboundTraffic',
+            key: 'outboundTraffic',
             width: 120,
+        },
+        {
+            title: '应用类型',
+            dataIndex: 'applicationType',
+            key: 'applicationType',
+            width: 100,
         },
         {
             title: '状态',
             dataIndex: 'status',
             key: 'status',
-            width: 100,
+            width: 80,
             render: (status: string) => {
                 let color = 'green';
-                if (status === '异常') {
+                if (status === '告警') {
                     color = 'red';
-                } else if (status === '警告') {
-                    color = 'orange';
                 }
                 return <Tag color={color}>{status}</Tag>;
             },
+        },
+        {
+            title: '操作',
+            key: 'action',
+            width: 80,
+            render: (_, record: DataType) => (
+                <Button
+                    type="link"
+                    size="small"
+                    onClick={() => {
+                        setSelectedLog(record);
+                        setIsDetailVisible(true);
+                    }}
+                >
+                    详情
+                </Button>
+            ),
         },
     ];
 
@@ -82,24 +215,115 @@ const OutboundLogs: React.FC = () => {
     const data: DataType[] = [
         {
             key: '1',
-            time: '2024-04-08 10:00:00',
             sourceIp: '192.168.1.100',
             destinationIp: '8.8.8.8',
+            sourcePort: 54321,
             destinationPort: 443,
-            protocol: 'HTTPS',
-            traffic: '1.2MB',
-            status: '正常',
+            protocol: 'TCP',
+            sessionStart: '2024-04-08 10:00:00',
+            sessionEnd: '2024-04-08 10:05:30',
+            outboundTraffic: '1.23',
+            applicationType: 'HTTP(S)',
+            status: '监控',
+            requestInfo: {
+                protocol: 'https',
+                url: 'https://8.8.8.8/api/v1/data',
+                dnsName: 'dns.google.com',
+                method: 'GET',
+                headers: {
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+                    'Accept': 'application/json, text/plain, */*',
+                    'Content-Type': 'application/json',
+                    'X-Forwarded-For': '192.168.1.100',
+                    'Host': 'dns.google.com',
+                    'Connection': 'keep-alive',
+                    'Accept-Encoding': 'gzip, deflate, br',
+                    'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
+                },
+                body: {
+                    payload: '{"query": "example.com", "type": "A"}',
+                    size: '45kb',
+                    type: 'application/json',
+                    timestamp: '2024-04-08 10:00:00'
+                }
+            },
+            responseInfo: {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Server': 'nginx/1.20.1',
+                    'Date': 'Mon, 08 Apr 2024 10:00:00 GMT',
+                    'Content-Length': '1234',
+                },
+                statusCode: 200,
+                body: {
+                    status: 0,
+                    message: 'Success',
+                    data: '{"result": "success", "ip": "8.8.8.8"}'
+                }
+            }
         },
         {
             key: '2',
-            time: '2024-04-08 10:01:00',
             sourceIp: '192.168.1.101',
             destinationIp: '1.1.1.1',
+            sourcePort: 45678,
             destinationPort: 53,
-            protocol: 'DNS',
-            traffic: '0.5MB',
-            status: '警告',
+            protocol: 'UDP',
+            sessionStart: '2024-04-08 10:01:00',
+            sessionEnd: '2024-04-08 10:01:05',
+            outboundTraffic: '0.001',
+            applicationType: 'DNS',
+            status: '告警',
+            requestInfo: {
+                protocol: 'dns',
+                url: '',
+                dnsName: 'example.com',
+                headers: {
+                    'User-Agent': '',
+                    'Accept': '',
+                    'Content-Type': '',
+                    'X-Forwarded-For': '',
+                    'Host': '',
+                    'Connection': '',
+                    'Accept-Encoding': '',
+                    'Accept-Language': '',
+                },
+                body: {
+                    payload: '',
+                    size: '0.001kb',
+                    type: 'dns',
+                    timestamp: '2024-04-08 10:01:00'
+                }
+            },
+            dnsResponse: {
+                header: {
+                    id: '12345',
+                    qr: true,
+                    opcode: 'QUERY',
+                    aa: false,
+                    tc: false,
+                    rd: true,
+                    ra: true,
+                    rcode: 'NOERROR',
+                    qdcount: 1,
+                    ancount: 1,
+                    nscount: 0,
+                    arcount: 0
+                },
+                answers: [
+                    { name: 'example.com', type: 'A', ttl: 300, data: '1.1.1.1' }
+                ],
+                authority: [],
+                additional: []
+            }
         },
+    ];
+
+    // 添加协议选项
+    const protocolOptions = [
+        { label: 'TCP', value: 'TCP' },
+        { label: 'UDP', value: 'UDP' },
+        { label: '非TCP/UDP', value: '非TCP/UDP' },
     ];
 
     // 初始化图表
@@ -228,6 +452,198 @@ const OutboundLogs: React.FC = () => {
         };
     }, []);
 
+    // 添加表单提交和重置处理函数
+    const handleFilter = (values: any) => {
+        console.log('Filter values:', values);
+    };
+
+    const handleReset = () => {
+        form.resetFields();
+        // 同时重置流量范围状态
+        setTrafficRange(null);
+    };
+
+    // 添加保存筛选条件的处理函数
+    const handleSaveFilter = () => {
+        const currentValues = form.getFieldsValue();
+        if (Object.keys(currentValues).every(key => !currentValues[key])) {
+            message.warning('请至少设置一个搜索条件');
+            return;
+        }
+        message.success('搜索条件保存成功');
+        setIsFilterModalVisible(false);
+        setFilterName('');
+    };
+
+    // 修改收藏IP的处理函数
+    const addToFavorites = (ip: string, type: 'source' | 'destination') => {
+        if (favoriteIps.includes(ip)) {
+            setFavoriteIps(prev => prev.filter(item => item !== ip));
+            message.info('已取消收藏');
+        } else {
+            setFavoriteIps(prev => [...prev, ip]);
+            message.success('IP已添加到收藏夹');
+        }
+
+        // 更新localStorage
+        const savedIps = JSON.parse(localStorage.getItem('outboundFavoriteIps') || '[]') as FavoriteIp[];
+        const newSavedIps = favoriteIps.includes(ip)
+            ? savedIps.filter(item => item.ip !== ip)
+            : [...savedIps, { ip, type, key: ip }];
+        localStorage.setItem('outboundFavoriteIps', JSON.stringify(newSavedIps));
+    };
+
+    // 修改加载收藏IP的useEffect
+    useEffect(() => {
+        const savedIps = JSON.parse(localStorage.getItem('outboundFavoriteIps') || '[]') as FavoriteIp[];
+        setFavoriteIps(savedIps.map(item => item.ip));
+    }, []);
+
+
+
+    // 自定义流量范围输入组件
+    const TrafficRangeInput = () => {
+        const [inputRef, setInputRef] = useState<HTMLDivElement | null>(null);
+        const [popupPosition, setPopupPosition] = useState<'left' | 'right'>('left');
+        const [localRange, setLocalRange] = useState<[number, number]>([5, 1000]);
+
+        const handleClickOutside = (e: MouseEvent) => {
+            if (inputRef && !inputRef.contains(e.target as Node)) {
+                setIsTrafficModalVisible(false);
+            }
+        };
+
+        const calculatePosition = () => {
+            if (inputRef) {
+                const rect = inputRef.getBoundingClientRect();
+                const windowWidth = window.innerWidth;
+                const popupWidth = 280;
+
+                // 如果右边空间不够，就向左对齐
+                if (rect.left + popupWidth > windowWidth - 20) {
+                    setPopupPosition('right');
+                } else {
+                    setPopupPosition('left');
+                }
+            }
+        };
+
+        // 当弹窗打开时，同步当前值到本地状态
+        useEffect(() => {
+            if (isTrafficModalVisible) {
+                setLocalRange(trafficRange ? [trafficRange[0], trafficRange[1]] : [5, 1000]);
+                calculatePosition();
+                document.addEventListener('mousedown', handleClickOutside);
+                return () => {
+                    document.removeEventListener('mousedown', handleClickOutside);
+                };
+            }
+        }, [isTrafficModalVisible, inputRef]);
+
+        const handleConfirm = () => {
+            setTrafficRange(localRange);
+            form.setFieldsValue({ trafficRange: localRange });
+            setIsTrafficModalVisible(false);
+        };
+
+        const handleReset = () => {
+            setLocalRange([5, 1000]);
+            // 同时重置主状态和表单值
+            setTrafficRange(null);
+            form.setFieldsValue({ trafficRange: null });
+        };
+
+        return (
+            <div style={{ position: 'relative' }} ref={setInputRef}>
+                <Input
+                    placeholder="流量大小"
+                    value={trafficRange ? `${trafficRange[0]}MB - ${trafficRange[1]}MB` : ''}
+                    readOnly
+                    style={{ width: '100%' }}
+                    allowClear
+                    onClear={() => {
+                        setTrafficRange(null);
+                        form.setFieldsValue({ trafficRange: null });
+                    }}
+                    onClick={() => setIsTrafficModalVisible(!isTrafficModalVisible)}
+                />
+                {isTrafficModalVisible && (
+                    <div
+                        style={{
+                            position: 'absolute',
+                            top: '100%',
+                            [popupPosition === 'left' ? 'left' : 'right']: 0,
+                            zIndex: 1000,
+                            backgroundColor: 'white',
+                            border: '1px solid #d9d9d9',
+                            borderRadius: '6px',
+                            boxShadow: '0 6px 16px 0 rgba(0, 0, 0, 0.08), 0 3px 6px -4px rgba(0, 0, 0, 0.12), 0 9px 28px 8px rgba(0, 0, 0, 0.05)',
+                            padding: '12px',
+                            minWidth: '280px',
+                            marginTop: '4px'
+                        }}
+                        onMouseDown={(e) => e.stopPropagation()}
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <div style={{ marginBottom: '12px' }}>
+                            <div style={{ marginBottom: '8px', fontSize: '14px', fontWeight: 500 }}>设置流量范围</div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <InputNumber
+                                    min={0}
+                                    value={localRange[0]}
+                                    onChange={(value) => setLocalRange([value || 5, localRange[1]])}
+                                    addonAfter="MB"
+                                    style={{ width: '110px' }}
+                                    placeholder="最小值"
+                                    onMouseDown={(e) => e.stopPropagation()}
+                                    onClick={(e) => e.stopPropagation()}
+                                    onFocus={(e) => e.stopPropagation()}
+                                />
+                                <span style={{ margin: '0 8px', color: '#999' }}>-</span>
+                                <InputNumber
+                                    min={0}
+                                    value={localRange[1]}
+                                    onChange={(value) => setLocalRange([localRange[0], value || 0])}
+                                    addonAfter="MB"
+                                    style={{ width: '110px' }}
+                                    placeholder="最大值"
+                                    onMouseDown={(e) => e.stopPropagation()}
+                                    onClick={(e) => e.stopPropagation()}
+                                    onFocus={(e) => e.stopPropagation()}
+                                />
+                            </div>
+                        </div>
+                        <div style={{ borderTop: '1px solid #f0f0f0', paddingTop: '8px', display: 'flex', justifyContent: 'flex-end' }}>
+                            <Space>
+                                <Button
+                                    size="small"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleReset();
+                                    }}
+                                    onMouseDown={(e) => e.stopPropagation()}
+                                >
+                                    重置
+                                </Button>
+                                <Button
+                                    size="small"
+                                    type="primary"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleConfirm();
+                                    }}
+                                    onMouseDown={(e) => e.stopPropagation()}
+                                >
+                                    确定
+                                </Button>
+                            </Space>
+                        </div>
+                    </div>
+                )}
+            </div>
+        );
+    };
+
     return (
         <div>
             <Card style={{ marginBottom: 16 }}>
@@ -237,27 +653,114 @@ const OutboundLogs: React.FC = () => {
                 <div ref={chartRef} style={{ height: '300px' }} />
             </Card>
             <Card>
-                <div style={{ marginBottom: 16 }}>
-                    <Space>
-                        <RangePicker
-                            showTime
-                            format="YYYY-MM-DD HH:mm:ss"
-                            defaultValue={[dayjs().subtract(1, 'day'), dayjs()]}
-                        />
-                        <Select defaultValue="all" style={{ width: 120 }}>
-                            <Option value="all">全部状态</Option>
-                            <Option value="normal">正常</Option>
-                            <Option value="warning">警告</Option>
-                            <Option value="error">异常</Option>
-                        </Select>
-                        <Input
-                            placeholder="搜索IP地址"
-                            style={{ width: 200 }}
-                            prefix={<SearchOutlined />}
-                        />
-                        <Button icon={<ReloadOutlined />}>重置</Button>
-                    </Space>
-                </div>
+                <Form form={form} onFinish={handleFilter} style={{ marginBottom: 24 }}>
+                    <Row gutter={[16, 16]}>
+                        <Col span={4}>
+                            <Form.Item name="quickSearch" style={{ marginBottom: 0 }}>
+                                <Select
+                                    placeholder="快捷搜索"
+                                    allowClear
+                                    options={[]}
+                                />
+                            </Form.Item>
+                        </Col>
+                        <Col span={4}>
+                            <Form.Item name="sourceIp" style={{ marginBottom: 0 }}>
+                                <Input placeholder="源IP" allowClear />
+                            </Form.Item>
+                        </Col>
+                        <Col span={4}>
+                            <Form.Item name="destinationIp" style={{ marginBottom: 0 }}>
+                                <Input placeholder="目的IP" allowClear />
+                            </Form.Item>
+                        </Col>
+                        <Col span={4}>
+                            <Form.Item name="sourcePort" style={{ marginBottom: 0 }}>
+                                <Input
+                                    placeholder="源端口(多个用逗号分隔)"
+                                    allowClear
+                                />
+                            </Form.Item>
+                        </Col>
+                        <Col span={4}>
+                            <Form.Item name="destinationPort" style={{ marginBottom: 0 }}>
+                                <Input
+                                    placeholder="目的端口(多个用逗号分隔)"
+                                    allowClear
+                                />
+                            </Form.Item>
+                        </Col>
+                        <Col span={4}>
+                            <Form.Item name="protocol" style={{ marginBottom: 0 }}>
+                                <Select
+                                    mode="multiple"
+                                    placeholder="协议"
+                                    style={{ width: '100%' }}
+                                    options={protocolOptions}
+                                />
+                            </Form.Item>
+                        </Col>
+                    </Row>
+                    <Row gutter={[16, 16]} style={{ marginTop: 16 }}>
+                        <Col span={4}>
+                            <Form.Item name="trafficRange" style={{ marginBottom: 0 }}>
+                                <TrafficRangeInput />
+                            </Form.Item>
+                        </Col>
+                        <Col span={4}>
+                            <Form.Item name="applicationType" style={{ marginBottom: 0 }}>
+                                <Select
+                                    mode="multiple"
+                                    placeholder="应用类型"
+                                    style={{ width: '100%' }}
+                                    options={[
+                                        { label: 'HTTP(S)', value: 'HTTP(S)' },
+                                        { label: 'DNS', value: 'DNS' },
+                                        { label: 'SSH', value: 'SSH' },
+                                        { label: 'FTP', value: 'FTP' },
+                                        { label: 'SMTP', value: 'SMTP' },
+                                        { label: 'POP3', value: 'POP3' },
+                                        { label: 'IMAP', value: 'IMAP' },
+                                        { label: '其他', value: '其他' },
+                                    ]}
+                                />
+                            </Form.Item>
+                        </Col>
+                        <Col span={4}>
+                            <Form.Item name="status" style={{ marginBottom: 0 }}>
+                                <Select
+                                    placeholder="状态"
+                                    style={{ width: '100%' }}
+                                    allowClear
+                                >
+                                    <Option value="monitoring">监控</Option>
+                                    <Option value="alert">告警</Option>
+                                </Select>
+                            </Form.Item>
+                        </Col>
+                        <Col span={4} style={{ display: 'flex', alignItems: 'flex-end' }}>
+                            <Form.Item style={{ marginBottom: 0 }}>
+                                <Space>
+                                    <Button type="primary" htmlType="submit" icon={<SearchOutlined />}>
+                                        搜索
+                                    </Button>
+                                    <Button onClick={handleReset} icon={<ReloadOutlined />}>
+                                        重置
+                                    </Button>
+                                    <Button onClick={() => setIsFilterModalVisible(true)} icon={<SaveOutlined />}>
+                                        保存条件
+                                    </Button>
+                                    <Button
+                                        icon={<StarOutlined />}
+                                        onClick={() => setIsIpDrawerVisible(true)}
+                                    >
+                                        IP收藏夹
+                                    </Button>
+                                </Space>
+                            </Form.Item>
+                        </Col>
+                    </Row>
+                </Form>
                 <Table
                     columns={columns}
                     dataSource={data}
@@ -270,6 +773,420 @@ const OutboundLogs: React.FC = () => {
                     }}
                 />
             </Card>
+
+            {/* 添加保存筛选条件的 Modal */}
+            <Modal
+                title="保存搜索条件"
+                open={isFilterModalVisible}
+                onOk={handleSaveFilter}
+                onCancel={() => {
+                    setIsFilterModalVisible(false);
+                    setFilterName('');
+                }}
+                okText="保存"
+                cancelText="取消"
+            >
+                <Form layout="vertical">
+                    <Form.Item
+                        label="条件名称"
+                        required
+                        style={{ marginBottom: 0 }}
+                    >
+                        <Input
+                            placeholder="请输入条件名称"
+                            value={filterName}
+                            onChange={(e) => setFilterName(e.target.value)}
+                        />
+                    </Form.Item>
+                </Form>
+            </Modal>
+
+            {/* 添加 IP收藏夹抽屉组件 */}
+            <Drawer
+                title="IP收藏夹"
+                placement="right"
+                width={600}
+                onClose={() => setIsIpDrawerVisible(false)}
+                open={isIpDrawerVisible}
+            >
+                <Row gutter={[16, 16]} style={{ marginBottom: 16 }}>
+                    <Col flex="auto">
+                        <Input placeholder="请输入IP地址" />
+                    </Col>
+                    <Col>
+                        <Button type="primary">搜索</Button>
+                    </Col>
+                </Row>
+
+                <Table
+                    columns={[
+                        {
+                            title: 'IP',
+                            dataIndex: 'ip',
+                            key: 'ip',
+                        },
+                        {
+                            title: '类型',
+                            dataIndex: 'type',
+                            key: 'type',
+                            render: (text: string) => (
+                                <Tag color={text === 'source' ? 'blue' : 'green'}>
+                                    {text === 'source' ? '源IP' : '目标IP'}
+                                </Tag>
+                            )
+                        },
+                        {
+                            title: '操作',
+                            key: 'action',
+                            render: (_, record: FavoriteIp) => (
+                                <Button
+                                    type="link"
+                                    danger
+                                    onClick={() => addToFavorites(record.ip, record.type)}
+                                >
+                                    删除
+                                </Button>
+                            )
+                        }
+                    ]}
+                    dataSource={JSON.parse(localStorage.getItem('outboundFavoriteIps') || '[]') as FavoriteIp[]}
+                    pagination={false}
+                />
+            </Drawer>
+
+            {/* 详情抽屉 */}
+            <Drawer
+                title={
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <Typography.Title level={4} style={{ margin: 0, fontSize: '18px' }}>出境日志详情</Typography.Title>
+                    </div>
+                }
+                placement="right"
+                width="clamp(800px, 50%, 100%)"
+                onClose={() => {
+                    setSelectedLog(null);
+                    setIsDetailVisible(false);
+                }}
+                open={isDetailVisible}
+            >
+                <Space direction="vertical" style={{ width: '100%' }} size="large">
+                    <Card title="会话信息详情">
+                        <Descriptions bordered column={2} size="small">
+                            <Descriptions.Item label="源IP">
+                                <Typography.Text copyable>{selectedLog?.sourceIp}</Typography.Text>
+                            </Descriptions.Item>
+                            <Descriptions.Item label="目的IP">
+                                <Typography.Text copyable>{selectedLog?.destinationIp}</Typography.Text>
+                            </Descriptions.Item>
+                            <Descriptions.Item label="源端口">
+                                {selectedLog?.sourcePort}
+                            </Descriptions.Item>
+                            <Descriptions.Item label="目的端口">
+                                {selectedLog?.destinationPort}
+                            </Descriptions.Item>
+                            <Descriptions.Item label="协议">
+                                {selectedLog?.protocol}
+                            </Descriptions.Item>
+                            <Descriptions.Item label="应用类型">
+                                {selectedLog?.applicationType}
+                            </Descriptions.Item>
+                            <Descriptions.Item label="会话起始">
+                                {selectedLog?.sessionStart}
+                            </Descriptions.Item>
+                            <Descriptions.Item label="会话结束">
+                                {selectedLog?.sessionEnd}
+                            </Descriptions.Item>
+                            <Descriptions.Item label="出境流量">
+                                {selectedLog?.outboundTraffic} MB
+                            </Descriptions.Item>
+                            <Descriptions.Item label="状态">
+                                <Tag color={selectedLog?.status === '告警' ? 'red' : 'green'}>
+                                    {selectedLog?.status}
+                                </Tag>
+                            </Descriptions.Item>
+                        </Descriptions>
+                    </Card>
+
+                    <Card title="外联情报匹配">
+                        <Row gutter={[24, 24]} justify="center">
+                            {[
+                                { logo: '/images/华为.png', name: '华为威胁情报', hasData: true },
+                                { logo: '/images/奇安信.png', name: '奇安信威胁情报', hasData: true },
+                                { logo: '/images/腾讯.png', name: '腾讯威胁情报', hasData: true },
+                                { logo: '/images/360.png', name: '360威胁情报', hasData: false },
+                                { logo: '/images/阿里.png', name: '阿里云威胁情报', hasData: false }
+                            ].map((vendor, index) => (
+                                <Col key={index} style={{ width: '19%' }}>
+                                    <div style={{
+                                        padding: '8px 0',
+                                        marginBottom: '8px',
+                                        height: '40px',
+                                        position: 'relative'
+                                    }}>
+                                        <div style={{
+                                            position: 'relative',
+                                            width: 'fit-content',
+                                            margin: '0 auto',
+                                            height: '40px',
+                                            lineHeight: '40px'
+                                        }}>
+                                            <div style={{
+                                                position: 'absolute',
+                                                right: '100%',
+                                                top: '47%',
+                                                transform: 'translateY(-50%)',
+                                                marginRight: '12px'
+                                            }}>
+                                                <img
+                                                    src={vendor.logo}
+                                                    alt={vendor.name}
+                                                    style={{
+                                                        width: 32,
+                                                        height: 32
+                                                    }}
+                                                />
+                                            </div>
+                                            <span style={{
+                                                fontSize: 16,
+                                                fontWeight: 500,
+                                                whiteSpace: 'nowrap'
+                                            }}>
+                                                {vendor.name}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        {vendor.hasData ? [
+                                            {
+                                                label: '威胁等级', value: index === 0 ? <Tag color="red">高危</Tag> :
+                                                    index === 1 ? <Tag color="green">低危</Tag> : <Tag color="orange">中危</Tag>
+                                            },
+                                            { label: '置信度', value: '高' },
+                                            { label: '情报类型', value: '跨站脚本攻击' },
+                                            { label: '情报归属', value: '公有情报源' },
+                                            { label: '经纬度信息', value: '30.34324,343.3434' },
+                                            { label: '情报相关组织', value: index === 1 ? 'APT32' : 'Lazarus' },
+                                            { label: '关联病毒家族', value: 'Lockbit勒索病毒' },
+                                            { label: '入库时间', value: '2024-12-11 12:03:44' },
+                                            { label: '过期时间', value: '2024-12-31 11:22:31' }
+                                        ].map((item, idx) => (
+                                            <div
+                                                key={idx}
+                                                style={{
+                                                    padding: '12px 0',
+                                                    borderBottom: idx !== 8 ? '1px solid #f0f0f0' : 'none',
+                                                    textAlign: 'center'
+                                                }}
+                                            >
+                                                <div style={{
+                                                    color: '#666',
+                                                    marginBottom: '8px',
+                                                    textAlign: 'center'
+                                                }}>{item.label}</div>
+                                                <div style={{
+                                                    textAlign: 'center'
+                                                }}>{item.value}</div>
+                                            </div>
+                                        )) : (
+                                            <div style={{
+                                                padding: '280px 0'
+                                            }}>
+                                                <Empty
+                                                    description="暂无数据"
+                                                    image={Empty.PRESENTED_IMAGE_SIMPLE}
+                                                />
+                                            </div>
+                                        )}
+                                    </div>
+                                </Col>
+                            ))}
+                        </Row>
+                    </Card>
+
+                    {(selectedLog?.dnsResponse || selectedLog?.requestInfo?.protocol === 'dns') && (
+                        <Card title="DNS响应">
+                            <Tabs
+                                items={[
+                                    {
+                                        key: 'header',
+                                        label: '报文头',
+                                        children: (
+                                            <Descriptions bordered column={2} size="small">
+                                                <Descriptions.Item label="报文标识">
+                                                    {selectedLog?.dnsResponse?.header.id}
+                                                </Descriptions.Item>
+                                                <Descriptions.Item label="响应标志">
+                                                    {selectedLog?.dnsResponse?.header.qr ? '响应' : '查询'}
+                                                </Descriptions.Item>
+                                                <Descriptions.Item label="操作码">
+                                                    {selectedLog?.dnsResponse?.header.opcode}
+                                                </Descriptions.Item>
+                                                <Descriptions.Item label="权威应答">
+                                                    {selectedLog?.dnsResponse?.header.aa ? '是' : '否'}
+                                                </Descriptions.Item>
+                                                <Descriptions.Item label="截断标志">
+                                                    {selectedLog?.dnsResponse?.header.tc ? '是' : '否'}
+                                                </Descriptions.Item>
+                                                <Descriptions.Item label="期望递归">
+                                                    {selectedLog?.dnsResponse?.header.rd ? '是' : '否'}
+                                                </Descriptions.Item>
+                                                <Descriptions.Item label="递归可用">
+                                                    {selectedLog?.dnsResponse?.header.ra ? '是' : '否'}
+                                                </Descriptions.Item>
+                                                <Descriptions.Item label="返回码">
+                                                    {selectedLog?.dnsResponse?.header.rcode}
+                                                </Descriptions.Item>
+                                                <Descriptions.Item label="问题数">
+                                                    {selectedLog?.dnsResponse?.header.qdcount}
+                                                </Descriptions.Item>
+                                                <Descriptions.Item label="回答数">
+                                                    {selectedLog?.dnsResponse?.header.ancount}
+                                                </Descriptions.Item>
+                                                <Descriptions.Item label="授权数">
+                                                    {selectedLog?.dnsResponse?.header.nscount}
+                                                </Descriptions.Item>
+                                                <Descriptions.Item label="附加数">
+                                                    {selectedLog?.dnsResponse?.header.arcount}
+                                                </Descriptions.Item>
+                                            </Descriptions>
+                                        ),
+                                    },
+                                    {
+                                        key: 'answers',
+                                        label: '应答记录',
+                                        children: (
+                                            <Table
+                                                dataSource={selectedLog?.dnsResponse?.answers.map((item: { name: string; type: string; ttl: number; data: string }, index: number) => ({ ...item, key: index }))}
+                                                columns={[
+                                                    { title: '域名', dataIndex: 'name', key: 'name' },
+                                                    { title: '记录类型', dataIndex: 'type', key: 'type' },
+                                                    { title: 'TTL', dataIndex: 'ttl', key: 'ttl' },
+                                                    { title: '记录值', dataIndex: 'data', key: 'data' },
+                                                ]}
+                                                pagination={false}
+                                                size="small"
+                                            />
+                                        ),
+                                    },
+                                    {
+                                        key: 'authority',
+                                        label: '权威记录',
+                                        children: (
+                                            <Table
+                                                dataSource={selectedLog?.dnsResponse?.authority.map((item: { name: string; type: string; ttl: number; data: string }, index: number) => ({ ...item, key: index }))}
+                                                columns={[
+                                                    { title: '域名', dataIndex: 'name', key: 'name' },
+                                                    { title: '记录类型', dataIndex: 'type', key: 'type' },
+                                                    { title: 'TTL', dataIndex: 'ttl', key: 'ttl' },
+                                                    { title: '记录值', dataIndex: 'data', key: 'data' },
+                                                ]}
+                                                pagination={false}
+                                                size="small"
+                                            />
+                                        ),
+                                    },
+                                    {
+                                        key: 'additional',
+                                        label: '附加记录',
+                                        children: (
+                                            <Table
+                                                dataSource={selectedLog?.dnsResponse?.additional.map((item: { name: string; type: string; ttl: number; data: string }, index: number) => ({ ...item, key: index }))}
+                                                columns={[
+                                                    { title: '域名', dataIndex: 'name', key: 'name' },
+                                                    { title: '记录类型', dataIndex: 'type', key: 'type' },
+                                                    { title: 'TTL', dataIndex: 'ttl', key: 'ttl' },
+                                                    { title: '记录值', dataIndex: 'data', key: 'data' },
+                                                ]}
+                                                pagination={false}
+                                                size="small"
+                                            />
+                                        ),
+                                    },
+                                ]}
+                            />
+                        </Card>
+                    )}
+
+                    {selectedLog?.requestInfo && (
+                        <Card title="请求信息">
+                            <Tabs
+                                items={[
+                                    {
+                                        key: 'headers',
+                                        label: '请求头',
+                                        children: (
+                                            <Table
+                                                columns={[
+                                                    { title: '名称', dataIndex: 'name', key: 'name' },
+                                                    { title: '值', dataIndex: 'value', key: 'value' },
+                                                ]}
+                                                dataSource={Object.entries(selectedLog.requestInfo.headers).map(([key, value], index: number) => ({
+                                                    key: index,
+                                                    name: key,
+                                                    value: value
+                                                }))}
+                                                pagination={false}
+                                                size="small"
+                                            />
+                                        ),
+                                    },
+                                    {
+                                        key: 'body',
+                                        label: '请求体',
+                                        children: (
+                                            <pre style={{ whiteSpace: 'pre-wrap', wordWrap: 'break-word' }}>
+                                                {selectedLog.requestInfo.body ? JSON.stringify(selectedLog.requestInfo.body, null, 2) : ''}
+                                            </pre>
+                                        ),
+                                    },
+                                    {
+                                        key: 'params',
+                                        label: '请求参数',
+                                        children: <Empty description="暂无数据" />,
+                                    },
+                                ]}
+                            />
+                        </Card>
+                    )}
+
+                    {selectedLog?.responseInfo && (
+                        <Card title="响应信息">
+                            <Tabs
+                                items={[
+                                    {
+                                        key: 'headers',
+                                        label: '响应头',
+                                        children: (
+                                            <Table
+                                                columns={[
+                                                    { title: '名称', dataIndex: 'name', key: 'name' },
+                                                    { title: '值', dataIndex: 'value', key: 'value' },
+                                                ]}
+                                                dataSource={Object.entries(selectedLog.responseInfo.headers).map(([key, value], index: number) => ({
+                                                    key: index,
+                                                    name: key,
+                                                    value: value
+                                                }))}
+                                                pagination={false}
+                                                size="small"
+                                            />
+                                        ),
+                                    },
+                                    {
+                                        key: 'body',
+                                        label: '响应体',
+                                        children: (
+                                            <pre style={{ whiteSpace: 'pre-wrap', wordWrap: 'break-word' }}>
+                                                {selectedLog.responseInfo.body ? JSON.stringify(selectedLog.responseInfo.body, null, 2) : ''}
+                                            </pre>
+                                        ),
+                                    },
+                                ]}
+                            />
+                        </Card>
+                    )}
+                </Space>
+            </Drawer>
         </div>
     );
 };
