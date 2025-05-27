@@ -1,22 +1,37 @@
 import { Card, Table, Button, Space, Tag, Input, Select, InputNumber, Row, Col, Form, Modal, message, Drawer, Typography, Tabs, Descriptions, Empty, Radio } from 'antd';
-import { SearchOutlined, ReloadOutlined, SaveOutlined, StarOutlined, StarFilled } from '@ant-design/icons';
+import { SearchOutlined, ReloadOutlined, SaveOutlined, StarOutlined, StarFilled, ArrowUpOutlined, ArrowDownOutlined } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import dayjs from 'dayjs';
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import * as echarts from 'echarts';
 import OutboundTrafficVisual from '../components/OutboundTrafficVisualization';
+import { US, CN, GB, FR, DE } from 'country-flag-icons/react/3x2';
+import LabelCascader from '@/components/LabelCascader';
 const { Option } = Select;
+
+// 获取国旗组件的辅助函数
+const getFlagComponent = (country: string) => {
+    const componentMap: { [key: string]: any } = {
+        '美国': US,
+        '中国': CN,
+        '英国': GB,
+        '法国': FR,
+        '德国': DE,
+    };
+    return componentMap[country];
+};
 
 interface DataType {
     key: string;
     sourceIp: string;
     destinationIp: string;
-    sourcePort: number;
+    outboundDestination: string;  // 外联目的
     destinationPort: number;
     protocol: string;
     sessionStart: string;
     sessionEnd: string;
-    outboundTraffic: string;
+    upstreamTraffic: string;  // 上行流量
+    downstreamTraffic: string;  // 下行流量
     applicationType: string;
     status: string;
     requestInfo?: {
@@ -99,7 +114,10 @@ const OutboundLogs: React.FC = () => {
     const [isFilterModalVisible, setIsFilterModalVisible] = useState(false);
     const [isIpDrawerVisible, setIsIpDrawerVisible] = useState(false);
     const [favoriteIps, setFavoriteIps] = useState<string[]>([]);
-    const [trafficRange, setTrafficRange] = useState<[number, number] | null>(null);
+    const [trafficRange, setTrafficRange] = useState<{
+        upstream: [number, number] | null;
+        downstream: [number, number] | null;
+    }>({ upstream: null, downstream: null });
     const [isTrafficModalVisible, setIsTrafficModalVisible] = useState(false);
     const [selectedLog, setSelectedLog] = useState<DataType | null>(null);
     const [isDetailVisible, setIsDetailVisible] = useState(false);
@@ -110,12 +128,73 @@ const OutboundLogs: React.FC = () => {
     const [targetIp, setTargetIp] = useState<string>('');
     const prevDurationRef = useRef<number>(0);
 
+    // 外联目的地选项
+    const outboundDestinationOptions = [
+        {
+            value: 'world',
+            label: '世界',
+            children: [
+                { value: 'usa', label: '美国' },
+                { value: 'uk', label: '英国' },
+                { value: 'france', label: '法国' },
+                { value: 'germany', label: '德国' },
+                { value: 'italy', label: '意大利' },
+                { value: 'spain', label: '西班牙' },
+                { value: 'portugal', label: '葡萄牙' },
+                { value: 'greece', label: '希腊' },
+                { value: 'turkey', label: '土耳其' },
+                { value: 'australia', label: '澳大利亚' },
+                { value: 'canada', label: '加拿大' },
+                { value: 'brazil', label: '巴西' },
+                { value: 'argentina', label: '阿根廷' },
+                { value: 'chile', label: '智利' },
+                { value: 'peru', label: '秘鲁' },
+            ]
+        },
+        {
+            value: 'asia',
+            label: '亚洲',
+            children: [
+                { value: 'japan', label: '日本' },
+                { value: 'korea', label: '韩国' },
+                { value: 'singapore', label: '新加坡' },
+                { value: 'thailand', label: '泰国' },
+                { value: 'india', label: '印度' },
+                { value: 'malaysia', label: '马来西亚' },
+            ]
+        },
+        {
+            value: 'europe',
+            label: '欧洲',
+            children: [
+                { value: 'uk', label: '英国' },
+                { value: 'france', label: '法国' },
+                { value: 'germany', label: '德国' },
+                { value: 'italy', label: '意大利' },
+                { value: 'spain', label: '西班牙' },
+                { value: 'netherlands', label: '荷兰' },
+            ]
+        },
+        {
+            value: 'america',
+            label: '美洲',
+            children: [
+                { value: 'usa', label: '美国' },
+                { value: 'canada', label: '加拿大' },
+                { value: 'brazil', label: '巴西' },
+                { value: 'mexico', label: '墨西哥' },
+                { value: 'argentina', label: '阿根廷' },
+                { value: 'chile', label: '智利' },
+            ]
+        }
+    ];
+
     const columns: ColumnsType<DataType> = [
         {
             title: '源IP',
             dataIndex: 'sourceIp',
             key: 'sourceIp',
-            width: 140,
+            width: 180,
             render: (ip: string) => (
                 <div style={{ display: 'flex', alignItems: 'center', width: '100%' }}>
                     <Button
@@ -135,7 +214,7 @@ const OutboundLogs: React.FC = () => {
             title: '目的IP',
             dataIndex: 'destinationIp',
             key: 'destinationIp',
-            width: 140,
+            width: 160,
             render: (ip: string) => (
                 <div style={{ display: 'flex', alignItems: 'center', width: '100%' }}>
                     <Button
@@ -152,16 +231,27 @@ const OutboundLogs: React.FC = () => {
             ),
         },
         {
-            title: '源端口',
-            dataIndex: 'sourcePort',
-            key: 'sourcePort',
-            width: 80,
+            title: '出境目标',
+            dataIndex: 'outboundDestination',
+            key: 'outboundDestination',
+            width: 180,
+            ellipsis: true,
+            render: (text: string) => {
+                const country = text.split('|')[0].trim();
+                const FlagComponent = getFlagComponent(country);
+                return (
+                    <Space>
+                        {FlagComponent && <FlagComponent style={{ width: 16 }} />}
+                        {text}
+                    </Space>
+                );
+            }
         },
         {
             title: '目的端口',
             dataIndex: 'destinationPort',
             key: 'destinationPort',
-            width: 80,
+            width: 90,
         },
         {
             title: '协议',
@@ -173,19 +263,31 @@ const OutboundLogs: React.FC = () => {
             title: '会话起始',
             dataIndex: 'sessionStart',
             key: 'sessionStart',
-            width: 150,
+            width: 200,
         },
         {
             title: '会话结束',
             dataIndex: 'sessionEnd',
             key: 'sessionEnd',
-            width: 150,
+            width: 200,
         },
         {
-            title: '出境流量(MB)',
-            dataIndex: 'outboundTraffic',
-            key: 'outboundTraffic',
-            width: 120,
+            title: '出境流量(KB)',
+            key: 'traffic',
+            width: 160,
+            render: (_, record: DataType) => (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
+                        <ArrowUpOutlined style={{ color: '#52c41a', fontSize: '10px' }} />
+                        {record.upstreamTraffic}
+                    </span>
+                    <span>/</span>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
+                        <ArrowDownOutlined style={{ color: '#1890ff', fontSize: '10px' }} />
+                        {record.downstreamTraffic}
+                    </span>
+                </div>
+            ),
         },
         {
             title: '应用类型',
@@ -231,12 +333,13 @@ const OutboundLogs: React.FC = () => {
             key: '1',
             sourceIp: '192.168.1.100',
             destinationIp: '8.8.8.8',
-            sourcePort: 54321,
+            outboundDestination: '美国 | 加利福尼亚',
             destinationPort: 443,
             protocol: 'TCP',
             sessionStart: '2024-04-08 10:00:00',
             sessionEnd: '2024-04-08 10:05:30',
-            outboundTraffic: '1.23',
+            upstreamTraffic: '0.45',
+            downstreamTraffic: '0.78',
             applicationType: 'HTTP(S)',
             status: '监控',
             requestInfo: {
@@ -280,12 +383,13 @@ const OutboundLogs: React.FC = () => {
             key: '2',
             sourceIp: '192.168.1.101',
             destinationIp: '1.1.1.1',
-            sourcePort: 45678,
+            outboundDestination: '法国 | 巴黎',
             destinationPort: 53,
             protocol: 'UDP',
             sessionStart: '2024-04-08 10:01:00',
             sessionEnd: '2024-04-08 10:01:05',
-            outboundTraffic: '0.001',
+            upstreamTraffic: '0.001',
+            downstreamTraffic: '0.032',
             applicationType: 'DNS',
             status: '告警',
             dnsResponse: {
@@ -453,7 +557,7 @@ const OutboundLogs: React.FC = () => {
     const handleReset = () => {
         form.resetFields();
         // 同时重置流量范围状态
-        setTrafficRange(null);
+        setTrafficRange({ upstream: null, downstream: null });
     };
 
     // 添加保存筛选条件的处理函数
@@ -535,7 +639,13 @@ const OutboundLogs: React.FC = () => {
     const TrafficRangeInput = () => {
         const [inputRef, setInputRef] = useState<HTMLDivElement | null>(null);
         const [popupPosition, setPopupPosition] = useState<'left' | 'right'>('left');
-        const [localRange, setLocalRange] = useState<[number, number]>([5, 1000]);
+        const [localRange, setLocalRange] = useState<{
+            upstream: [number, number];
+            downstream: [number, number];
+        }>({
+            upstream: [0, 100],
+            downstream: [0, 100]
+        });
 
         const handleClickOutside = (e: MouseEvent) => {
             if (inputRef && !inputRef.contains(e.target as Node)) {
@@ -547,7 +657,7 @@ const OutboundLogs: React.FC = () => {
             if (inputRef) {
                 const rect = inputRef.getBoundingClientRect();
                 const windowWidth = window.innerWidth;
-                const popupWidth = 280;
+                const popupWidth = 360;
 
                 // 如果右边空间不够，就向左对齐
                 if (rect.left + popupWidth > windowWidth - 20) {
@@ -561,7 +671,10 @@ const OutboundLogs: React.FC = () => {
         // 当弹窗打开时，同步当前值到本地状态
         useEffect(() => {
             if (isTrafficModalVisible) {
-                setLocalRange(trafficRange ? [trafficRange[0], trafficRange[1]] : [5, 1000]);
+                setLocalRange({
+                    upstream: trafficRange.upstream || [0, 100],
+                    downstream: trafficRange.downstream || [0, 100]
+                });
                 calculatePosition();
                 document.addEventListener('mousedown', handleClickOutside);
                 return () => {
@@ -571,28 +684,46 @@ const OutboundLogs: React.FC = () => {
         }, [isTrafficModalVisible, inputRef]);
 
         const handleConfirm = () => {
-            setTrafficRange(localRange);
+            setTrafficRange({
+                upstream: localRange.upstream,
+                downstream: localRange.downstream
+            });
             form.setFieldsValue({ trafficRange: localRange });
             setIsTrafficModalVisible(false);
         };
 
         const handleReset = () => {
-            setLocalRange([5, 1000]);
+            setLocalRange({
+                upstream: [0, 100],
+                downstream: [0, 100]
+            });
             // 同时重置主状态和表单值
-            setTrafficRange(null);
+            setTrafficRange({ upstream: null, downstream: null });
             form.setFieldsValue({ trafficRange: null });
+        };
+
+        const getDisplayText = () => {
+            if (!trafficRange.upstream && !trafficRange.downstream) return '';
+            const parts = [];
+            if (trafficRange.upstream) {
+                parts.push(`↗${trafficRange.upstream[0]}-${trafficRange.upstream[1]}KB`);
+            }
+            if (trafficRange.downstream) {
+                parts.push(`↙${trafficRange.downstream[0]}-${trafficRange.downstream[1]}KB`);
+            }
+            return parts.join(' / ');
         };
 
         return (
             <div style={{ position: 'relative' }} ref={setInputRef}>
                 <Input
-                    placeholder="流量大小"
-                    value={trafficRange ? `${trafficRange[0]}MB - ${trafficRange[1]}MB` : ''}
+                    placeholder="出境流量"
+                    value={getDisplayText()}
                     readOnly
                     style={{ width: '100%' }}
                     allowClear
                     onClear={() => {
-                        setTrafficRange(null);
+                        setTrafficRange({ upstream: null, downstream: null });
                         form.setFieldsValue({ trafficRange: null });
                     }}
                     onClick={() => setIsTrafficModalVisible(!isTrafficModalVisible)}
@@ -609,38 +740,91 @@ const OutboundLogs: React.FC = () => {
                             borderRadius: '6px',
                             boxShadow: '0 6px 16px 0 rgba(0, 0, 0, 0.08), 0 3px 6px -4px rgba(0, 0, 0, 0.12), 0 9px 28px 8px rgba(0, 0, 0, 0.05)',
                             padding: '12px',
-                            minWidth: '280px',
+                            minWidth: '360px',
                             marginTop: '4px'
                         }}
                         onMouseDown={(e) => e.stopPropagation()}
                         onClick={(e) => e.stopPropagation()}
                     >
-                        <div style={{ marginBottom: '12px' }}>
-                            <div style={{ marginBottom: '8px', fontSize: '14px', fontWeight: 500 }}>设置流量范围</div>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <InputNumber
-                                    min={0}
-                                    value={localRange[0]}
-                                    onChange={(value) => setLocalRange([value || 5, localRange[1]])}
-                                    addonAfter="MB"
-                                    style={{ width: '110px' }}
-                                    placeholder="最小值"
-                                    onMouseDown={(e) => e.stopPropagation()}
-                                    onClick={(e) => e.stopPropagation()}
-                                    onFocus={(e) => e.stopPropagation()}
-                                />
-                                <span style={{ margin: '0 8px', color: '#999' }}>-</span>
-                                <InputNumber
-                                    min={0}
-                                    value={localRange[1]}
-                                    onChange={(value) => setLocalRange([localRange[0], value || 0])}
-                                    addonAfter="MB"
-                                    style={{ width: '110px' }}
-                                    placeholder="最大值"
-                                    onMouseDown={(e) => e.stopPropagation()}
-                                    onClick={(e) => e.stopPropagation()}
-                                    onFocus={(e) => e.stopPropagation()}
-                                />
+                        <div style={{ marginBottom: '16px' }}>
+                            <div style={{ marginBottom: '12px', fontSize: '14px', fontWeight: 500 }}>设置流量范围</div>
+
+                            {/* 上行流量设置 */}
+                            <div style={{ marginBottom: '12px' }}>
+                                <div style={{ marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                    <ArrowUpOutlined style={{ color: '#52c41a', fontSize: '12px' }} />
+                                    <span style={{ fontSize: '13px', color: '#666' }}>上行流量</span>
+                                </div>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                    <InputNumber
+                                        min={0}
+                                        value={localRange.upstream[0]}
+                                        onChange={(value) => setLocalRange({
+                                            ...localRange,
+                                            upstream: [value || 0, localRange.upstream[1]]
+                                        })}
+                                        addonAfter="KB"
+                                        style={{ width: '140px' }}
+                                        placeholder="最小值"
+                                        onMouseDown={(e) => e.stopPropagation()}
+                                        onClick={(e) => e.stopPropagation()}
+                                        onFocus={(e) => e.stopPropagation()}
+                                    />
+                                    <span style={{ margin: '0 8px', color: '#999' }}>-</span>
+                                    <InputNumber
+                                        min={0}
+                                        value={localRange.upstream[1]}
+                                        onChange={(value) => setLocalRange({
+                                            ...localRange,
+                                            upstream: [localRange.upstream[0], value || 0]
+                                        })}
+                                        addonAfter="KB"
+                                        style={{ width: '140px' }}
+                                        placeholder="最大值"
+                                        onMouseDown={(e) => e.stopPropagation()}
+                                        onClick={(e) => e.stopPropagation()}
+                                        onFocus={(e) => e.stopPropagation()}
+                                    />
+                                </div>
+                            </div>
+
+                            {/* 下行流量设置 */}
+                            <div>
+                                <div style={{ marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                    <ArrowDownOutlined style={{ color: '#1890ff', fontSize: '12px' }} />
+                                    <span style={{ fontSize: '13px', color: '#666' }}>下行流量</span>
+                                </div>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                    <InputNumber
+                                        min={0}
+                                        value={localRange.downstream[0]}
+                                        onChange={(value) => setLocalRange({
+                                            ...localRange,
+                                            downstream: [value || 0, localRange.downstream[1]]
+                                        })}
+                                        addonAfter="KB"
+                                        style={{ width: '140px' }}
+                                        placeholder="最小值"
+                                        onMouseDown={(e) => e.stopPropagation()}
+                                        onClick={(e) => e.stopPropagation()}
+                                        onFocus={(e) => e.stopPropagation()}
+                                    />
+                                    <span style={{ margin: '0 8px', color: '#999' }}>-</span>
+                                    <InputNumber
+                                        min={0}
+                                        value={localRange.downstream[1]}
+                                        onChange={(value) => setLocalRange({
+                                            ...localRange,
+                                            downstream: [localRange.downstream[0], value || 0]
+                                        })}
+                                        addonAfter="KB"
+                                        style={{ width: '140px' }}
+                                        placeholder="最大值"
+                                        onMouseDown={(e) => e.stopPropagation()}
+                                        onClick={(e) => e.stopPropagation()}
+                                        onFocus={(e) => e.stopPropagation()}
+                                    />
+                                </div>
                             </div>
                         </div>
                         <div style={{ borderTop: '1px solid #f0f0f0', paddingTop: '8px', display: 'flex', justifyContent: 'flex-end' }}>
@@ -705,9 +889,11 @@ const OutboundLogs: React.FC = () => {
                             </Form.Item>
                         </Col>
                         <Col span={4}>
-                            <Form.Item name="sourcePort" style={{ marginBottom: 0 }}>
-                                <Input
-                                    placeholder="源端口(多个用逗号分隔)"
+                            <Form.Item name="outboundDestination" style={{ marginBottom: 0 }}>
+                                <LabelCascader
+                                    label="出境目标"
+                                    options={outboundDestinationOptions}
+                                    placeholder="请选择"
                                     allowClear
                                 />
                             </Form.Item>
@@ -768,6 +954,7 @@ const OutboundLogs: React.FC = () => {
                                 </Select>
                             </Form.Item>
                         </Col>
+
                         <Col span={4} style={{ display: 'flex', alignItems: 'flex-end' }}>
                             <Form.Item style={{ marginBottom: 0 }}>
                                 <Space>
@@ -794,6 +981,10 @@ const OutboundLogs: React.FC = () => {
                 <Table
                     columns={columns}
                     dataSource={data}
+                    scroll={{
+                        x: 1320,
+                        scrollToFirstRowOnChange: true
+                    }}
                     pagination={{
                         total: data.length,
                         pageSize: 10,
@@ -905,7 +1096,7 @@ const OutboundLogs: React.FC = () => {
                             <OutboundTrafficVisual
                                 sourceInfo={{
                                     ip: selectedLog.sourceIp,
-                                    port: selectedLog.sourcePort
+                                    port: Math.floor(Math.random() * 65535) + 1024 // 动态生成源端口
                                 }}
                                 destinationInfo={{
                                     ip: selectedLog.destinationIp,
@@ -919,7 +1110,10 @@ const OutboundLogs: React.FC = () => {
                                 status={selectedLog.status}
                                 sessionStart={selectedLog.sessionStart}
                                 sessionEnd={selectedLog.sessionEnd}
-                                trafficSize={selectedLog.outboundTraffic ? `${selectedLog.outboundTraffic} MB` : undefined}
+                                upstreamTraffic={selectedLog.upstreamTraffic}
+                                downstreamTraffic={selectedLog.downstreamTraffic}
+                                outboundDestination={selectedLog.outboundDestination}
+                                applicationType={selectedLog.applicationType}
                                 onDownloadPcap={() => {
                                     message.success('PCAP包下载已开始');
                                 }}
@@ -937,7 +1131,7 @@ const OutboundLogs: React.FC = () => {
                         )}
                     </Card>
 
-                    <Card title="外联情报匹配">
+                    <Card title="云端情报命中">
                         <Row gutter={[24, 24]} justify="center">
                             {[
                                 { logo: '/images/华为.png', name: '华为威胁情报', hasData: true },
@@ -993,18 +1187,14 @@ const OutboundLogs: React.FC = () => {
                                             },
                                             { label: '置信度', value: '高' },
                                             { label: '情报类型', value: '跨站脚本攻击' },
-                                            { label: '情报归属', value: '公有情报源' },
-                                            { label: '经纬度信息', value: '30.34324,343.3434' },
                                             { label: '情报相关组织', value: index === 1 ? 'APT32' : 'Lazarus' },
-                                            { label: '关联病毒家族', value: 'Lockbit勒索病毒' },
-                                            { label: '入库时间', value: '2024-12-11 12:03:44' },
-                                            { label: '过期时间', value: '2024-12-31 11:22:31' }
+                                            { label: '关联病毒家族', value: 'Lockbit勒索病毒' }
                                         ].map((item, idx) => (
                                             <div
                                                 key={idx}
                                                 style={{
                                                     padding: '12px 0',
-                                                    borderBottom: idx !== 8 ? '1px solid #f0f0f0' : 'none',
+                                                    borderBottom: idx !== 4 ? '1px solid #f0f0f0' : 'none',
                                                     textAlign: 'center'
                                                 }}
                                             >
@@ -1019,7 +1209,7 @@ const OutboundLogs: React.FC = () => {
                                             </div>
                                         )) : (
                                             <div style={{
-                                                padding: '280px 0'
+                                                padding: '120px 0'
                                             }}>
                                                 <Empty
                                                     description="暂无数据"

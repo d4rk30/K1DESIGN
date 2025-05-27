@@ -36,25 +36,7 @@ const OutboundTrafficConfig: React.FC = () => {
                     appType: ['HTTP(S)', 'FTP']
                 }
             ]
-        },
-        {
-            key: '2',
-            name: 'Web服务出境策略',
-            remark: '针对Web服务的出境流量监控策略',
-            status: false,
-            rules: [
-                {
-                    trafficSize: 50,
-                    protocol: ['TCP'],
-                    appType: ['HTTP(S)']
-                },
-                {
-                    trafficSize: 200,
-                    protocol: ['TCP'],
-                    appType: ['FTP']
-                }
-            ]
-        },
+        }
     ];
 
     const [dataSource, setDataSource] = useState<OutboundConfigType[]>(mockData);
@@ -328,7 +310,7 @@ const OutboundTrafficConfig: React.FC = () => {
                                                     placeholder="请输入"
                                                     style={{ width: '100%' }}
                                                     min={0}
-                                                    addonAfter="MB"
+                                                    addonAfter="KB"
                                                 />
                                             </Form.Item>
                                         </Col>
@@ -439,7 +421,9 @@ const OutboundTrafficConfig: React.FC = () => {
                                         color: 'rgba(0, 0, 0, 0.65)',
                                         lineHeight: '24px'
                                     }}>
-                                        命中规则的出境流量显示为告警，不符合规则的出境流量显示为监控。传输层协议和应用协议为空情况，表示全部协议和应用协议。
+                                        <div>1. 命中规则的出境流量显示为告警，不符合规则的出境流量显示为监控。</div>
+                                        <div>2. 传输层协议和应用协议为空情况，表示全部协议和应用协议。</div>
+                                        <div>3. 多个规则之间的关系为“或”关系，即只要命中一个规则，则显示为告警。</div>
                                     </div>
                                 </div>
                             </>

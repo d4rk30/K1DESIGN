@@ -1,6 +1,20 @@
 import React from 'react';
 import { Space, Typography, Tag, Descriptions } from 'antd';
+import { ArrowUpOutlined, ArrowDownOutlined } from '@ant-design/icons';
+import { US, CN, GB, FR, DE } from 'country-flag-icons/react/3x2';
 import styles from './style.module.less';
+
+// 获取国旗组件的辅助函数
+const getFlagComponent = (country: string) => {
+    const componentMap: { [key: string]: any } = {
+        '美国': US,
+        '中国': CN,
+        '英国': GB,
+        '法国': FR,
+        '德国': DE,
+    };
+    return componentMap[country];
+};
 
 interface OutboundTrafficVisualProps {
     sourceInfo: {
@@ -20,6 +34,10 @@ interface OutboundTrafficVisualProps {
     sessionStart?: string;
     sessionEnd?: string;
     trafficSize?: string;
+    upstreamTraffic?: string;
+    downstreamTraffic?: string;
+    outboundDestination?: string;
+    applicationType?: string;
     onDownloadPcap?: () => void;
     onAddToBlacklist?: (ip: string) => void;
     onAddToWhitelist?: (ip: string) => void;
@@ -36,6 +54,10 @@ const OutboundTrafficVisual: React.FC<OutboundTrafficVisualProps> = ({
     sessionStart,
     sessionEnd,
     trafficSize,
+    upstreamTraffic,
+    downstreamTraffic,
+    outboundDestination,
+    applicationType,
     onDownloadPcap,
     onAddToBlacklist,
     onAddToWhitelist
@@ -109,14 +131,33 @@ const OutboundTrafficVisual: React.FC<OutboundTrafficVisualProps> = ({
                                 )}
                             </div>
                         )}
-                        {trafficSize && (
+                        {(trafficSize || (upstreamTraffic && downstreamTraffic)) && (
                             <div className={styles.trafficSection}>
-                                <Typography.Text
-                                    className={styles.trafficText}
-                                    type="secondary"
-                                >
-                                    流量大小: {trafficSize}
-                                </Typography.Text>
+                                {upstreamTraffic && downstreamTraffic ? (
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                        <Typography.Text
+                                            className={styles.trafficText}
+                                            type="secondary"
+                                        >
+                                        </Typography.Text>
+                                        <span style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
+                                            <ArrowUpOutlined style={{ color: '#52c41a', fontSize: '10px' }} />
+                                            {upstreamTraffic}KB
+                                        </span>
+                                        <span>/</span>
+                                        <span style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
+                                            <ArrowDownOutlined style={{ color: '#1890ff', fontSize: '10px' }} />
+                                            {downstreamTraffic}KB
+                                        </span>
+                                    </div>
+                                ) : (
+                                    <Typography.Text
+                                        className={styles.trafficText}
+                                        type="secondary"
+                                    >
+                                        {trafficSize}
+                                    </Typography.Text>
+                                )}
                             </div>
                         )}
                     </div>
@@ -138,6 +179,13 @@ const OutboundTrafficVisual: React.FC<OutboundTrafficVisualProps> = ({
                                 <Descriptions.Item label="源端口">
                                     <Typography.Text style={{ fontSize: '14px' }}>
                                         {sourceInfo.port}
+                                    </Typography.Text>
+                                </Descriptions.Item>
+                            )}
+                            {applicationType && (
+                                <Descriptions.Item label="应用类型">
+                                    <Typography.Text style={{ fontSize: '14px' }}>
+                                        {applicationType}
                                     </Typography.Text>
                                 </Descriptions.Item>
                             )}
@@ -195,6 +243,20 @@ const OutboundTrafficVisual: React.FC<OutboundTrafficVisualProps> = ({
                                     <Typography.Text style={{ fontSize: '14px' }}>
                                         {destinationInfo.port}
                                     </Typography.Text>
+                                </Descriptions.Item>
+                            )}
+                            {outboundDestination && (
+                                <Descriptions.Item label="出境目标">
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                        {(() => {
+                                            const country = outboundDestination.split('|')[0].trim();
+                                            const FlagComponent = getFlagComponent(country);
+                                            return FlagComponent ? <FlagComponent style={{ width: 16 }} /> : null;
+                                        })()}
+                                        <Typography.Text style={{ fontSize: '14px' }}>
+                                            {outboundDestination}
+                                        </Typography.Text>
+                                    </div>
                                 </Descriptions.Item>
                             )}
                             {sessionEnd && (
