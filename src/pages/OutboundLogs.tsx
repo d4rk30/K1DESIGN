@@ -447,7 +447,7 @@ const OutboundLogs: React.FC = () => {
                     trigger: 'axis',
                     formatter: function (params: any) {
                         const param = params[0];
-                        return `${dayjs(param.value[0]).format('HH:mm:ss')}<br/>流量: ${param.value[1]} MB/s`;
+                        return `${dayjs(param.value[0]).format('HH:mm:ss')}<br/>流量: ${param.value[1]} KB/s`;
                     }
                 },
                 xAxis: {
@@ -1186,15 +1186,14 @@ const OutboundLogs: React.FC = () => {
                                                     index === 1 ? <Tag color="green">低危</Tag> : <Tag color="orange">中危</Tag>
                                             },
                                             { label: '置信度', value: '高' },
-                                            { label: '情报类型', value: '跨站脚本攻击' },
-                                            { label: '情报相关组织', value: index === 1 ? 'APT32' : 'Lazarus' },
-                                            { label: '关联病毒家族', value: 'Lockbit勒索病毒' }
+                                            { label: '威胁类型', value: '跨站脚本攻击' },
+                                            { label: '是否有效', value: '永久有效' }
                                         ].map((item, idx) => (
                                             <div
                                                 key={idx}
                                                 style={{
                                                     padding: '12px 0',
-                                                    borderBottom: idx !== 4 ? '1px solid #f0f0f0' : 'none',
+                                                    borderBottom: idx !== 3 ? '1px solid #f0f0f0' : 'none',
                                                     textAlign: 'center'
                                                 }}
                                             >
@@ -1209,7 +1208,7 @@ const OutboundLogs: React.FC = () => {
                                             </div>
                                         )) : (
                                             <div style={{
-                                                padding: '120px 0'
+                                                padding: '86px 0'
                                             }}>
                                                 <Empty
                                                     description="暂无数据"
@@ -1382,11 +1381,18 @@ const OutboundLogs: React.FC = () => {
                                                     { title: '名称', dataIndex: 'name', key: 'name' },
                                                     { title: '值', dataIndex: 'value', key: 'value' },
                                                 ]}
-                                                dataSource={Object.entries(selectedLog.responseInfo.headers).map(([key, value], index: number) => ({
-                                                    key: index,
-                                                    name: key,
-                                                    value: value
-                                                }))}
+                                                dataSource={[
+                                                    {
+                                                        key: 'statusCode',
+                                                        name: '状态码',
+                                                        value: selectedLog.responseInfo.statusCode
+                                                    },
+                                                    ...Object.entries(selectedLog.responseInfo.headers).map(([key, value], index: number) => ({
+                                                        key: index,
+                                                        name: key,
+                                                        value: value
+                                                    }))
+                                                ]}
                                                 pagination={false}
                                                 size="small"
                                             />
