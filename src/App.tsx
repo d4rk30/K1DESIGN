@@ -14,6 +14,7 @@ import AntiMappingLogs from './pages/AntiMappingLogs';
 import AntiMappingSources from './pages/AntiMappingSources';
 import AntiMappingAssets from './pages/AntiMappingAssets';
 import OutboundLogs from './pages/OutboundLogs';
+import AppStealthLogs from './pages/AppStealthLogs';
 import ThreatIntelligenceTrace from './pages/ThreatIntelligenceTrace';
 import ThreatIntelligenceDetail from './pages/ThreatIntelligenceDetail';
 import ThreatIntelligenceDetailV2 from './pages/ThreatIntelligenceDetailV2';
@@ -61,6 +62,9 @@ const App: React.FC = () => {
 
             {/* 出境流量告警 */}
             <Route path="outbound-logs" element={<OutboundLogs />} />
+
+            {/* 应用隐身 */}
+            <Route path="app-stealth-logs" element={<AppStealthLogs />} />
 
             {/* 威胁情报 */}
             <Route path="threat-intelligence-trace">

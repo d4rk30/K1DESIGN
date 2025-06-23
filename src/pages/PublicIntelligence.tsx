@@ -55,6 +55,27 @@ const intelligenceSources: IntelligenceSource[] = [
         status: 'disconnected',
         updateTime: '2024-04-08 14:30:00'
     },
+    {
+        title: '绿盟威胁情报',
+        logoPath: '/images/绿盟.png',
+        description: '受控外联情报',
+        status: 'connected',
+        updateTime: '2024-04-08 15:15:00'
+    },
+    {
+        title: '长亭威胁情报',
+        logoPath: '/images/长亭.png',
+        description: '受控外联情报',
+        status: 'connected',
+        updateTime: '2024-04-08 15:10:00'
+    },
+    {
+        title: '知道创宇威胁情报',
+        logoPath: '/images/知道创宇.png',
+        description: '受控外联情报',
+        status: 'disconnected',
+        updateTime: '2024-04-08 14:55:00'
+    },
 ];
 
 const PublicIntelligence: React.FC = () => {

@@ -1,7 +1,7 @@
 // 1. 引入
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { Card, Table, Button, Space, Form, Row, Col, Modal, message, Typography, Tag, Drawer, Input, InputNumber, Radio, Empty, Tabs, Descriptions } from 'antd';
-import { StarOutlined, StarFilled, SearchOutlined, ReloadOutlined, SaveOutlined, ExportOutlined, DeleteOutlined } from '@ant-design/icons';
+import { Card, Table, Button, Space, Form, Row, Col, Modal, message, Typography, Tag, Drawer, Input, InputNumber, Radio, Empty, Tabs, Descriptions, Carousel, Skeleton } from 'antd';
+import { StarOutlined, StarFilled, SearchOutlined, ReloadOutlined, SaveOutlined, ExportOutlined, DeleteOutlined, CopyOutlined, ApartmentOutlined, GlobalOutlined, ApiOutlined, LeftOutlined, RightOutlined, UpOutlined, DownOutlined, CalendarOutlined, LinkOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import LabelSelect from '@/components/LabelSelect';
 import LabelInput from '@/components/LabelInput';
@@ -377,6 +377,30 @@ const ExternalLogs: React.FC = () => {
     const [timeUnit, setTimeUnit] = useState<string>('hour');
     const prevDurationRef = useRef<number>(0);
 
+    // 添加IP溯源相关的状态
+    const [currentVendorPage, setCurrentVendorPage] = useState(0);
+    const [activeTraceTab, setActiveTraceTab] = useState('fingerprint');
+    const carouselRef = useRef<any>(null);
+
+    // 添加tabs切换处理函数
+    const handleTraceTabChange = (key: string) => {
+        setActiveTraceTab(key);
+        // 重置厂商轮播状态
+        setCurrentVendorPage(0);
+        // 重置Carousel到第一页
+        if (carouselRef.current) {
+            carouselRef.current.goTo(0);
+        }
+    };
+
+    // 添加useEffect来确保在tabs切换时正确重置Carousel
+    useEffect(() => {
+        if (carouselRef.current) {
+            carouselRef.current.goTo(0);
+        }
+        setCurrentVendorPage(0);
+    }, [activeTraceTab]);
+
     // 工具函数
     const toggleModal = (key: keyof typeof modalState) => {
         setModalState(prev => ({ ...prev, [key]: !prev[key] }));
@@ -417,8 +441,7 @@ const ExternalLogs: React.FC = () => {
 
     const getTableColumns = (
         addToFavorites: (ip: string, type: 'attack' | 'target') => void,
-        setSelectedLog: (log: any) => void,
-        setIsDetailVisible: (visible: boolean) => void
+        setSelectedLog: (log: any) => void
     ) => {
         const renderIpColumn = (ip: string, type: 'attack' | 'target', showStar = true, showAssetTag = false) => (
             <div style={{ display: 'flex', alignItems: 'center', width: '100%' }}>
@@ -578,7 +601,6 @@ const ExternalLogs: React.FC = () => {
                             type="link"
                             onClick={() => {
                                 setSelectedLog(record);
-                                setIsDetailVisible(true);
                             }}
                             style={{ padding: '4px 8px' }}
                         >
@@ -641,7 +663,7 @@ const ExternalLogs: React.FC = () => {
     }, []);
 
     // 获取数据
-    const columns = getTableColumns(addToFavorites, setSelectedLog, () => toggleModal('isDetailVisible'));
+    const columns = getTableColumns(addToFavorites, setSelectedLog);
     // 使用保存的mock数据而不是每次重新生成
     // const data = generateMockData(); // 删除这行
     // 筛选操作后的模拟数据
@@ -681,6 +703,466 @@ const ExternalLogs: React.FC = () => {
 
         message.success(`已将IP ${selectedLog?.attackIp} 添加到${listType === 'black' ? '黑' : '白'}名单，时长：${totalSeconds === -1 ? '永久' : `${duration}${selectedUnit?.label}`}`);
         setTimeModalVisible(false);
+    };
+
+    // 添加RecordDisplay组件
+    const RecordDisplay: React.FC<{
+        leftRecords: { label: string; value: string }[];
+        rightRecords: { label: string; value: string }[];
+        leftStartNumber?: number;
+        rightStartNumber?: number;
+    }> = ({ leftRecords, rightRecords, leftStartNumber = 1, rightStartNumber = 5 }) => {
+        const renderNumberColumn = (start: number, count: number) => (
+            <Col span={1} style={{ maxWidth: 30 }}>
+                <div style={{ width: 24, backgroundColor: '#E3F1FD', textAlign: 'center', padding: 4, borderRadius: 4, color: '#999' }}>
+                    {[...Array(count)].map((_, i) => (
+                        <div key={i}>{start + i}</div>
+                    ))}
+                </div>
+            </Col>
+        );
+
+        const renderRecordColumn = (records: { label: string; value: string }[]) => (
+            <>
+                <Col span={3}>
+                    <div style={{ padding: 4, color: '#999' }}>
+                        {records.map((record, i) => (
+                            <div key={i}>{record.label}</div>
+                        ))}
+                    </div>
+                </Col>
+                <Col span={8}>
+                    <div style={{ padding: 4 }}>
+                        {records.map((record, i) => (
+                            <div key={i}>{record.value}</div>
+                        ))}
+                    </div>
+                </Col>
+            </>
+        );
+
+        return (
+            <div style={{ fontSize: 14, color: '#333', fontWeight: 400, backgroundColor: '#F7FBFF', padding: '12px 16px', borderRadius: 4, border: '1px solid #f3f3f3' }}>
+                <Row gutter={[24, 24]} style={{ borderRadius: 4 }}>
+                    {renderNumberColumn(leftStartNumber, leftRecords.length)}
+                    {renderRecordColumn(leftRecords)}
+                    {renderNumberColumn(rightStartNumber, rightRecords.length)}
+                    {renderRecordColumn(rightRecords)}
+                </Row>
+            </div>
+        );
+    };
+
+    // 添加TagList组件
+    const TagList: React.FC<{
+        title: string;
+        tags: string[];
+        maxDisplayCount?: number;
+    }> = ({ title, tags, maxDisplayCount = 10 }) => {
+        const [expanded, setExpanded] = useState(false);
+        const shouldShowExpand = tags.length > maxDisplayCount;
+        const displayTags = expanded ? tags : tags.slice(0, maxDisplayCount);
+
+        return (
+            <div style={{ marginBottom: 16 }}>
+                <Row wrap={false} align="middle">
+                    <Col flex="120px">
+                        <span style={{ color: '#666' }}>{title}</span>
+                    </Col>
+                    <Col flex="auto">
+                        <Space size={[8, 8]} wrap style={{ display: 'flex', flexWrap: 'wrap' }}>
+                            {displayTags.map((tag, index) => (
+                                <Tag key={index} color="blue">{tag}</Tag>
+                            ))}
+                            {shouldShowExpand && (
+                                <Button
+                                    type="link"
+                                    size="small"
+                                    onClick={() => setExpanded(!expanded)}
+                                    style={{ padding: '0 4px' }}
+                                >
+                                    {expanded ? '收起' : '展开全部'}
+                                </Button>
+                            )}
+                        </Space>
+                    </Col>
+                </Row>
+            </div>
+        );
+    };
+
+    // 添加PortCard组件
+    const PortCard: React.FC<{
+        port: number;
+        time: string;
+        protocol: string;
+        serviceName: string;
+        version: string;
+    }> = ({ port, time, protocol, serviceName, version }) => {
+        return (
+            <div style={{
+                padding: '16px 0',
+                border: '1px solid #f3f3f3',
+                borderRadius: 6,
+                minWidth: 320,
+            }}>
+                <Row>
+                    <Col style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        position: 'relative',
+                        padding: '0 16px'
+                    }}>
+                        <div style={{ fontSize: 16, fontWeight: 500, color: '#333' }}>端口</div>
+                        <div style={{ fontSize: 30, color: '#0E7CFD', marginTop: 16, fontWeight: 700 }}>{port}</div>
+                        <div style={{
+                            position: 'absolute',
+                            right: 0,
+                            top: '50%',
+                            transform: 'translateY(-50%)',
+                            width: 1,
+                            height: '100%',
+                            backgroundColor: '#f3f3f3'
+                        }} />
+                    </Col>
+                    <Col style={{ padding: '0 32px 0 16px' }}>
+                        <Space direction="vertical" size={8} style={{ width: '100%' }}>
+                            <div>
+                                <CalendarOutlined style={{ marginRight: 8 }} />
+                                {time}
+                            </div>
+                            <div>服务协议：{protocol}</div>
+                            <div>服务名称：{serviceName || '-'}</div>
+                            <div>版本信息：{version || '-'}</div>
+                        </Space>
+                    </Col>
+                </Row>
+            </div >
+        );
+    };
+
+    // 添加tabs内容渲染函数
+    const renderDNSRecords = () => {
+        const leftRecords = [
+            { label: 'A:', value: '156.254.127.112' },
+            { label: 'AAAA:', value: '-' },
+            { label: 'NS:', value: '-' },
+            { label: 'MX:', value: '-' }
+        ];
+
+        const rightRecords = [
+            { label: 'TXT:', value: '156.254.127.112' },
+            { label: 'SOA:', value: '-' },
+            { label: 'CNAME:', value: '-' }
+        ];
+
+        return <RecordDisplay leftRecords={leftRecords} rightRecords={rightRecords} />;
+    };
+
+    const renderWhois = () => {
+        const leftRecords = [
+            { label: '注册者:', value: 'REDACTED FOR PRIVACY' },
+            { label: '注册机构:', value: 'REDACTED FOR PRIVACY' },
+            { label: '邮箱:', value: '信息已设置隐私保护' },
+            { label: '地址:', value: 'Redacted for Privacy Purposes' },
+            { label: '电话:', value: 'ALLOCATED UNSPECIFIED REDACTED FOR PRIVACY' }
+        ];
+
+        const rightRecords = [
+            { label: '注册时间:', value: '2024-02-29 06:11:09' },
+            { label: '过期时间:', value: '2024-02-29 06:11:09' },
+            { label: '更新时间:', value: '2024-02-29 06:11:09' },
+            { label: '域名服务商:', value: 'Chengdu west dimension digital technology Co., LTD' },
+            { label: '域名服务器:', value: 'ns3.4cun.com; ns4.4cun.com' }
+        ];
+
+        return <RecordDisplay
+            leftRecords={leftRecords}
+            rightRecords={rightRecords}
+            leftStartNumber={1}
+            rightStartNumber={6}
+        />;
+    };
+
+    const renderSubdomains = () => {
+        return (
+            <Table
+                columns={[
+                    {
+                        title: '域名',
+                        dataIndex: 'domain',
+                        key: 'domain',
+                        width: '30%',
+                    },
+                    {
+                        title: '威胁等级',
+                        dataIndex: 'threatLevel',
+                        key: 'threatLevel',
+                        width: '20%',
+                    },
+                    {
+                        title: '创建时间',
+                        dataIndex: 'firstParseTime',
+                        key: 'firstParseTime',
+                        width: '25%',
+                    },
+                    {
+                        title: '更新时间',
+                        dataIndex: 'lastParseTime',
+                        key: 'lastParseTime',
+                        width: '25%',
+                    }
+                ]}
+                dataSource={[
+                    {
+                        key: '1',
+                        domain: 'mail.example.com',
+                        threatLevel: <Tag color="red">高危</Tag>,
+                        firstParseTime: '2024-01-15 08:30:00',
+                        lastParseTime: '2024-02-29 10:15:23'
+                    },
+                    {
+                        key: '2',
+                        domain: 'api.example.com',
+                        threatLevel: <Tag color="orange">中危</Tag>,
+                        firstParseTime: '2024-01-16 09:45:12',
+                        lastParseTime: '2024-02-29 11:20:45'
+                    },
+                    {
+                        key: '3',
+                        domain: 'blog.example.com',
+                        threatLevel: <Tag color="red">高危</Tag>,
+                        firstParseTime: '2024-01-17 14:22:33',
+                        lastParseTime: '2024-02-29 09:05:18'
+                    },
+                    {
+                        key: '4',
+                        domain: 'dev.example.com',
+                        threatLevel: <Tag color="green">低危</Tag>,
+                        firstParseTime: '2024-01-18 16:40:55',
+                        lastParseTime: '2024-02-29 08:30:42'
+                    }
+                ]}
+                pagination={{
+                    total: 4,
+                    pageSize: 10,
+                    showSizeChanger: true,
+                    showQuickJumper: true,
+                    showTotal: (total) => `共 ${total} 条记录`,
+                }}
+            />
+        );
+    };
+
+    const renderFingerprint = () => {
+        const fingerprintData = {
+            assetTags: [
+                'Windows Server', 'IIS 8.5', 'Microsoft-HTTPAPI/2.0',
+                'ASP.NET', '.NET Framework 4.0', 'Windows Server 2012',
+                'Microsoft SQL Server 2014', 'Windows防火墙', 'Windows更新服务',
+                'Remote Desktop Services', 'Windows Management Instrumentation',
+                'Windows任务计划程序', 'Windows事件日志'
+            ],
+            components: [
+                'jQuery 1.12.4', 'Bootstrap 3.3.7', 'Vue.js 2.6.11',
+                'Axios 0.19.2', 'Moment.js 2.24.0', 'Lodash 4.17.15',
+                'ECharts 4.7.0', 'React 16.13.1', 'Webpack 4.42.0',
+                'Node.js 12.16.1'
+            ],
+            titles: [
+                '登录页面', '系统管理', '用户管理', '权限管理',
+                '日志查询', '数据统计', '监控中心', '配置中心',
+                '任务管理', '资源管理'
+            ],
+            certificates: [
+                'DigiCert SHA2 Secure Server CA', 'Let\'s Encrypt Authority X3',
+                'Symantec Class 3 EV SSL CA', 'GlobalSign Organization Validation CA',
+                'Comodo RSA Domain Validation Secure Server CA'
+            ]
+        };
+
+        return (
+            <div>
+                <TagList title="资产标签" tags={fingerprintData.assetTags} />
+                <TagList title="组件信息" tags={fingerprintData.components} />
+                <TagList title="网站标题" tags={fingerprintData.titles} />
+                <TagList title="HTTPS证书" tags={fingerprintData.certificates} />
+            </div>
+        );
+    };
+
+    const renderPorts = () => {
+        const [expanded, setExpanded] = useState(false);
+
+        const portsData = [
+            { port: 21, time: '2023-12-01 15:30:00', protocol: 'FTP', serviceName: 'vsftpd', version: '3.0.3' },
+            { port: 22, time: '2023-12-01 15:30:00', protocol: 'SSH', serviceName: 'OpenSSH', version: '8.2p1' },
+            { port: 80, time: '2023-12-01 15:30:00', protocol: 'HTTP', serviceName: 'nginx', version: '1.18.0' },
+            { port: 443, time: '2023-12-01 15:30:00', protocol: 'HTTPS', serviceName: 'nginx', version: '1.18.0' },
+            { port: 3306, time: '2023-12-01 15:30:00', protocol: 'MySQL', serviceName: 'MySQL', version: '8.0.23' },
+            { port: 6379, time: '2023-12-01 15:30:00', protocol: 'Redis', serviceName: 'Redis', version: '6.0.9' },
+            { port: 8080, time: '2023-12-01 15:30:00', protocol: 'HTTP', serviceName: 'Tomcat', version: '9.0.41' },
+            { port: 9000, time: '2023-12-01 15:30:00', protocol: 'HTTP', serviceName: '', version: '' },
+            { port: 9090, time: '2023-12-01 15:30:00', protocol: 'HTTP', serviceName: '', version: '' },
+            { port: 27017, time: '2023-12-01 15:30:00', protocol: 'MongoDB', serviceName: 'MongoDB', version: '4.4.3' }
+        ];
+
+        // 根据展开状态决定显示全部端口数据还是仅显示前5个
+        const displayPorts = expanded ? portsData : portsData.slice(0, 4);
+
+        return (
+            // 外层容器，使用相对定位以便放置展开/收起按钮
+            <div style={{ position: 'relative' }}>
+                <Row gutter={[24, 24]} style={{
+                    marginBottom: portsData.length > 5 ? 16 : 0,
+                }}>
+                    {displayPorts.map((port, index) => (
+                        <Col key={index} span={12} style={{ paddingLeft: 12, paddingRight: 12 }}>
+                            <PortCard {...port} />
+                        </Col>
+                    ))}
+                </Row>
+
+                {/* 当端口数据超过5条时显示展开/收起按钮 */}
+                {portsData.length > 4 && (
+                    <div style={{
+                        // 使用绝对定位将按钮固定在底部中间
+                        position: 'absolute',
+                        bottom: -32,
+                        left: '50%',
+                        transform: 'translateX(-50%)',  // 水平居中对齐
+                        cursor: 'pointer',
+                        color: '#0E7CFD'
+                    }}
+                        onClick={() => setExpanded(!expanded)}
+                    >
+                        {/* 根据展开状态显示向上或向下箭头图标 */}
+                        {expanded ? <UpOutlined /> : <DownOutlined />}
+                    </div>
+                )}
+            </div>
+        );
+    };
+
+    // 添加同C段信息渲染函数
+    const renderCSegment = () => {
+        return (
+            <Table
+                columns={[
+                    {
+                        title: 'IP地址',
+                        dataIndex: 'ip',
+                        key: 'ip',
+                    },
+                    {
+                        title: '威胁等级',
+                        dataIndex: 'threatLevel',
+                        key: 'threatLevel',
+                        render: (level) => {
+                            const colors: Record<string, string> = {
+                                '高危': 'red',
+                                '中危': 'orange',
+                                '低危': 'green'
+                            };
+                            return <Tag color={colors[level]}>{level}</Tag>;
+                        }
+                    },
+                    {
+                        title: '情报类型',
+                        dataIndex: 'intelType',
+                        key: 'intelType',
+                    },
+                    {
+                        title: '归属地',
+                        dataIndex: 'location',
+                        key: 'location',
+                        render: ({ country, city }) => {
+                            return (
+                                <Space>
+                                    <span>{country} | {city}</span>
+                                </Space>
+                            );
+                        },
+                    },
+                    {
+                        title: '创建时间',
+                        dataIndex: 'firstAttackTime',
+                        key: 'firstAttackTime',
+                    },
+                    {
+                        title: '更新时间',
+                        dataIndex: 'updateTime',
+                        key: 'updateTime',
+                    }
+                ]}
+                dataSource={[
+                    {
+                        key: '1',
+                        ip: '156.254.127.100',
+                        threatLevel: '高危',
+                        intelType: '恶意扫描',
+                        location: {
+                            country: '美国',
+                            city: '纽约'
+                        },
+                        firstAttackTime: '2023-12-01 15:30:00',
+                        updateTime: '2023-12-05 10:20:00'
+                    },
+                    {
+                        key: '2',
+                        ip: '156.254.127.101',
+                        threatLevel: '中危',
+                        intelType: 'DDoS攻击',
+                        location: {
+                            country: '中国',
+                            city: '北京'
+                        },
+                        firstAttackTime: '2023-11-28 09:15:00',
+                        updateTime: '2023-12-04 16:45:00'
+                    },
+                    {
+                        key: '3',
+                        ip: '156.254.127.102',
+                        threatLevel: '高危',
+                        intelType: '漏洞利用',
+                        location: {
+                            country: '俄罗斯',
+                            city: '莫斯科'
+                        },
+                        firstAttackTime: '2023-11-25 14:20:00',
+                        updateTime: '2023-12-03 11:30:00'
+                    },
+                    {
+                        key: '4',
+                        ip: '156.254.127.103',
+                        threatLevel: '低危',
+                        intelType: '可疑流量',
+                        location: {
+                            country: '英国',
+                            city: '伦敦'
+                        },
+                        firstAttackTime: '2023-11-20 08:40:00',
+                        updateTime: '2023-12-02 09:15:00'
+                    }
+                ]}
+                pagination={{
+                    total: 4,
+                    pageSize: 10,
+                    showSizeChanger: true,
+                    showQuickJumper: true,
+                    showTotal: (total) => `共 ${total} 条记录`,
+                }}
+            />
+        );
+    };
+
+    // 更新tabs内容 - 去掉attackPath
+    const tabContents = {
+        fingerprint: renderFingerprint(),
+        ports: renderPorts(),
+        cSegment: renderCSegment()
     };
 
     // 渲染函数
@@ -946,31 +1428,7 @@ const ExternalLogs: React.FC = () => {
                 />
             </Drawer>
 
-            {/* 添加保存筛选条件的 Modal */}
-            <Modal
-                title="保存搜索条件"
-                open={modalState.isFilterModalVisible}
-                onOk={handleSaveFilter}
-                onCancel={() => {
-                    toggleModal('isFilterModalVisible');
-                    setFilterName('');
-                }}
-                okText="保存"
-                cancelText="取消"
-            >
-                <Form layout="vertical">
-                    <Form.Item style={{ marginBottom: 0 }}>
-                        <LabelInput
-                            label="条件名称"
-                            required
-                            placeholder="请输入条件名称"
-                            value={filterName}
-                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFilterName(e.target.value)}
-                        />
-                    </Form.Item>
-                </Form>
-            </Modal>
-
+            {/* 详情页抽屉组件 */}
             <Drawer
                 title={
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -1192,8 +1650,365 @@ const ExternalLogs: React.FC = () => {
                         },
                         {
                             key: 'ipTrace',
-                            label: 'IP溯源',
-                            children: <Empty description="暂无数据" />,
+                            label: '外联溯源',
+                            children: (
+                                <Space direction="vertical" style={{ width: '100%' }} size="large">
+                                    {/* 威胁情报详情卡片 */}
+                                    <Card styles={{ body: { padding: '24px' } }}>
+                                        <Row gutter={[24, 24]} align="middle">
+                                            <Col span={4}>
+                                                <img
+                                                    src="/images/ThreatOut.png"
+                                                    alt="威胁分数"
+                                                    style={{ width: '100%' }}
+                                                />
+                                            </Col>
+                                            <Col span={20}>
+                                                <Row gutter={[0, 16]}>
+                                                    <Col span={24}>
+                                                        <div style={{ marginBottom: 8 }}>
+                                                            <Row justify="space-between" align="middle">
+                                                                <Col>
+                                                                    <Space size={36} align="center">
+                                                                        <Space align="center">
+                                                                            <span style={{ fontSize: 24, fontWeight: 500, display: 'flex', alignItems: 'center' }}>
+                                                                                {selectedLog?.destinationIp || '192.168.1.100'}
+                                                                                <CopyOutlined
+                                                                                    style={{ cursor: 'pointer', color: '#1890ff', fontSize: 14, marginLeft: 8 }}
+                                                                                    onClick={() => {
+                                                                                        navigator.clipboard.writeText(selectedLog?.destinationIp || '192.168.1.100');
+                                                                                        message.success('IP已复制到剪贴板');
+                                                                                    }}
+                                                                                />
+                                                                            </span>
+                                                                        </Space>
+                                                                    </Space>
+                                                                </Col>
+                                                                <Col>
+                                                                    <Button>
+                                                                        误报反馈
+                                                                    </Button>
+                                                                </Col>
+                                                            </Row>
+                                                        </div>
+                                                        <Space size={8} wrap>
+                                                            <Tag color="blue">SQL注入</Tag>
+                                                            <Tag color="blue">XSS攻击</Tag>
+                                                            <Tag color="blue">DDoS攻击</Tag>
+                                                            <Tag color="blue">暴力破解</Tag>
+                                                        </Space>
+                                                    </Col>
+                                                    <Col span={24}>
+                                                        <Row gutter={0}>
+                                                            <Col span={8}>
+                                                                <div style={{
+                                                                    width: '100%',
+                                                                    display: 'flex',
+                                                                    alignItems: 'center',
+                                                                    justifyContent: 'flex-start'
+                                                                }}>
+                                                                    <div style={{
+                                                                        width: 32,
+                                                                        height: 32,
+                                                                        borderRadius: '50%',
+                                                                        backgroundColor: '#1890ff',
+                                                                        display: 'flex',
+                                                                        alignItems: 'center',
+                                                                        justifyContent: 'center',
+                                                                        marginRight: 8
+                                                                    }}>
+                                                                        <GlobalOutlined style={{ color: '#fff', fontSize: 16 }} />
+                                                                    </div>
+                                                                    <span style={{ color: '#999', marginRight: 8 }}>端口信息</span>
+                                                                    <span style={{ color: '#1890ff', fontSize: 20, fontWeight: 500 }}>10</span>
+                                                                </div>
+                                                            </Col>
+                                                            <Col span={8}>
+                                                                <div style={{
+                                                                    width: '100%',
+                                                                    display: 'flex',
+                                                                    alignItems: 'center',
+                                                                    justifyContent: 'flex-start'
+                                                                }}>
+                                                                    <div style={{
+                                                                        width: 32,
+                                                                        height: 32,
+                                                                        borderRadius: '50%',
+                                                                        backgroundColor: '#1890ff',
+                                                                        display: 'flex',
+                                                                        alignItems: 'center',
+                                                                        justifyContent: 'center',
+                                                                        marginRight: 8
+                                                                    }}>
+                                                                        <LinkOutlined style={{ color: '#fff', fontSize: 16 }} />
+                                                                    </div>
+                                                                    <span style={{ color: '#999', marginRight: 8 }}>同C段信息</span>
+                                                                    <span style={{ color: '#1890ff', fontSize: 20, fontWeight: 500 }}>4</span>
+                                                                </div>
+                                                            </Col>
+                                                            <Col span={8}>
+                                                                <div style={{
+                                                                    width: '100%',
+                                                                    display: 'flex',
+                                                                    alignItems: 'center',
+                                                                    justifyContent: 'flex-start'
+                                                                }}>
+                                                                    <div style={{
+                                                                        width: 32,
+                                                                        height: 32,
+                                                                        borderRadius: '50%',
+                                                                        backgroundColor: '#1890ff',
+                                                                        display: 'flex',
+                                                                        alignItems: 'center',
+                                                                        justifyContent: 'center',
+                                                                        marginRight: 8
+                                                                    }}>
+                                                                        <ApiOutlined style={{ color: '#fff', fontSize: 16 }} />
+                                                                    </div>
+                                                                    <span style={{ color: '#999', marginRight: 8 }}>情报厂商</span>
+                                                                    <span style={{ color: '#1890ff', fontSize: 20, fontWeight: 500 }}>8</span>
+                                                                </div>
+                                                            </Col>
+                                                        </Row>
+                                                    </Col>
+                                                </Row>
+                                            </Col>
+                                        </Row>
+                                        <div style={{
+                                            height: '1px',
+                                            background: '#f0f0f0',
+                                            margin: '16px 0 8px 0'
+                                        }} />
+                                        <Row>
+                                            <Col flex="1">
+                                                <Row gutter={[0, 16]}>
+                                                    <Col span={24}>
+                                                        <div style={{ position: 'relative' }}>
+                                                            {/* 左侧切换按钮 */}
+                                                            <div
+                                                                style={{
+                                                                    position: 'absolute',
+                                                                    left: -40,
+                                                                    top: '50%',
+                                                                    transform: 'translateY(-50%)',
+                                                                    width: 32,
+                                                                    height: 32,
+                                                                    borderRadius: '50%',
+                                                                    backgroundColor: '#fff',
+                                                                    border: '1px solid #d9d9d9',
+                                                                    display: 'flex',
+                                                                    alignItems: 'center',
+                                                                    justifyContent: 'center',
+                                                                    cursor: 'pointer',
+                                                                    zIndex: 10,
+                                                                    boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                                                                    transition: 'all 0.3s'
+                                                                }}
+                                                                onMouseEnter={(e) => {
+                                                                    e.currentTarget.style.backgroundColor = '#f0f9ff';
+                                                                    e.currentTarget.style.borderColor = '#1890ff';
+                                                                    e.currentTarget.style.boxShadow = '0 4px 12px rgba(24, 144, 255, 0.15)';
+                                                                }}
+                                                                onMouseLeave={(e) => {
+                                                                    e.currentTarget.style.backgroundColor = '#fff';
+                                                                    e.currentTarget.style.borderColor = '#d9d9d9';
+                                                                    e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)';
+                                                                }}
+                                                                onClick={() => {
+                                                                    if (carouselRef.current) {
+                                                                        carouselRef.current.prev();
+                                                                    }
+                                                                }}
+                                                            >
+                                                                <LeftOutlined style={{ fontSize: 14, color: '#666' }} />
+                                                            </div>
+
+                                                            {/* 右侧切换按钮 */}
+                                                            <div
+                                                                style={{
+                                                                    position: 'absolute',
+                                                                    right: -40,
+                                                                    top: '50%',
+                                                                    transform: 'translateY(-50%)',
+                                                                    width: 32,
+                                                                    height: 32,
+                                                                    borderRadius: '50%',
+                                                                    backgroundColor: '#fff',
+                                                                    border: '1px solid #d9d9d9',
+                                                                    display: 'flex',
+                                                                    alignItems: 'center',
+                                                                    justifyContent: 'center',
+                                                                    cursor: 'pointer',
+                                                                    zIndex: 10,
+                                                                    boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                                                                    transition: 'all 0.3s'
+                                                                }}
+                                                                onMouseEnter={(e) => {
+                                                                    e.currentTarget.style.backgroundColor = '#f0f9ff';
+                                                                    e.currentTarget.style.borderColor = '#1890ff';
+                                                                    e.currentTarget.style.boxShadow = '0 4px 12px rgba(24, 144, 255, 0.15)';
+                                                                }}
+                                                                onMouseLeave={(e) => {
+                                                                    e.currentTarget.style.backgroundColor = '#fff';
+                                                                    e.currentTarget.style.borderColor = '#d9d9d9';
+                                                                    e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)';
+                                                                }}
+                                                                onClick={() => {
+                                                                    if (carouselRef.current) {
+                                                                        carouselRef.current.next();
+                                                                    }
+                                                                }}
+                                                            >
+                                                                <RightOutlined style={{ fontSize: 14, color: '#666' }} />
+                                                            </div>
+
+                                                            {/* 厂商数据展示 */}
+                                                            <div style={{ padding: '0 0px' }}>
+                                                                <Carousel
+                                                                    key={`vendor-carousel-${activeTraceTab}`}
+                                                                    ref={carouselRef}
+                                                                    dots={false}
+                                                                    arrows={false}
+                                                                    autoplay={false}
+                                                                    beforeChange={(from, to) => setCurrentVendorPage(to)}
+                                                                    style={{
+                                                                        padding: '0 40px',
+                                                                        willChange: 'transform',
+                                                                        transform: 'translate3d(0, 0, 0)'
+                                                                    }}
+                                                                    slidesToShow={3}
+                                                                    slidesToScroll={1}
+                                                                    infinite={true}
+                                                                    responsive={[
+                                                                        {
+                                                                            breakpoint: 1200,
+                                                                            settings: {
+                                                                                slidesToShow: 3,
+                                                                                slidesToScroll: 1
+                                                                            }
+                                                                        },
+                                                                        {
+                                                                            breakpoint: 768,
+                                                                            settings: {
+                                                                                slidesToShow: 2,
+                                                                                slidesToScroll: 1
+                                                                            }
+                                                                        }
+                                                                    ]}
+                                                                >
+                                                                    {[
+                                                                        { logo: '/images/华为.png', name: '华为威胁情报' },
+                                                                        { logo: '/images/奇安信.png', name: '奇安信威胁情报' },
+                                                                        { logo: '/images/腾讯.png', name: '腾讯威胁情报' },
+                                                                        { logo: '/images/360.png', name: '360威胁情报' },
+                                                                        { logo: '/images/阿里.png', name: '阿里云威胁情报' },
+                                                                        { logo: '/images/绿盟.png', name: '绿盟威胁情报' },
+                                                                        { logo: '/images/长亭.png', name: '长亭威胁情报' },
+                                                                        { logo: '/images/知道创宇.png', name: '知道创宇威胁情报' }
+                                                                    ].map((vendor, index) => (
+                                                                        <div key={index} style={{ padding: '0 8px' }}>
+                                                                            <div style={{
+                                                                                padding: '8px 0',
+                                                                                marginBottom: '8px',
+                                                                                height: '40px',
+                                                                                position: 'relative',
+                                                                                overflow: 'hidden'
+                                                                            }}>
+                                                                                <div style={{
+                                                                                    position: 'relative',
+                                                                                    width: 'fit-content',
+                                                                                    margin: '0 auto',
+                                                                                    height: '40px',
+                                                                                    lineHeight: '40px',
+                                                                                    whiteSpace: 'nowrap'
+                                                                                }}>
+                                                                                    <div style={{
+                                                                                        position: 'absolute',
+                                                                                        right: '100%',
+                                                                                        top: '47%',
+                                                                                        transform: 'translateY(-50%)',
+                                                                                        marginRight: '12px'
+                                                                                    }}>
+                                                                                        <img
+                                                                                            src={vendor.logo}
+                                                                                            alt={vendor.name}
+                                                                                            style={{
+                                                                                                width: 32,
+                                                                                                height: 32
+                                                                                            }}
+                                                                                        />
+                                                                                    </div>
+                                                                                    <span style={{
+                                                                                        fontSize: 16,
+                                                                                        fontWeight: 500,
+                                                                                        whiteSpace: 'nowrap',
+                                                                                        display: 'inline-block'
+                                                                                    }}>
+                                                                                        {vendor.name}
+                                                                                    </span>
+                                                                                </div>
+                                                                            </div>
+                                                                            <div>
+                                                                                {[
+                                                                                    {
+                                                                                        label: '威胁等级', value: index === 0 ? <Tag color="red">高危</Tag> :
+                                                                                            index === 1 ? <Tag color="green">低危</Tag> : <Tag color="orange">中危</Tag>
+                                                                                    },
+                                                                                    { label: '置信度', value: '高' },
+                                                                                    { label: '情报类型', value: '跨站脚本攻击' },
+                                                                                    { label: '情报归属', value: '公有情报源' },
+                                                                                    { label: '经纬度信息', value: '30.34324,343.3434' },
+                                                                                    { label: '情报相关组织', value: index === 1 ? 'APT32' : 'Lazarus' },
+                                                                                    { label: '关联病毒家族', value: 'Lockbit勒索病毒' },
+                                                                                    { label: '入库时间', value: '2024-12-11 12:03:44' },
+                                                                                    { label: '过期时间', value: '2024-12-31 11:22:31' }
+                                                                                ].map((item, idx) => (
+                                                                                    <div
+                                                                                        key={idx}
+                                                                                        style={{
+                                                                                            padding: '12px 0',
+                                                                                            borderBottom: idx !== 8 ? '1px solid #f0f0f0' : 'none',
+                                                                                            textAlign: 'center'
+                                                                                        }}
+                                                                                    >
+                                                                                        <div style={{
+                                                                                            color: '#666',
+                                                                                            marginBottom: '8px',
+                                                                                            textAlign: 'center'
+                                                                                        }}>{item.label}</div>
+                                                                                        <div style={{
+                                                                                            textAlign: 'center'
+                                                                                        }}>{item.value}</div>
+                                                                                    </div>
+                                                                                ))}
+                                                                            </div>
+                                                                        </div>
+                                                                    ))}
+                                                                </Carousel>
+                                                            </div>
+                                                        </div>
+                                                    </Col>
+                                                </Row>
+                                            </Col>
+                                        </Row>
+                                    </Card>
+
+                                    {/* 带tabs的卡片 */}
+                                    <Card
+                                        tabList={[
+                                            { key: 'fingerprint', tab: '指纹信息' },
+                                            { key: 'ports', tab: '端口信息' },
+                                            { key: 'cSegment', tab: '同C段信息' }
+                                        ]}
+                                        activeTabKey={activeTraceTab}
+                                        onTabChange={handleTraceTabChange}
+                                    >
+                                        <div>
+                                            {tabContents[activeTraceTab as keyof typeof tabContents]}
+                                        </div>
+                                    </Card>
+                                </Space>
+                            ),
                         },
                     ]}
                 />

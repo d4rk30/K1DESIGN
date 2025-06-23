@@ -144,6 +144,20 @@ const MainLayout = () => {
             key: 'app-stealth',
             icon: <EyeInvisibleOutlined />,
             label: '应用隐身',
+            children: [
+                {
+                    key: 'app-stealth-logs',
+                    label: '应用隐身日志',
+                },
+                {
+                    key: 'app-stealth-config',
+                    label: '应用隐身配置',
+                },
+                {
+                    key: 'pass-list',
+                    label: '通过列表',
+                },
+            ],
         },
         {
             key: 'policy',

@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from 'react';
-import { Card, Row, Col, Table, Tag, Space, Button, Input, message, Modal, Form, Upload, Spin, Skeleton } from 'antd';
+import React, { useEffect, useState, useRef } from 'react';
+import { Card, Row, Col, Table, Tag, Space, Button, Input, message, Modal, Form, Upload, Spin, Skeleton, Carousel } from 'antd';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { SearchOutlined, ReloadOutlined, CalendarOutlined, UpOutlined, DownOutlined, CopyOutlined, ApartmentOutlined, GlobalOutlined, ApiOutlined, LinkOutlined, InboxOutlined } from '@ant-design/icons';
+import { SearchOutlined, ReloadOutlined, CalendarOutlined, UpOutlined, DownOutlined, CopyOutlined, ApartmentOutlined, GlobalOutlined, ApiOutlined, LinkOutlined, InboxOutlined, LeftOutlined, RightOutlined } from '@ant-design/icons';
 import LabelSelect from '@/components/LabelSelect';
 import { US, CN, GB, FR, DE, RU } from 'country-flag-icons/react/3x2';
 import LabelInput from '@/components/LabelInput';
@@ -16,9 +16,10 @@ const ThreatIntelligenceDetail: React.FC = () => {
     const [feedbackVisible, setFeedbackVisible] = useState(false);
     const [feedbackForm] = Form.useForm();
     const [fileList, setFileList] = useState<UploadFile[]>([]);
-    const [messageShown, setMessageShown] = useState(false);
     const [parseLoading, setParseLoading] = useState(true);
     const [cardLoading, setCardLoading] = useState(true);
+    const [currentVendorPage, setCurrentVendorPage] = useState(0);
+    const carouselRef = useRef<any>(null);
 
     const attackTabs = [
         { key: 'parse', tab: '外联黑域名' },
@@ -38,22 +39,8 @@ const ThreatIntelligenceDetail: React.FC = () => {
     useEffect(() => {
         if (!location.state?.type) {
             navigate('/threat-intelligence-trace');
-        } else if (!messageShown) {
-            // 显示全局提示消息
-            const key = 'loadingMessage';
-            message.open({
-                content: (
-                    <Space>
-                        溯源中...
-                        <Spin size="small" />
-                    </Space>
-                ),
-                key,
-                duration: 3
-            });
-            setMessageShown(true);
         }
-    }, [location.state, navigate, messageShown]);
+    }, [location.state, navigate]);
 
     useEffect(() => {
         if (!location.state?.type) {
@@ -1070,9 +1057,14 @@ const ThreatIntelligenceDetail: React.FC = () => {
                             </Space>
                         </Col>
                         <Col span={24}>
-                            <Row gutter={24}>
-                                <Col span={6}>
-                                    <div style={{ display: 'flex', alignItems: 'center' }}>
+                            <Row gutter={0}>
+                                <Col span={8}>
+                                    <div style={{
+                                        width: '100%',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'flex-start'
+                                    }}>
                                         <div style={{
                                             width: 32,
                                             height: 32,
@@ -1089,8 +1081,13 @@ const ThreatIntelligenceDetail: React.FC = () => {
                                         <span style={{ color: '#1890ff', fontSize: 20, fontWeight: 500 }}>2</span>
                                     </div>
                                 </Col>
-                                <Col span={6}>
-                                    <div style={{ display: 'flex', alignItems: 'center' }}>
+                                <Col span={8}>
+                                    <div style={{
+                                        width: '100%',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'flex-start'
+                                    }}>
                                         <div style={{
                                             width: 32,
                                             height: 32,
@@ -1107,6 +1104,29 @@ const ThreatIntelligenceDetail: React.FC = () => {
                                         <span style={{ color: '#1890ff', fontSize: 20, fontWeight: 500 }}>4</span>
                                     </div>
                                 </Col>
+                                <Col span={8}>
+                                    <div style={{
+                                        width: '100%',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'flex-start'
+                                    }}>
+                                        <div style={{
+                                            width: 32,
+                                            height: 32,
+                                            borderRadius: '50%',
+                                            backgroundColor: '#1890ff',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            marginRight: 8
+                                        }}>
+                                            <ApiOutlined style={{ color: '#fff', fontSize: 16 }} />
+                                        </div>
+                                        <span style={{ color: '#999', marginRight: 8 }}>情报厂商</span>
+                                        <span style={{ color: '#1890ff', fontSize: 20, fontWeight: 500 }}>8</span>
+                                    </div>
+                                </Col>
                             </Row>
                         </Col>
                     </Row>
@@ -1121,90 +1141,207 @@ const ThreatIntelligenceDetail: React.FC = () => {
                 <Col flex="1">
                     <Row gutter={[0, 16]}>  {/* 减小行间距 */}
                         <Col span={24}>
-                            <Row gutter={[24, 24]}>
-                                {[
-                                    { logo: '/images/华为.png', name: '华为威胁情报' },
-                                    { logo: '/images/奇安信.png', name: '奇安信威胁情报' },
-                                    { logo: '/images/腾讯.png', name: '腾讯威胁情报' },
-                                    { logo: '/images/360.png', name: '360威胁情报' },
-                                    { logo: '/images/阿里.png', name: '阿里云威胁情报' }
-                                ].map((vendor, index) => (
-                                    <Col key={index} style={{ width: '19%' }}>
-                                        <div style={{
-                                            padding: '8px 0',
-                                            marginBottom: '8px',
-                                            height: '40px',
-                                            position: 'relative'
-                                        }}>
-                                            <div style={{
-                                                position: 'relative',
-                                                width: 'fit-content',
-                                                margin: '0 auto',
-                                                height: '40px',
-                                                lineHeight: '40px'
-                                            }}>
+                            {/* 威胁情报厂商轮播展示 */}
+                            <div style={{ position: 'relative' }}>
+                                {/* 左侧切换按钮 */}
+                                <div
+                                    style={{
+                                        position: 'absolute',
+                                        left: -40,
+                                        top: '50%',
+                                        transform: 'translateY(-50%)',
+                                        width: 32,
+                                        height: 32,
+                                        borderRadius: '50%',
+                                        backgroundColor: '#fff',
+                                        border: '1px solid #d9d9d9',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        cursor: 'pointer',
+                                        zIndex: 10,
+                                        boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                                        transition: 'all 0.3s'
+                                    }}
+                                    onMouseEnter={(e) => {
+                                        e.currentTarget.style.backgroundColor = '#f0f9ff';
+                                        e.currentTarget.style.borderColor = '#1890ff';
+                                        e.currentTarget.style.boxShadow = '0 4px 12px rgba(24, 144, 255, 0.15)';
+                                    }}
+                                    onMouseLeave={(e) => {
+                                        e.currentTarget.style.backgroundColor = '#fff';
+                                        e.currentTarget.style.borderColor = '#d9d9d9';
+                                        e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)';
+                                    }}
+                                    onClick={() => {
+                                        if (carouselRef.current) {
+                                            carouselRef.current.prev();
+                                        }
+                                    }}
+                                >
+                                    <LeftOutlined style={{ fontSize: 14, color: '#666' }} />
+                                </div>
+
+                                {/* 右侧切换按钮 */}
+                                <div
+                                    style={{
+                                        position: 'absolute',
+                                        right: -40,
+                                        top: '50%',
+                                        transform: 'translateY(-50%)',
+                                        width: 32,
+                                        height: 32,
+                                        borderRadius: '50%',
+                                        backgroundColor: '#fff',
+                                        border: '1px solid #d9d9d9',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        cursor: 'pointer',
+                                        zIndex: 10,
+                                        boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                                        transition: 'all 0.3s'
+                                    }}
+                                    onMouseEnter={(e) => {
+                                        e.currentTarget.style.backgroundColor = '#f0f9ff';
+                                        e.currentTarget.style.borderColor = '#1890ff';
+                                        e.currentTarget.style.boxShadow = '0 4px 12px rgba(24, 144, 255, 0.15)';
+                                    }}
+                                    onMouseLeave={(e) => {
+                                        e.currentTarget.style.backgroundColor = '#fff';
+                                        e.currentTarget.style.borderColor = '#d9d9d9';
+                                        e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)';
+                                    }}
+                                    onClick={() => {
+                                        if (carouselRef.current) {
+                                            carouselRef.current.next();
+                                        }
+                                    }}
+                                >
+                                    <RightOutlined style={{ fontSize: 14, color: '#666' }} />
+                                </div>
+
+                                {/* 厂商数据 - 使用Ant Design Carousel高级配置 */}
+                                <Carousel
+                                    ref={carouselRef}
+                                    dots={false}
+                                    arrows={false}
+                                    autoplay={false}
+                                    beforeChange={(from, to) => setCurrentVendorPage(to)}
+                                    style={{
+                                        padding: '0 40px'
+                                    }}
+                                    slidesToShow={5}
+                                    slidesToScroll={1}
+                                    infinite={true}
+                                    responsive={[
+                                        {
+                                            breakpoint: 1200,
+                                            settings: {
+                                                slidesToShow: 4,
+                                                slidesToScroll: 1
+                                            }
+                                        },
+                                        {
+                                            breakpoint: 768,
+                                            settings: {
+                                                slidesToShow: 3,
+                                                slidesToScroll: 1
+                                            }
+                                        }
+                                    ]}
+                                >
+                                    {(() => {
+                                        const allVendors = [
+                                            { logo: '/images/华为.png', name: '华为威胁情报' },
+                                            { logo: '/images/奇安信.png', name: '奇安信威胁情报' },
+                                            { logo: '/images/腾讯.png', name: '腾讯威胁情报' },
+                                            { logo: '/images/360.png', name: '360威胁情报' },
+                                            { logo: '/images/阿里.png', name: '阿里云威胁情报' },
+                                            { logo: '/images/绿盟.png', name: '绿盟威胁情报' },
+                                            { logo: '/images/长亭.png', name: '长亭威胁情报' },
+                                            { logo: '/images/知道创宇.png', name: '知道创宇威胁情报' }
+                                        ];
+
+                                        return allVendors.map((vendor, index) => (
+                                            <div key={index} style={{ padding: '0 8px' }}>
                                                 <div style={{
-                                                    position: 'absolute',
-                                                    right: '100%',
-                                                    top: '47%',
-                                                    transform: 'translateY(-50%)',
-                                                    marginRight: '12px'
+                                                    padding: '8px 0',
+                                                    marginBottom: '8px',
+                                                    height: '40px',
+                                                    position: 'relative'
                                                 }}>
-                                                    <img
-                                                        src={vendor.logo}
-                                                        alt={vendor.name}
-                                                        style={{
-                                                            width: 32,
-                                                            height: 32
-                                                        }}
-                                                    />
+                                                    <div style={{
+                                                        position: 'relative',
+                                                        width: 'fit-content',
+                                                        margin: '0 auto',
+                                                        height: '40px',
+                                                        lineHeight: '40px'
+                                                    }}>
+                                                        <div style={{
+                                                            position: 'absolute',
+                                                            right: '100%',
+                                                            top: '47%',
+                                                            transform: 'translateY(-50%)',
+                                                            marginRight: '12px'
+                                                        }}>
+                                                            <img
+                                                                src={vendor.logo}
+                                                                alt={vendor.name}
+                                                                style={{
+                                                                    width: 32,
+                                                                    height: 32
+                                                                }}
+                                                            />
+                                                        </div>
+                                                        <span style={{
+                                                            fontSize: 16,
+                                                            fontWeight: 500,
+                                                            whiteSpace: 'nowrap'
+                                                        }}>
+                                                            {vendor.name}
+                                                        </span>
+                                                    </div>
                                                 </div>
-                                                <span style={{
-                                                    fontSize: 16,
-                                                    fontWeight: 500,
-                                                    whiteSpace: 'nowrap'
-                                                }}>
-                                                    {vendor.name}
-                                                </span>
+                                                <div>
+                                                    {[
+                                                        {
+                                                            label: '威胁等级', value: index === 0 ? <Tag color="red">高危</Tag> :
+                                                                index === 1 ? <Tag color="green">低危</Tag> : <Tag color="orange">中危</Tag>
+                                                        },
+                                                        { label: '置信度', value: '高' },
+                                                        { label: '情报类型', value: '跨站脚本攻击' },
+                                                        { label: '情报归属', value: '公有情报源' },
+                                                        { label: '经纬度信息', value: '30.34324,343.3434' },
+                                                        { label: '情报相关组织', value: index === 1 ? 'APT32' : 'Lazarus' },
+                                                        { label: '关联病毒家族', value: 'Lockbit勒索病毒' },
+                                                        { label: '入库时间', value: '2024-12-11 12:03:44' },
+                                                        { label: '过期时间', value: '2024-12-31 11:22:31' }
+                                                    ].map((item, idx) => (
+                                                        <div
+                                                            key={idx}
+                                                            style={{
+                                                                padding: '12px 0',
+                                                                borderBottom: idx !== 8 ? '1px solid #f0f0f0' : 'none',
+                                                                textAlign: 'center'
+                                                            }}
+                                                        >
+                                                            <div style={{
+                                                                color: '#666',
+                                                                marginBottom: '8px',
+                                                                textAlign: 'center'
+                                                            }}>{item.label}</div>
+                                                            <div style={{
+                                                                textAlign: 'center'
+                                                            }}>{item.value}</div>
+                                                        </div>
+                                                    ))}
+                                                </div>
                                             </div>
-                                        </div>
-                                        <div>
-                                            {[
-                                                {
-                                                    label: '威胁等级', value: index === 0 ? <Tag color="red">高危</Tag> :
-                                                        index === 1 ? <Tag color="green">低危</Tag> : <Tag color="orange">中危</Tag>
-                                                },
-                                                { label: '置信度', value: '高' },
-                                                { label: '情报类型', value: '跨站脚本攻击' },
-                                                { label: '情报归属', value: '公有情报源' },
-                                                { label: '经纬度信息', value: '30.34324,343.3434' },
-                                                { label: '情报相关组织', value: index === 1 ? 'APT32' : 'Lazarus' },
-                                                { label: '关联病毒家族', value: 'Lockbit勒索病毒' },
-                                                { label: '入库时间', value: '2024-12-11 12:03:44' },
-                                                { label: '过期时间', value: '2024-12-31 11:22:31' }
-                                            ].map((item, idx) => (
-                                                <div
-                                                    key={idx}
-                                                    style={{
-                                                        padding: '12px 0',
-                                                        borderBottom: idx !== 11 ? '1px solid #f0f0f0' : 'none',
-                                                        textAlign: 'center'
-                                                    }}
-                                                >
-                                                    <div style={{
-                                                        color: '#666',
-                                                        marginBottom: '8px',
-                                                        textAlign: 'center'
-                                                    }}>{item.label}</div>
-                                                    <div style={{
-                                                        textAlign: 'center'
-                                                    }}>{item.value}</div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </Col>
-                                ))}
-                            </Row>
+                                        ));
+                                    })()}
+                                </Carousel>
+                            </div>
                         </Col>
                     </Row>
                 </Col>
