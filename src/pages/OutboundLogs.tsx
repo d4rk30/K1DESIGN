@@ -137,11 +137,12 @@ const OutboundLogs: React.FC = () => {
     const [targetIp, setTargetIp] = useState<string>('');
     const prevDurationRef = useRef<number>(0);
     const [selectedRows, setSelectedRows] = useState<any[]>([]);
+    const [selectedRowsDetail, setSelectedRowsDetail] = useState<any[]>([]);
 
     const handleTrace = (record: any) => {
         // 跳转到威胁情报溯源详情页，并传递必要的参数
         console.log("Navigating to trace for record:", record);
-        navigate('/threat-intelligence-trace/detail', { state: { type: 'attack', ip: record.destinationIp } });
+        navigate('/threat-intelligence-trace/detail', { state: { type: 'external', ip: record.destinationIp } });
     };
 
     // 外联目的地选项
@@ -961,6 +962,40 @@ const OutboundLogs: React.FC = () => {
         { name: '英国', count: 600 },
     ];
 
+    // 详情页mock数据生成（更真实）
+    const generateDetailMockData = () => {
+        if (!selectedLog) return [];
+        const protocols = ['TCP', 'UDP', 'HTTP', 'HTTPS'];
+        const appTypes = ['DNS', 'HTTP(S)', 'FTP', 'SSH', '未知'];
+        const statuses = ['监控', '告警'];
+        const baseIp = selectedLog.sourceIp.split('.');
+        const arr = [];
+        for (let i = 0; i < 20; i++) {
+            // 生成不同的源IP和端口
+            const ip = `${baseIp[0]}.${baseIp[1]}.${baseIp[2]}.${(parseInt(baseIp[3]) + i) % 255}`;
+            const port = 1024 + (i * 137) % 50000;
+            const protocol = protocols[i % protocols.length];
+            const appType = appTypes[i % appTypes.length];
+            const status = statuses[i % statuses.length];
+            // 时间递增
+            const start = dayjs(selectedLog.sessionStart).add(i, 'minute').format('YYYY-MM-DD HH:mm:ss');
+            const end = dayjs(selectedLog.sessionEnd).add(i, 'minute').format('YYYY-MM-DD HH:mm:ss');
+            arr.push({
+                key: `${selectedLog.key}-${i}`,
+                sourceIp: ip,
+                sourcePort: port,
+                protocol,
+                applicationType: appType,
+                sessionStart: start,
+                sessionEnd: end,
+                status,
+                upstreamTraffic: (parseFloat(selectedLog.upstreamTraffic) + i * 0.7).toFixed(1),
+                downstreamTraffic: (parseFloat(selectedLog.downstreamTraffic) + i * 0.9).toFixed(1),
+            });
+        }
+        return arr;
+    };
+
     return (
         <div>
             <OutboundTrendCard
@@ -1150,7 +1185,7 @@ const OutboundLogs: React.FC = () => {
                     </div>
                 }
                 placement="right"
-                width="clamp(800px, 50%, 100%)"
+                width="clamp(1100px, 60%, 100%)"
                 onClose={() => {
                     setSelectedLog(null);
                     setIsDetailVisible(false);
@@ -1159,328 +1194,99 @@ const OutboundLogs: React.FC = () => {
             >
                 <Space direction="vertical" style={{ width: '100%' }} size="large">
 
-                    <Card title="云端情报命中">
-                        <Row gutter={[24, 24]} justify="center">
-                            {[
-                                { logo: '/images/华为.png', name: '华为威胁情报', hasData: true },
-                                { logo: '/images/奇安信.png', name: '奇安信威胁情报', hasData: true },
-                                { logo: '/images/腾讯.png', name: '腾讯威胁情报', hasData: true },
-                                { logo: '/images/360.png', name: '360威胁情报', hasData: false },
-                                { logo: '/images/阿里.png', name: '阿里云威胁情报', hasData: false }
-                            ].map((vendor, index) => (
-                                <Col key={index} style={{ width: '19%' }}>
-                                    <div style={{
-                                        padding: '8px 0',
-                                        marginBottom: '8px',
-                                        height: '40px',
-                                        position: 'relative'
-                                    }}>
-                                        <div style={{
-                                            position: 'relative',
-                                            width: 'fit-content',
-                                            margin: '0 auto',
-                                            height: '40px',
-                                            lineHeight: '40px'
-                                        }}>
-                                            <div style={{
-                                                position: 'absolute',
-                                                right: '100%',
-                                                top: '47%',
-                                                transform: 'translateY(-50%)',
-                                                marginRight: '12px'
-                                            }}>
-                                                <img
-                                                    src={vendor.logo}
-                                                    alt={vendor.name}
-                                                    style={{
-                                                        width: 32,
-                                                        height: 32
-                                                    }}
-                                                />
-                                            </div>
-                                            <span style={{
-                                                fontSize: 16,
-                                                fontWeight: 500,
-                                                whiteSpace: 'nowrap'
-                                            }}>
-                                                {vendor.name}
+                    {/* 详情页批量操作按钮 */}
+                    <div>
+                        {selectedRowsDetail.length > 0 && (
+                            <div style={{ marginBottom: 16 }}>
+                                <Space>
+                                    <Button icon={<SaveOutlined />}>导出</Button>
+                                    <Button icon={<ReloadOutlined />} onClick={() => setSelectedRowsDetail([])}>清空</Button>
+                                </Space>
+                            </div>
+                        )}
+                        <Table
+                            columns={[
+                                {
+                                    title: '源IP',
+                                    dataIndex: 'sourceIp',
+                                    key: 'sourceIp',
+                                    width: 140,
+                                },
+                                {
+                                    title: '源端口',
+                                    dataIndex: 'sourcePort',
+                                    key: 'sourcePort',
+                                    width: 100,
+                                    render: () => 443,
+                                },
+                                {
+                                    title: '协议',
+                                    dataIndex: 'protocol',
+                                    key: 'protocol',
+                                    width: 80,
+                                },
+                                {
+                                    title: '应用类型',
+                                    dataIndex: 'applicationType',
+                                    key: 'applicationType',
+                                    width: 120,
+                                },
+                                {
+                                    title: '会话开始时间',
+                                    dataIndex: 'sessionStart',
+                                    key: 'sessionStart',
+                                    width: 180,
+                                },
+                                {
+                                    title: '会话结束时间',
+                                    dataIndex: 'sessionEnd',
+                                    key: 'sessionEnd',
+                                    width: 180,
+                                },
+                                {
+                                    title: '状态',
+                                    dataIndex: 'status',
+                                    key: 'status',
+                                    width: 80,
+                                },
+                                {
+                                    title: '出境流量',
+                                    dataIndex: 'traffic',
+                                    key: 'traffic',
+                                    width: 140,
+                                    render: (_, row) => (
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                            <span style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
+                                                <ArrowUpOutlined style={{ color: '#52c41a', fontSize: '10px' }} />
+                                                {row.upstreamTraffic}
+                                            </span>
+                                            <span>/</span>
+                                            <span style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
+                                                <ArrowDownOutlined style={{ color: '#1890ff', fontSize: '10px' }} />
+                                                {row.downstreamTraffic}
                                             </span>
                                         </div>
-                                    </div>
-                                    <div>
-                                        {vendor.hasData ? [
-                                            {
-                                                label: '威胁等级', value: index === 0 ? <Tag color="red">高危</Tag> :
-                                                    index === 1 ? <Tag color="green">低危</Tag> : <Tag color="orange">中危</Tag>
-                                            },
-                                            { label: '置信度', value: '高' },
-                                            { label: '威胁类型', value: '跨站脚本攻击' },
-                                            { label: '是否有效', value: '永久有效' }
-                                        ].map((item, idx) => (
-                                            <div
-                                                key={idx}
-                                                style={{
-                                                    padding: '12px 0',
-                                                    borderBottom: idx !== 3 ? '1px solid #f0f0f0' : 'none',
-                                                    textAlign: 'center'
-                                                }}
-                                            >
-                                                <div style={{
-                                                    color: '#666',
-                                                    marginBottom: '8px',
-                                                    textAlign: 'center'
-                                                }}>{item.label}</div>
-                                                <div style={{
-                                                    textAlign: 'center'
-                                                }}>{item.value}</div>
-                                            </div>
-                                        )) : (
-                                            <div style={{
-                                                padding: '86px 0'
-                                            }}>
-                                                <Empty
-                                                    description="暂无数据"
-                                                    image={Empty.PRESENTED_IMAGE_SIMPLE}
-                                                />
-                                            </div>
-                                        )}
-                                    </div>
-                                </Col>
-                            ))}
-                        </Row>
-                    </Card>
-
-                    <Card title={`${selectedLog?.status === '告警' ? '告警' : '监控'}信息详情`}>
-                        {selectedLog && (
-                            <OutboundTrafficVisual
-                                sourceInfo={{
-                                    ip: selectedLog.sourceIp,
-                                    port: Math.floor(Math.random() * 65535) + 1024 // 动态生成源端口
-                                }}
-                                destinationInfo={{
-                                    ip: selectedLog.destinationIp,
-                                    port: selectedLog.outboundCount,
-                                    isForeign: true
-                                }}
-                                protocol={selectedLog.protocol}
-                                url={selectedLog.requestInfo?.url || ''}
-                                method={selectedLog.requestInfo?.method}
-                                statusCode={selectedLog.responseInfo?.statusCode}
-                                status={selectedLog.status}
-                                sessionStart={selectedLog.sessionStart}
-                                sessionEnd={selectedLog.sessionEnd}
-                                upstreamTraffic={selectedLog.upstreamTraffic}
-                                downstreamTraffic={selectedLog.downstreamTraffic}
-                                outboundDestination={selectedLog.outboundDestination}
-                                applicationType={selectedLog.applicationType}
-                                onDownloadPcap={() => {
-                                    message.success('PCAP包下载已开始');
-                                }}
-                                onAddToBlacklist={(ip: string) => {
-                                    setTargetIp(ip);
-                                    setListType('black');
-                                    setTimeModalVisible(true);
-                                }}
-                                onAddToWhitelist={(ip: string) => {
-                                    setTargetIp(ip);
-                                    setListType('white');
-                                    setTimeModalVisible(true);
-                                }}
-                            />
-                        )}
-                    </Card>
-
-
-
-                    {(selectedLog?.dnsResponse || selectedLog?.requestInfo?.protocol === 'dns') && (
-                        <Card title="DNS响应">
-                            <Tabs
-                                items={[
-                                    {
-                                        key: 'header',
-                                        label: '报文头',
-                                        children: (
-                                            <Descriptions bordered column={2} size="small">
-                                                <Descriptions.Item label="报文标识">
-                                                    {selectedLog?.dnsResponse?.header.id}
-                                                </Descriptions.Item>
-                                                <Descriptions.Item label="响应标志">
-                                                    {selectedLog?.dnsResponse?.header.qr ? '响应' : '查询'}
-                                                </Descriptions.Item>
-                                                <Descriptions.Item label="操作码">
-                                                    {selectedLog?.dnsResponse?.header.opcode}
-                                                </Descriptions.Item>
-                                                <Descriptions.Item label="权威应答">
-                                                    {selectedLog?.dnsResponse?.header.aa ? '是' : '否'}
-                                                </Descriptions.Item>
-                                                <Descriptions.Item label="截断标志">
-                                                    {selectedLog?.dnsResponse?.header.tc ? '是' : '否'}
-                                                </Descriptions.Item>
-                                                <Descriptions.Item label="期望递归">
-                                                    {selectedLog?.dnsResponse?.header.rd ? '是' : '否'}
-                                                </Descriptions.Item>
-                                                <Descriptions.Item label="递归可用">
-                                                    {selectedLog?.dnsResponse?.header.ra ? '是' : '否'}
-                                                </Descriptions.Item>
-                                                <Descriptions.Item label="返回码">
-                                                    {selectedLog?.dnsResponse?.header.rcode}
-                                                </Descriptions.Item>
-                                                <Descriptions.Item label="问题数">
-                                                    {selectedLog?.dnsResponse?.header.qdcount}
-                                                </Descriptions.Item>
-                                                <Descriptions.Item label="回答数">
-                                                    {selectedLog?.dnsResponse?.header.ancount}
-                                                </Descriptions.Item>
-                                                <Descriptions.Item label="授权数">
-                                                    {selectedLog?.dnsResponse?.header.nscount}
-                                                </Descriptions.Item>
-                                                <Descriptions.Item label="附加数">
-                                                    {selectedLog?.dnsResponse?.header.arcount}
-                                                </Descriptions.Item>
-                                            </Descriptions>
-                                        ),
-                                    },
-                                    {
-                                        key: 'answers',
-                                        label: '应答记录',
-                                        children: (
-                                            <Table
-                                                dataSource={selectedLog?.dnsResponse?.answers.map((item: { name: string; type: string; ttl: number; data: string }, index: number) => ({ ...item, key: index }))}
-                                                columns={[
-                                                    { title: '域名', dataIndex: 'name', key: 'name' },
-                                                    { title: '记录类型', dataIndex: 'type', key: 'type' },
-                                                    { title: 'TTL', dataIndex: 'ttl', key: 'ttl' },
-                                                    { title: '记录值', dataIndex: 'data', key: 'data' },
-                                                ]}
-                                                pagination={false}
-                                                size="small"
-                                            />
-                                        ),
-                                    },
-                                    {
-                                        key: 'authority',
-                                        label: '权威记录',
-                                        children: (
-                                            <Table
-                                                dataSource={selectedLog?.dnsResponse?.authority.map((item: { name: string; type: string; ttl: number; data: string }, index: number) => ({ ...item, key: index }))}
-                                                columns={[
-                                                    { title: '域名', dataIndex: 'name', key: 'name' },
-                                                    { title: '记录类型', dataIndex: 'type', key: 'type' },
-                                                    { title: 'TTL', dataIndex: 'ttl', key: 'ttl' },
-                                                    { title: '记录值', dataIndex: 'data', key: 'data' },
-                                                ]}
-                                                pagination={false}
-                                                size="small"
-                                            />
-                                        ),
-                                    },
-                                    {
-                                        key: 'additional',
-                                        label: '附加记录',
-                                        children: (
-                                            <Table
-                                                dataSource={selectedLog?.dnsResponse?.additional.map((item: { name: string; type: string; ttl: number; data: string }, index: number) => ({ ...item, key: index }))}
-                                                columns={[
-                                                    { title: '域名', dataIndex: 'name', key: 'name' },
-                                                    { title: '记录类型', dataIndex: 'type', key: 'type' },
-                                                    { title: 'TTL', dataIndex: 'ttl', key: 'ttl' },
-                                                    { title: '记录值', dataIndex: 'data', key: 'data' },
-                                                ]}
-                                                pagination={false}
-                                                size="small"
-                                            />
-                                        ),
-                                    },
-                                ]}
-                            />
-                        </Card>
-                    )}
-
-                    {selectedLog?.requestInfo && (
-                        <Card title="请求信息">
-                            <Tabs
-                                items={[
-                                    {
-                                        key: 'headers',
-                                        label: '请求头',
-                                        children: (
-                                            <Table
-                                                columns={[
-                                                    { title: '名称', dataIndex: 'name', key: 'name' },
-                                                    { title: '值', dataIndex: 'value', key: 'value' },
-                                                ]}
-                                                dataSource={Object.entries(selectedLog.requestInfo.headers).map(([key, value], index: number) => ({
-                                                    key: index,
-                                                    name: key,
-                                                    value: value
-                                                }))}
-                                                pagination={false}
-                                                size="small"
-                                            />
-                                        ),
-                                    },
-                                    {
-                                        key: 'body',
-                                        label: '请求体',
-                                        children: (
-                                            <pre style={{ whiteSpace: 'pre-wrap', wordWrap: 'break-word' }}>
-                                                {selectedLog.requestInfo.body ? JSON.stringify(selectedLog.requestInfo.body, null, 2) : ''}
-                                            </pre>
-                                        ),
-                                    },
-                                    {
-                                        key: 'params',
-                                        label: '请求参数',
-                                        children: <Empty description="暂无数据" />,
-                                    },
-                                ]}
-                            />
-                        </Card>
-                    )}
-
-                    {selectedLog?.responseInfo && (
-                        <Card title="响应信息">
-                            <Tabs
-                                items={[
-                                    {
-                                        key: 'headers',
-                                        label: '响应头',
-                                        children: (
-                                            <Table
-                                                columns={[
-                                                    { title: '名称', dataIndex: 'name', key: 'name' },
-                                                    { title: '值', dataIndex: 'value', key: 'value' },
-                                                ]}
-                                                dataSource={[
-                                                    {
-                                                        key: 'statusCode',
-                                                        name: '状态码',
-                                                        value: selectedLog.responseInfo.statusCode
-                                                    },
-                                                    ...Object.entries(selectedLog.responseInfo.headers).map(([key, value], index: number) => ({
-                                                        key: index,
-                                                        name: key,
-                                                        value: value
-                                                    }))
-                                                ]}
-                                                pagination={false}
-                                                size="small"
-                                            />
-                                        ),
-                                    },
-                                    {
-                                        key: 'body',
-                                        label: '响应体',
-                                        children: (
-                                            <pre style={{ whiteSpace: 'pre-wrap', wordWrap: 'break-word' }}>
-                                                {selectedLog.responseInfo.body ? JSON.stringify(selectedLog.responseInfo.body, null, 2) : ''}
-                                            </pre>
-                                        ),
-                                    },
-                                ]}
-                            />
-                        </Card>
-                    )}
+                                    ),
+                                },
+                            ]}
+                            dataSource={selectedLog ? generateDetailMockData() : []}
+                            rowSelection={{
+                                type: 'checkbox',
+                                columnWidth: 50,
+                                selectedRowKeys: selectedRowsDetail.map(row => row.key),
+                                onChange: (_, rows) => setSelectedRowsDetail(rows),
+                            }}
+                            pagination={{
+                                total: selectedLog ? generateDetailMockData().length : 0,
+                                pageSize: 10,
+                                showSizeChanger: true,
+                                showQuickJumper: true,
+                                showTotal: (total) => `共 ${total} 条记录`,
+                            }}
+                            scroll={{ x: 1050 }}
+                            style={{ marginBottom: 16 }}
+                        />
+                    </div>
                 </Space>
             </Drawer>
 
