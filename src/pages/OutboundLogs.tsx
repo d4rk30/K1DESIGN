@@ -1,13 +1,16 @@
-import { Card, Table, Button, Space, Tag, Input, Select, InputNumber, Row, Col, Form, Modal, message, Drawer, Typography, Tabs, Descriptions, Empty, Radio } from 'antd';
+import { Card, Table, Button, Space, Tag, Input, InputNumber, Row, Col, Form, Modal, message, Drawer, Typography, Tabs, Descriptions, Empty, Radio, Tooltip } from 'antd';
 import { SearchOutlined, ReloadOutlined, SaveOutlined, StarOutlined, StarFilled, ArrowUpOutlined, ArrowDownOutlined } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import dayjs from 'dayjs';
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import * as echarts from 'echarts';
+import { useNavigate } from 'react-router-dom';
 import OutboundTrafficVisual from '../components/OutboundTrafficVisualization';
-import { US, CN, GB, FR, DE } from 'country-flag-icons/react/3x2';
+import { US, CN, GB, FR, DE, RU, UA, SG, NL } from 'country-flag-icons/react/3x2';
 import LabelCascader from '@/components/LabelCascader';
-const { Option } = Select;
+import LabelSelect from '@/components/LabelSelect';
+import LabelInput from '@/components/LabelInput';
+import OutboundTrendCard from '@/components/OutboundTrendCard';
 
 // 获取国旗组件的辅助函数
 const getFlagComponent = (country: string) => {
@@ -17,6 +20,10 @@ const getFlagComponent = (country: string) => {
         '英国': GB,
         '法国': FR,
         '德国': DE,
+        '俄罗斯': RU,
+        '乌克兰': UA,
+        '新加坡': SG,
+        '荷兰': NL,
     };
     return componentMap[country];
 };
@@ -26,7 +33,7 @@ interface DataType {
     sourceIp: string;
     destinationIp: string;
     outboundDestination: string;  // 外联目的
-    destinationPort: number;
+    outboundCount: number;
     protocol: string;
     sessionStart: string;
     sessionEnd: string;
@@ -89,6 +96,7 @@ interface DataType {
         authority: { name: string; type: string; ttl: number; data: string }[];
         additional: { name: string; type: string; ttl: number; data: string }[];
     };
+    intelligenceHit?: boolean;
 }
 
 // 添加收藏IP的类型定义
@@ -106,6 +114,7 @@ interface TimeUnit {
 }
 
 const OutboundLogs: React.FC = () => {
+    const navigate = useNavigate();
     const chartRef = useRef<HTMLDivElement>(null);
     const chartInstance = useRef<echarts.ECharts | null>(null);
     const timerRef = useRef<NodeJS.Timeout | null>(null);
@@ -127,6 +136,13 @@ const OutboundLogs: React.FC = () => {
     const [timeUnit, setTimeUnit] = useState<string>('hour');
     const [targetIp, setTargetIp] = useState<string>('');
     const prevDurationRef = useRef<number>(0);
+    const [selectedRows, setSelectedRows] = useState<any[]>([]);
+
+    const handleTrace = (record: any) => {
+        // 跳转到威胁情报溯源详情页，并传递必要的参数
+        console.log("Navigating to trace for record:", record);
+        navigate('/threat-intelligence-trace/detail', { state: { type: 'attack', ip: record.destinationIp } });
+    };
 
     // 外联目的地选项
     const outboundDestinationOptions = [
@@ -191,26 +207,6 @@ const OutboundLogs: React.FC = () => {
 
     const columns: ColumnsType<DataType> = [
         {
-            title: '源IP',
-            dataIndex: 'sourceIp',
-            key: 'sourceIp',
-            width: 180,
-            render: (ip: string) => (
-                <div style={{ display: 'flex', alignItems: 'center', width: '100%' }}>
-                    <Button
-                        type="link"
-                        style={{ padding: 0, minWidth: 32, marginRight: 8 }}
-                        icon={favoriteIps.includes(ip) ? <StarFilled style={{ color: '#faad14' }} /> : <StarOutlined />}
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            addToFavorites(ip, 'source');
-                        }}
-                    />
-                    <Typography.Text copyable>{ip}</Typography.Text>
-                </div>
-            ),
-        },
-        {
             title: '目的IP',
             dataIndex: 'destinationIp',
             key: 'destinationIp',
@@ -231,7 +227,7 @@ const OutboundLogs: React.FC = () => {
             ),
         },
         {
-            title: '出境目标',
+            title: '出境地区',
             dataIndex: 'outboundDestination',
             key: 'outboundDestination',
             width: 180,
@@ -248,33 +244,53 @@ const OutboundLogs: React.FC = () => {
             }
         },
         {
-            title: '目的端口',
-            dataIndex: 'destinationPort',
-            key: 'destinationPort',
+            title: '出境次数',
+            dataIndex: 'outboundCount',
+            key: 'outboundCount',
             width: 90,
+            sorter: (a, b) => a.outboundCount - b.outboundCount,
         },
         {
-            title: '协议',
-            dataIndex: 'protocol',
-            key: 'protocol',
-            width: 80,
+            title: '是否命中情报',
+            dataIndex: 'intelligenceHit',
+            key: 'intelligenceHit',
+            width: 100,
+            render: (hit: boolean, record: DataType) => (
+                <span>
+                    <Tag color={hit ? 'green' : 'default'}>{hit ? '命中' : '未命中'}</Tag>
+                    {hit && (
+                        <Tooltip title="溯源">
+                            <Button
+                                type="link"
+                                size="small"
+                                style={{ padding: 0, marginLeft: 4, fontSize: 16 }}
+                                onClick={() => handleTrace(record)}
+                                icon={<SearchOutlined />}
+                            />
+                        </Tooltip>
+                    )}
+                </span>
+            ),
         },
         {
-            title: '会话起始',
+            title: '出境开始时间',
             dataIndex: 'sessionStart',
             key: 'sessionStart',
             width: 200,
+            sorter: (a, b) => dayjs(a.sessionStart).valueOf() - dayjs(b.sessionStart).valueOf(),
         },
         {
-            title: '会话结束',
+            title: '出境结束时间',
             dataIndex: 'sessionEnd',
             key: 'sessionEnd',
             width: 200,
+            sorter: (a, b) => dayjs(a.sessionEnd).valueOf() - dayjs(b.sessionEnd).valueOf(),
         },
         {
-            title: '出境流量(KB)',
+            title: '出境总量(MB)',
             key: 'traffic',
             width: 160,
+            sorter: (a, b) => (parseFloat(a.upstreamTraffic) + parseFloat(a.downstreamTraffic)) - (parseFloat(b.upstreamTraffic) + parseFloat(b.downstreamTraffic)),
             render: (_, record: DataType) => (
                 <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                     <span style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
@@ -290,39 +306,45 @@ const OutboundLogs: React.FC = () => {
             ),
         },
         {
-            title: '应用类型',
-            dataIndex: 'applicationType',
-            key: 'applicationType',
-            width: 100,
-        },
-        {
-            title: '状态',
-            dataIndex: 'status',
-            key: 'status',
-            width: 80,
-            render: (status: string) => {
-                let color = 'blue';
-                if (status === '告警') {
-                    color = 'red';
-                }
-                return <Tag color={color}>{status}</Tag>;
-            },
-        },
-        {
             title: '操作',
             key: 'action',
-            width: 80,
+            width: 160,
+            fixed: 'right',
             render: (_, record: DataType) => (
-                <Button
-                    type="link"
-                    size="small"
-                    onClick={() => {
-                        setSelectedLog(record);
-                        setIsDetailVisible(true);
-                    }}
-                >
-                    详情
-                </Button>
+                <Space size="small">
+                    <Button
+                        type="link"
+                        size="small"
+                        onClick={() => {
+                            setSelectedLog(record);
+                            setIsDetailVisible(true);
+                        }}
+                    >
+                        详情
+                    </Button>
+                    <Button
+                        type="link"
+                        size="small"
+                        onClick={() => {
+                            setTargetIp(record.destinationIp);
+                            setListType('black');
+                            setTimeModalVisible(true);
+                        }}
+                    >
+                        加黑
+                    </Button>
+                    <Button
+                        type="link"
+                        size="small"
+                        onClick={() => {
+                            setTargetIp(record.destinationIp);
+                            setListType('white');
+                            setTimeModalVisible(true);
+                        }}
+                    >
+                        加白
+                    </Button>
+                </Space>
             ),
         },
     ];
@@ -332,95 +354,162 @@ const OutboundLogs: React.FC = () => {
         {
             key: '1',
             sourceIp: '192.168.1.100',
-            destinationIp: '8.8.8.8',
+            destinationIp: '88.123.98.6',
             outboundDestination: '美国 | 加利福尼亚',
-            destinationPort: 443,
-            protocol: 'TCP',
-            sessionStart: '2024-04-08 10:00:00',
-            sessionEnd: '2024-04-08 10:05:30',
-            upstreamTraffic: '0.45',
-            downstreamTraffic: '0.78',
-            applicationType: 'HTTP(S)',
+            outboundCount: 1523,
+            protocol: 'UDP',
+            intelligenceHit: false,
+            sessionStart: dayjs().subtract(2, 'hour').format('YYYY-MM-DD HH:mm:ss'),
+            sessionEnd: dayjs().subtract(2, 'hour').add(3, 'second').format('YYYY-MM-DD HH:mm:ss'),
+            upstreamTraffic: '4.2',
+            downstreamTraffic: '12.5',
+            applicationType: 'DNS',
             status: '监控',
-            requestInfo: {
-                protocol: 'https',
-                url: 'https://8.8.8.8/api/v1/data',
-                dnsName: 'dns.google.com',
-                method: 'GET',
-                headers: {
-                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-                    'Accept': 'application/json, text/plain, */*',
-                    'Content-Type': 'application/json',
-                    'X-Forwarded-For': '192.168.1.100',
-                    'Host': 'dns.google.com',
-                    'Connection': 'keep-alive',
-                    'Accept-Encoding': 'gzip, deflate, br',
-                    'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
-                },
-                body: {
-                    payload: '{"query": "example.com", "type": "A"}',
-                    size: '45kb',
-                    type: 'application/json',
-                    timestamp: '2024-04-08 10:00:00'
-                }
-            },
-            responseInfo: {
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Server': 'nginx/1.20.1',
-                    'Date': 'Mon, 08 Apr 2024 10:00:00 GMT',
-                    'Content-Length': '1234',
-                },
-                statusCode: 200,
-                body: {
-                    status: 0,
-                    message: 'Success',
-                    data: '{"result": "success", "ip": "8.8.8.8"}'
-                }
-            }
         },
         {
             key: '2',
-            sourceIp: '192.168.1.101',
-            destinationIp: '1.1.1.1',
-            outboundDestination: '法国 | 巴黎',
-            destinationPort: 53,
-            protocol: 'UDP',
-            sessionStart: '2024-04-08 10:01:00',
-            sessionEnd: '2024-04-08 10:01:05',
-            upstreamTraffic: '0.001',
-            downstreamTraffic: '0.032',
-            applicationType: 'DNS',
+            sourceIp: '192.168.2.55',
+            destinationIp: '198.51.100.10',
+            outboundDestination: '俄罗斯 | 莫斯科',
+            outboundCount: 89,
+            protocol: 'TCP',
+            intelligenceHit: true,
+            sessionStart: dayjs().subtract(1, 'hour').format('YYYY-MM-DD HH:mm:ss'),
+            sessionEnd: dayjs().subtract(1, 'hour').add(5, 'minute').format('YYYY-MM-DD HH:mm:ss'),
+            upstreamTraffic: '7.8',
+            downstreamTraffic: '15.2',
+            applicationType: '未知',
             status: '告警',
-            dnsResponse: {
-                header: {
-                    id: '12345',
-                    qr: true,
-                    opcode: 'QUERY',
-                    aa: false,
-                    tc: false,
-                    rd: true,
-                    ra: true,
-                    rcode: 'NOERROR',
-                    qdcount: 1,
-                    ancount: 1,
-                    nscount: 0,
-                    arcount: 0
-                },
-                answers: [
-                    { name: 'example.com', type: 'A', ttl: 300, data: '1.1.1.1' }
-                ],
-                authority: [],
-                additional: []
-            }
         },
+        {
+            key: '3',
+            sourceIp: '192.168.1.120',
+            destinationIp: '104.18.32.134',
+            outboundDestination: '美国 | 旧金山',
+            outboundCount: 542,
+            protocol: 'TCP',
+            intelligenceHit: false,
+            sessionStart: dayjs().subtract(45, 'minute').format('YYYY-MM-DD HH:mm:ss'),
+            sessionEnd: dayjs().subtract(45, 'minute').add(10, 'minute').format('YYYY-MM-DD HH:mm:ss'),
+            upstreamTraffic: '9.3',
+            downstreamTraffic: '18.7',
+            applicationType: 'HTTP(S)',
+            status: '监控',
+        },
+        {
+            key: '4',
+            sourceIp: '192.168.5.10',
+            destinationIp: '45.137.21.57',
+            outboundDestination: '荷兰 | 阿姆斯特丹',
+            outboundCount: 12,
+            protocol: 'TCP',
+            intelligenceHit: true,
+            sessionStart: dayjs().subtract(30, 'minute').format('YYYY-MM-DD HH:mm:ss'),
+            sessionEnd: dayjs().subtract(30, 'minute').add(1, 'minute').format('YYYY-MM-DD HH:mm:ss'),
+            upstreamTraffic: '3.2',
+            downstreamTraffic: '7.6',
+            applicationType: 'SSH',
+            status: '告警',
+        },
+        {
+            key: '5',
+            sourceIp: '192.168.1.100',
+            destinationIp: '13.225.103.55',
+            outboundDestination: '新加坡',
+            outboundCount: 234,
+            protocol: 'TCP',
+            intelligenceHit: false,
+            sessionStart: dayjs().subtract(20, 'minute').format('YYYY-MM-DD HH:mm:ss'),
+            sessionEnd: dayjs().subtract(20, 'minute').add(8, 'minute').format('YYYY-MM-DD HH:mm:ss'),
+            upstreamTraffic: '8.1',
+            downstreamTraffic: '16.4',
+            applicationType: 'HTTP(S)',
+            status: '监控',
+        },
+        {
+            key: '6',
+            sourceIp: '192.168.10.1',
+            destinationIp: '129.6.15.28',
+            outboundDestination: '美国 | 马里兰',
+            outboundCount: 345,
+            protocol: 'UDP',
+            intelligenceHit: false,
+            sessionStart: dayjs().subtract(15, 'minute').format('YYYY-MM-DD HH:mm:ss'),
+            sessionEnd: dayjs().subtract(15, 'minute').add(1, 'second').format('YYYY-MM-DD HH:mm:ss'),
+            upstreamTraffic: '5.7',
+            downstreamTraffic: '13.9',
+            applicationType: 'NTP',
+            status: '监控',
+        },
+        {
+            key: '7',
+            sourceIp: '192.168.3.45',
+            destinationIp: '185.199.108.153',
+            outboundDestination: '美国 | 加利福尼亚',
+            outboundCount: 876,
+            protocol: 'TCP',
+            intelligenceHit: false,
+            sessionStart: dayjs().subtract(10, 'minute').format('YYYY-MM-DD HH:mm:ss'),
+            sessionEnd: dayjs().subtract(10, 'minute').add(12, 'minute').format('YYYY-MM-DD HH:mm:ss'),
+            upstreamTraffic: '12.2',
+            downstreamTraffic: '17.5',
+            applicationType: 'HTTP(S)',
+            status: '监控',
+        },
+        {
+            key: '8',
+            sourceIp: '192.168.1.5',
+            destinationIp: '5.255.99.81',
+            outboundDestination: '乌克兰 | 基辅',
+            outboundCount: 5,
+            protocol: 'TCP',
+            intelligenceHit: true,
+            sessionStart: dayjs().subtract(5, 'minute').format('YYYY-MM-DD HH:mm:ss'),
+            sessionEnd: dayjs().subtract(5, 'minute').add(2, 'minute').format('YYYY-MM-DD HH:mm:ss'),
+            upstreamTraffic: '6.8',
+            downstreamTraffic: '14.3',
+            applicationType: 'FTP',
+            status: '告警',
+        },
+        {
+            key: '9',
+            sourceIp: '192.168.1.15',
+            destinationIp: '13.107.4.52',
+            outboundDestination: '美国 | 华盛顿',
+            outboundCount: 123,
+            protocol: 'TCP',
+            intelligenceHit: false,
+            sessionStart: dayjs().subtract(2, 'minute').format('YYYY-MM-DD HH:mm:ss'),
+            sessionEnd: dayjs().subtract(2, 'minute').add(6, 'minute').format('YYYY-MM-DD HH:mm:ss'),
+            upstreamTraffic: '10.4',
+            downstreamTraffic: '18.2',
+            applicationType: 'HTTP(S)',
+            status: '监控',
+        },
+        {
+            key: '10',
+            sourceIp: '192.168.2.201',
+            destinationIp: '89.234.157.254',
+            outboundDestination: '德国 | 纽伦堡',
+            outboundCount: 48,
+            protocol: 'TCP',
+            intelligenceHit: true,
+            sessionStart: dayjs().subtract(1, 'minute').format('YYYY-MM-DD HH:mm:ss'),
+            sessionEnd: dayjs().subtract(1, 'minute').add(30, 'second').format('YYYY-MM-DD HH:mm:ss'),
+            upstreamTraffic: '3.9',
+            downstreamTraffic: '11.7',
+            applicationType: '未知',
+            status: '告警',
+        }
     ];
 
-    // 添加协议选项
-    const protocolOptions = [
-        { label: 'TCP', value: 'TCP' },
-        { label: 'UDP', value: 'UDP' },
-        { label: '非TCP/UDP', value: '非TCP/UDP' },
+    // 源IP TOP5 mock数据
+    const sourceIpTop5 = [
+        { name: '192.168.1.100', count: 900 },
+        { name: '192.168.2.55', count: 700 },
+        { name: '192.168.1.120', count: 480 },
+        { name: '192.168.3.45', count: 260 },
+        { name: '192.168.10.1', count: 100 },
     ];
 
     // 初始化图表
@@ -632,8 +721,6 @@ const OutboundLogs: React.FC = () => {
         message.success(`已将IP ${targetIp} 添加到${listType === 'black' ? '黑' : '白'}名单，时长：${totalSeconds === -1 ? '永久' : `${duration}${selectedUnit?.label}`}`);
         setTimeModalVisible(false);
     };
-
-
 
     // 自定义流量范围输入组件
     const TrafficRangeInput = () => {
@@ -858,37 +945,48 @@ const OutboundLogs: React.FC = () => {
         );
     };
 
+    // mock数据，和ExternalLogs.tsx结构一致
+    const destinationIpTop5 = [
+        { name: '104.18.32.134', count: 950 },
+        { name: '198.51.100.10', count: 780 },
+        { name: '185.199.108.153', count: 540 },
+        { name: '13.225.103.55', count: 320 },
+        { name: '45.137.21.57', count: 120 },
+    ];
+    const outboundDestinationTop5 = [
+        { name: '美国', count: 2500 },
+        { name: '印度', count: 1800 },
+        { name: '德国', count: 1200 },
+        { name: '日本', count: 900 },
+        { name: '英国', count: 600 },
+    ];
+
     return (
         <div>
-            <Card style={{ marginBottom: 16 }}>
-                <div style={{ marginBottom: '8px', marginLeft: '12px' }}>
-                    <span style={{ fontWeight: 500, fontSize: '14px', color: '#000000' }}>实时出境流量</span>
-                </div>
-                <div ref={chartRef} style={{ height: '300px' }} />
-            </Card>
+            <OutboundTrendCard
+                destinationIpTop5={destinationIpTop5}
+                outboundDestinationTop5={outboundDestinationTop5}
+                sourceIpTop5={sourceIpTop5}
+            />
             <Card>
                 <Form form={form} onFinish={handleFilter} style={{ marginBottom: 24 }}>
                     <Row gutter={[16, 16]}>
-                        <Col span={4}>
+                        <Col span={6}>
                             <Form.Item name="quickSearch" style={{ marginBottom: 0 }}>
-                                <Select
-                                    placeholder="快捷搜索"
+                                <LabelSelect
+                                    label="快捷搜索"
+                                    placeholder="请选择"
                                     allowClear
                                     options={[]}
                                 />
                             </Form.Item>
                         </Col>
-                        <Col span={4}>
-                            <Form.Item name="sourceIp" style={{ marginBottom: 0 }}>
-                                <Input placeholder="源IP" allowClear />
-                            </Form.Item>
-                        </Col>
-                        <Col span={4}>
+                        <Col span={6}>
                             <Form.Item name="destinationIp" style={{ marginBottom: 0 }}>
-                                <Input placeholder="目的IP" allowClear />
+                                <LabelInput label="目的IP" placeholder="请输入目的IP" allowClear />
                             </Form.Item>
                         </Col>
-                        <Col span={4}>
+                        <Col span={6}>
                             <Form.Item name="outboundDestination" style={{ marginBottom: 0 }}>
                                 <LabelCascader
                                     label="出境目标"
@@ -898,64 +996,19 @@ const OutboundLogs: React.FC = () => {
                                 />
                             </Form.Item>
                         </Col>
-                        <Col span={4}>
-                            <Form.Item name="destinationPort" style={{ marginBottom: 0 }}>
-                                <Input
-                                    placeholder="目的端口(多个用逗号分隔)"
-                                    allowClear
-                                />
-                            </Form.Item>
-                        </Col>
-                        <Col span={4}>
-                            <Form.Item name="protocol" style={{ marginBottom: 0 }}>
-                                <Select
-                                    mode="multiple"
-                                    placeholder="协议"
-                                    style={{ width: '100%' }}
-                                    options={protocolOptions}
-                                />
+                        <Col span={6}>
+                            <Form.Item name="outboundCount" style={{ marginBottom: 0 }}>
+                                <LabelInput label="出境次数" placeholder="请输入出境次数" allowClear />
                             </Form.Item>
                         </Col>
                     </Row>
                     <Row gutter={[16, 16]} style={{ marginTop: 16 }}>
-                        <Col span={4}>
+                        <Col span={6}>
                             <Form.Item name="trafficRange" style={{ marginBottom: 0 }}>
                                 <TrafficRangeInput />
                             </Form.Item>
                         </Col>
-                        <Col span={4}>
-                            <Form.Item name="applicationType" style={{ marginBottom: 0 }}>
-                                <Select
-                                    mode="multiple"
-                                    placeholder="应用类型"
-                                    style={{ width: '100%' }}
-                                    options={[
-                                        { label: 'HTTP(S)', value: 'HTTP(S)' },
-                                        { label: 'DNS', value: 'DNS' },
-                                        { label: 'SSH', value: 'SSH' },
-                                        { label: 'FTP', value: 'FTP' },
-                                        { label: 'SMTP', value: 'SMTP' },
-                                        { label: 'POP3', value: 'POP3' },
-                                        { label: 'IMAP', value: 'IMAP' },
-                                        { label: '其他', value: '其他' },
-                                    ]}
-                                />
-                            </Form.Item>
-                        </Col>
-                        <Col span={4}>
-                            <Form.Item name="status" style={{ marginBottom: 0 }}>
-                                <Select
-                                    placeholder="状态"
-                                    style={{ width: '100%' }}
-                                    allowClear
-                                >
-                                    <Option value="monitoring">监控</Option>
-                                    <Option value="alert">告警</Option>
-                                </Select>
-                            </Form.Item>
-                        </Col>
-
-                        <Col span={4} style={{ display: 'flex', alignItems: 'flex-end' }}>
+                        <Col span={6} style={{ display: 'flex', alignItems: 'flex-end' }}>
                             <Form.Item style={{ marginBottom: 0 }}>
                                 <Space>
                                     <Button type="primary" htmlType="submit" icon={<SearchOutlined />}>
@@ -978,9 +1031,23 @@ const OutboundLogs: React.FC = () => {
                         </Col>
                     </Row>
                 </Form>
+                {/* 批量操作按钮 */}
+                {selectedRows.length > 0 && (
+                    <div style={{ marginBottom: 16 }}>
+                        <Space>
+                            <Button icon={<SaveOutlined />}>导出</Button>
+                            <Button icon={<ReloadOutlined />} onClick={() => setSelectedRows([])}>清空</Button>
+                        </Space>
+                    </div>
+                )}
                 <Table
                     columns={columns}
                     dataSource={data}
+                    rowSelection={{
+                        selectedRowKeys: selectedRows.map(row => row.key),
+                        onChange: (_, rows) => setSelectedRows(rows),
+                        columnWidth: 50
+                    }}
                     scroll={{
                         x: 1320,
                         scrollToFirstRowOnChange: true
@@ -1091,45 +1158,6 @@ const OutboundLogs: React.FC = () => {
                 open={isDetailVisible}
             >
                 <Space direction="vertical" style={{ width: '100%' }} size="large">
-                    <Card title={`${selectedLog?.status === '告警' ? '告警' : '监控'}信息详情`}>
-                        {selectedLog && (
-                            <OutboundTrafficVisual
-                                sourceInfo={{
-                                    ip: selectedLog.sourceIp,
-                                    port: Math.floor(Math.random() * 65535) + 1024 // 动态生成源端口
-                                }}
-                                destinationInfo={{
-                                    ip: selectedLog.destinationIp,
-                                    port: selectedLog.destinationPort,
-                                    isForeign: true
-                                }}
-                                protocol={selectedLog.protocol}
-                                url={selectedLog.requestInfo?.url || ''}
-                                method={selectedLog.requestInfo?.method}
-                                statusCode={selectedLog.responseInfo?.statusCode}
-                                status={selectedLog.status}
-                                sessionStart={selectedLog.sessionStart}
-                                sessionEnd={selectedLog.sessionEnd}
-                                upstreamTraffic={selectedLog.upstreamTraffic}
-                                downstreamTraffic={selectedLog.downstreamTraffic}
-                                outboundDestination={selectedLog.outboundDestination}
-                                applicationType={selectedLog.applicationType}
-                                onDownloadPcap={() => {
-                                    message.success('PCAP包下载已开始');
-                                }}
-                                onAddToBlacklist={(ip: string) => {
-                                    setTargetIp(ip);
-                                    setListType('black');
-                                    setTimeModalVisible(true);
-                                }}
-                                onAddToWhitelist={(ip: string) => {
-                                    setTargetIp(ip);
-                                    setListType('white');
-                                    setTimeModalVisible(true);
-                                }}
-                            />
-                        )}
-                    </Card>
 
                     <Card title="云端情报命中">
                         <Row gutter={[24, 24]} justify="center">
@@ -1221,6 +1249,48 @@ const OutboundLogs: React.FC = () => {
                             ))}
                         </Row>
                     </Card>
+
+                    <Card title={`${selectedLog?.status === '告警' ? '告警' : '监控'}信息详情`}>
+                        {selectedLog && (
+                            <OutboundTrafficVisual
+                                sourceInfo={{
+                                    ip: selectedLog.sourceIp,
+                                    port: Math.floor(Math.random() * 65535) + 1024 // 动态生成源端口
+                                }}
+                                destinationInfo={{
+                                    ip: selectedLog.destinationIp,
+                                    port: selectedLog.outboundCount,
+                                    isForeign: true
+                                }}
+                                protocol={selectedLog.protocol}
+                                url={selectedLog.requestInfo?.url || ''}
+                                method={selectedLog.requestInfo?.method}
+                                statusCode={selectedLog.responseInfo?.statusCode}
+                                status={selectedLog.status}
+                                sessionStart={selectedLog.sessionStart}
+                                sessionEnd={selectedLog.sessionEnd}
+                                upstreamTraffic={selectedLog.upstreamTraffic}
+                                downstreamTraffic={selectedLog.downstreamTraffic}
+                                outboundDestination={selectedLog.outboundDestination}
+                                applicationType={selectedLog.applicationType}
+                                onDownloadPcap={() => {
+                                    message.success('PCAP包下载已开始');
+                                }}
+                                onAddToBlacklist={(ip: string) => {
+                                    setTargetIp(ip);
+                                    setListType('black');
+                                    setTimeModalVisible(true);
+                                }}
+                                onAddToWhitelist={(ip: string) => {
+                                    setTargetIp(ip);
+                                    setListType('white');
+                                    setTimeModalVisible(true);
+                                }}
+                            />
+                        )}
+                    </Card>
+
+
 
                     {(selectedLog?.dnsResponse || selectedLog?.requestInfo?.protocol === 'dns') && (
                         <Card title="DNS响应">
