@@ -870,7 +870,7 @@ const ThreatIntelligenceDetail: React.FC = () => {
                             <Col xs={6}>
                                 <div style={{ display: 'flex' }}>
                                     <span style={{ color: '#999' }}>情报类型：</span>
-                                    <span>SQL注入攻击</span>
+                                    <span>蠕虫</span>
                                 </div>
                             </Col>
                             <Col xs={6}>
@@ -1310,7 +1310,7 @@ const ThreatIntelligenceDetail: React.FC = () => {
                                                                 index === 1 ? <Tag color="green">低危</Tag> : <Tag color="orange">中危</Tag>
                                                         },
                                                         { label: '置信度', value: '高' },
-                                                        { label: '情报类型', value: '跨站脚本攻击' },
+                                                        { label: '情报类型', value: '远控木马类' },
                                                         { label: '情报归属', value: '公有情报源' },
                                                         { label: '经纬度信息', value: '30.34324,343.3434' },
                                                         { label: '情报相关组织', value: index === 1 ? 'APT32' : 'Lazarus' },

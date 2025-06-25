@@ -119,6 +119,24 @@ interface TimeUnit {
 }
 
 // 4. Mock数据和常量
+const TARGET_TYPES = [
+    '僵尸网络类',
+    '挖矿软件类',
+    '恶意代码下载',
+    '社工钓鱼类',
+    '后门软件',
+    '黑客工具',
+    '漏洞利用类',
+    '流氓程序',
+    '勒索软件类',
+    '蠕虫',
+    '远控木马类',
+    '窃密木马类',
+    '普通木马',
+    'APT攻击类',
+    '其他类型'
+];
+
 const MOCK_DATA_CONFIG = {
     locations: [
         '中国 | 北京',
@@ -190,7 +208,7 @@ const generateMockData = (): AttackLog[] => {
     const getRandomIp = () => Array.from({ length: 4 }, () => getRandomNumber(0, 255)).join('.');
     const getRandomDomain = () => `${Math.random().toString(36).substring(7)}.example.com`;
 
-    const targetTypes = ['C2服务器', '恶意域名', '钓鱼网站', '僵尸网络', '挖矿程序'];
+    const targetTypes = TARGET_TYPES;
     const hitTypes = ['情报命中', '规则命中', 'AI检测', '行为分析'];
 
     const getRandomUserAgent = () => {
@@ -349,7 +367,7 @@ const generateMockData = (): AttackLog[] => {
 const FILTER_OPTIONS = {
     hitType: ['情报命中', '规则命中', 'AI检测', '行为分析'],
     action: MOCK_DATA_CONFIG.actions,
-    targetType: ['C2服务器', '恶意域名', '钓鱼网站', '僵尸网络', '挖矿程序'],
+    targetType: TARGET_TYPES,
     threatLevel: MOCK_DATA_CONFIG.threatLevels,
 };
 
@@ -1955,7 +1973,7 @@ const ExternalLogs: React.FC = () => {
                                                                                             index === 1 ? <Tag color="green">低危</Tag> : <Tag color="orange">中危</Tag>
                                                                                     },
                                                                                     { label: '置信度', value: '高' },
-                                                                                    { label: '情报类型', value: '跨站脚本攻击' },
+                                                                                    { label: '情报类型', value: '恶意代码下载' },
                                                                                     { label: '情报归属', value: '公有情报源' },
                                                                                     { label: '经纬度信息', value: '30.34324,343.3434' },
                                                                                     { label: '情报相关组织', value: index === 1 ? 'APT32' : 'Lazarus' },
