@@ -1,4 +1,4 @@
-import { Card, Table, Button, Space, Tag, Input, InputNumber, Row, Col, Form, Modal, message, Drawer, Typography, Tabs, Descriptions, Empty, Radio, Tooltip } from 'antd';
+import { Card, Table, Button, Space, Tag, Input, InputNumber, Row, Col, Form, Modal, message, Drawer, Typography, Tabs, Descriptions, Empty, Radio, Tooltip, Select, DatePicker } from 'antd';
 import { SearchOutlined, ReloadOutlined, SaveOutlined, StarOutlined, StarFilled, ArrowUpOutlined, ArrowDownOutlined } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import dayjs from 'dayjs';
@@ -11,6 +11,7 @@ import LabelCascader from '@/components/LabelCascader';
 import LabelSelect from '@/components/LabelSelect';
 import LabelInput from '@/components/LabelInput';
 import OutboundTrendCard from '@/components/OutboundTrendCard';
+import LabelRangePicker from '@/components/LabelRangePicker';
 
 // 获取国旗组件的辅助函数
 const getFlagComponent = (country: string) => {
@@ -113,6 +114,11 @@ interface TimeUnit {
     multiplier: number;
 }
 
+// 常见应用层协议
+const commonAppTypes = [
+    'DNS', 'HTTP', 'HTTPS', 'FTP', 'SSH', 'SMTP', 'POP3', 'IMAP', 'TELNET', '其他'
+];
+
 const OutboundLogs: React.FC = () => {
     const navigate = useNavigate();
     const chartRef = useRef<HTMLDivElement>(null);
@@ -138,6 +144,20 @@ const OutboundLogs: React.FC = () => {
     const prevDurationRef = useRef<number>(0);
     const [selectedRows, setSelectedRows] = useState<any[]>([]);
     const [selectedRowsDetail, setSelectedRowsDetail] = useState<any[]>([]);
+    const [detailFilters, setDetailFilters] = useState<{
+        sourceIp: string;
+        applicationTypes: string[];
+        sessionTime: [dayjs.Dayjs | null, dayjs.Dayjs | null];
+        status: string;
+        trafficRange: [number | undefined, number | undefined];
+    }>({
+        sourceIp: '',
+        applicationTypes: [],
+        sessionTime: [null, null],
+        status: '',
+        trafficRange: [undefined, undefined],
+    });
+    const [filteredDetailData, setFilteredDetailData] = useState<any[]>([]);
 
     const handleTrace = (record: any) => {
         // 跳转到威胁情报溯源详情页，并传递必要的参数
@@ -350,159 +370,148 @@ const OutboundLogs: React.FC = () => {
         },
     ];
 
-    // 模拟数据
-    const data: DataType[] = [
-        {
-            key: '1',
-            sourceIp: '192.168.1.100',
-            destinationIp: '88.123.98.6',
-            outboundDestination: '美国 | 加利福尼亚',
-            outboundCount: 1523,
-            protocol: 'UDP',
-            intelligenceHit: false,
-            sessionStart: dayjs().subtract(2, 'hour').format('YYYY-MM-DD HH:mm:ss'),
-            sessionEnd: dayjs().subtract(2, 'hour').add(3, 'second').format('YYYY-MM-DD HH:mm:ss'),
-            upstreamTraffic: '4.2',
-            downstreamTraffic: '12.5',
-            applicationType: 'DNS',
-            status: '监控',
-        },
-        {
-            key: '2',
-            sourceIp: '192.168.2.55',
-            destinationIp: '198.51.100.10',
-            outboundDestination: '俄罗斯 | 莫斯科',
-            outboundCount: 89,
-            protocol: 'TCP',
-            intelligenceHit: true,
-            sessionStart: dayjs().subtract(1, 'hour').format('YYYY-MM-DD HH:mm:ss'),
-            sessionEnd: dayjs().subtract(1, 'hour').add(5, 'minute').format('YYYY-MM-DD HH:mm:ss'),
-            upstreamTraffic: '7.8',
-            downstreamTraffic: '15.2',
-            applicationType: '未知',
-            status: '告警',
-        },
-        {
-            key: '3',
-            sourceIp: '192.168.1.120',
-            destinationIp: '104.18.32.134',
-            outboundDestination: '美国 | 旧金山',
-            outboundCount: 542,
-            protocol: 'TCP',
-            intelligenceHit: false,
-            sessionStart: dayjs().subtract(45, 'minute').format('YYYY-MM-DD HH:mm:ss'),
-            sessionEnd: dayjs().subtract(45, 'minute').add(10, 'minute').format('YYYY-MM-DD HH:mm:ss'),
-            upstreamTraffic: '9.3',
-            downstreamTraffic: '18.7',
-            applicationType: 'HTTP(S)',
-            status: '监控',
-        },
-        {
-            key: '4',
-            sourceIp: '192.168.5.10',
-            destinationIp: '45.137.21.57',
-            outboundDestination: '荷兰 | 阿姆斯特丹',
-            outboundCount: 12,
-            protocol: 'TCP',
-            intelligenceHit: true,
-            sessionStart: dayjs().subtract(30, 'minute').format('YYYY-MM-DD HH:mm:ss'),
-            sessionEnd: dayjs().subtract(30, 'minute').add(1, 'minute').format('YYYY-MM-DD HH:mm:ss'),
-            upstreamTraffic: '3.2',
-            downstreamTraffic: '7.6',
-            applicationType: 'SSH',
-            status: '告警',
-        },
-        {
-            key: '5',
-            sourceIp: '192.168.1.100',
-            destinationIp: '13.225.103.55',
-            outboundDestination: '新加坡',
-            outboundCount: 234,
-            protocol: 'TCP',
-            intelligenceHit: false,
-            sessionStart: dayjs().subtract(20, 'minute').format('YYYY-MM-DD HH:mm:ss'),
-            sessionEnd: dayjs().subtract(20, 'minute').add(8, 'minute').format('YYYY-MM-DD HH:mm:ss'),
-            upstreamTraffic: '8.1',
-            downstreamTraffic: '16.4',
-            applicationType: 'HTTP(S)',
-            status: '监控',
-        },
-        {
-            key: '6',
-            sourceIp: '192.168.10.1',
-            destinationIp: '129.6.15.28',
-            outboundDestination: '美国 | 马里兰',
-            outboundCount: 345,
-            protocol: 'UDP',
-            intelligenceHit: false,
-            sessionStart: dayjs().subtract(15, 'minute').format('YYYY-MM-DD HH:mm:ss'),
-            sessionEnd: dayjs().subtract(15, 'minute').add(1, 'second').format('YYYY-MM-DD HH:mm:ss'),
-            upstreamTraffic: '5.7',
-            downstreamTraffic: '13.9',
-            applicationType: 'NTP',
-            status: '监控',
-        },
-        {
-            key: '7',
-            sourceIp: '192.168.3.45',
-            destinationIp: '185.199.108.153',
-            outboundDestination: '美国 | 加利福尼亚',
-            outboundCount: 876,
-            protocol: 'TCP',
-            intelligenceHit: false,
-            sessionStart: dayjs().subtract(10, 'minute').format('YYYY-MM-DD HH:mm:ss'),
-            sessionEnd: dayjs().subtract(10, 'minute').add(12, 'minute').format('YYYY-MM-DD HH:mm:ss'),
-            upstreamTraffic: '12.2',
-            downstreamTraffic: '17.5',
-            applicationType: 'HTTP(S)',
-            status: '监控',
-        },
-        {
-            key: '8',
-            sourceIp: '192.168.1.5',
-            destinationIp: '5.255.99.81',
-            outboundDestination: '乌克兰 | 基辅',
-            outboundCount: 5,
-            protocol: 'TCP',
-            intelligenceHit: true,
-            sessionStart: dayjs().subtract(5, 'minute').format('YYYY-MM-DD HH:mm:ss'),
-            sessionEnd: dayjs().subtract(5, 'minute').add(2, 'minute').format('YYYY-MM-DD HH:mm:ss'),
-            upstreamTraffic: '6.8',
-            downstreamTraffic: '14.3',
-            applicationType: 'FTP',
-            status: '告警',
-        },
-        {
-            key: '9',
-            sourceIp: '192.168.1.15',
-            destinationIp: '13.107.4.52',
-            outboundDestination: '美国 | 华盛顿',
-            outboundCount: 123,
-            protocol: 'TCP',
-            intelligenceHit: false,
-            sessionStart: dayjs().subtract(2, 'minute').format('YYYY-MM-DD HH:mm:ss'),
-            sessionEnd: dayjs().subtract(2, 'minute').add(6, 'minute').format('YYYY-MM-DD HH:mm:ss'),
-            upstreamTraffic: '10.4',
-            downstreamTraffic: '18.2',
-            applicationType: 'HTTP(S)',
-            status: '监控',
-        },
-        {
-            key: '10',
-            sourceIp: '192.168.2.201',
-            destinationIp: '89.234.157.254',
-            outboundDestination: '德国 | 纽伦堡',
-            outboundCount: 48,
-            protocol: 'TCP',
-            intelligenceHit: true,
-            sessionStart: dayjs().subtract(1, 'minute').format('YYYY-MM-DD HH:mm:ss'),
-            sessionEnd: dayjs().subtract(1, 'minute').add(30, 'second').format('YYYY-MM-DD HH:mm:ss'),
-            upstreamTraffic: '3.9',
-            downstreamTraffic: '11.7',
-            applicationType: '未知',
-            status: '告警',
-        }
-    ];
+    // 主表格mock数据生成函数，保证applicationType合规
+    function generateMainTableMockData(): DataType[] {
+        return [
+            {
+                key: '1',
+                sourceIp: '192.168.1.100',
+                destinationIp: '88.123.98.6',
+                outboundDestination: '美国 | 加利福尼亚',
+                outboundCount: 1523,
+                protocol: 'UDP',
+                intelligenceHit: false,
+                sessionStart: dayjs().subtract(2, 'hour').format('YYYY-MM-DD HH:mm:ss'),
+                sessionEnd: dayjs().subtract(2, 'hour').add(3, 'second').format('YYYY-MM-DD HH:mm:ss'),
+                upstreamTraffic: '4.2',
+                downstreamTraffic: '12.5',
+                applicationType: commonAppTypes.includes('DNS') ? 'DNS' : '未知',
+                status: '监控',
+            },
+            {
+                key: '2',
+                sourceIp: '192.168.2.55',
+                destinationIp: '198.51.100.10',
+                outboundDestination: '俄罗斯 | 莫斯科',
+                outboundCount: 89,
+                protocol: 'TCP',
+                intelligenceHit: true,
+                sessionStart: dayjs().subtract(1, 'hour').format('YYYY-MM-DD HH:mm:ss'),
+                sessionEnd: dayjs().subtract(1, 'hour').add(5, 'minute').format('YYYY-MM-DD HH:mm:ss'),
+                upstreamTraffic: '7.8',
+                downstreamTraffic: '15.2',
+                applicationType: commonAppTypes.includes('未知') ? '未知' : commonAppTypes[0],
+                status: '告警',
+            },
+            {
+                key: '3',
+                sourceIp: '192.168.3.88',
+                destinationIp: '185.199.108.153',
+                outboundDestination: '英国 | 伦敦',
+                outboundCount: 234,
+                protocol: 'TCP',
+                intelligenceHit: false,
+                sessionStart: dayjs().subtract(30, 'minute').format('YYYY-MM-DD HH:mm:ss'),
+                sessionEnd: dayjs().subtract(29, 'minute').format('YYYY-MM-DD HH:mm:ss'),
+                upstreamTraffic: '9.3',
+                downstreamTraffic: '18.7',
+                applicationType: commonAppTypes.includes('HTTP') ? 'HTTP' : '未知',
+                status: '监控',
+            },
+            {
+                key: '4',
+                sourceIp: '192.168.4.77',
+                destinationIp: '13.225.103.55',
+                outboundDestination: '德国 | 柏林',
+                outboundCount: 56,
+                protocol: 'TCP',
+                intelligenceHit: true,
+                sessionStart: dayjs().subtract(10, 'minute').format('YYYY-MM-DD HH:mm:ss'),
+                sessionEnd: dayjs().subtract(9, 'minute').format('YYYY-MM-DD HH:mm:ss'),
+                upstreamTraffic: '3.2',
+                downstreamTraffic: '7.6',
+                applicationType: commonAppTypes.includes('SSH') ? 'SSH' : '未知',
+                status: '告警',
+            },
+            {
+                key: '5',
+                sourceIp: '192.168.5.66',
+                destinationIp: '45.137.21.57',
+                outboundDestination: '日本 | 东京',
+                outboundCount: 321,
+                protocol: 'TCP',
+                intelligenceHit: false,
+                sessionStart: dayjs().subtract(5, 'minute').format('YYYY-MM-DD HH:mm:ss'),
+                sessionEnd: dayjs().subtract(4, 'minute').format('YYYY-MM-DD HH:mm:ss'),
+                upstreamTraffic: '8.1',
+                downstreamTraffic: '16.4',
+                applicationType: commonAppTypes.includes('HTTP') ? 'HTTP' : '未知',
+                status: '监控',
+            },
+            {
+                key: '6',
+                sourceIp: '192.168.6.33',
+                destinationIp: '104.18.32.134',
+                outboundDestination: '中国 | 北京',
+                outboundCount: 78,
+                protocol: 'UDP',
+                intelligenceHit: false,
+                sessionStart: dayjs().subtract(3, 'minute').format('YYYY-MM-DD HH:mm:ss'),
+                sessionEnd: dayjs().subtract(2, 'minute').format('YYYY-MM-DD HH:mm:ss'),
+                upstreamTraffic: '5.7',
+                downstreamTraffic: '13.9',
+                applicationType: commonAppTypes.includes('其他') ? '其他' : '未知',
+                status: '监控',
+            },
+            {
+                key: '7',
+                sourceIp: '192.168.7.22',
+                destinationIp: '198.51.100.10',
+                outboundDestination: '美国 | 纽约',
+                outboundCount: 145,
+                protocol: 'TCP',
+                intelligenceHit: true,
+                sessionStart: dayjs().subtract(1, 'minute').format('YYYY-MM-DD HH:mm:ss'),
+                sessionEnd: dayjs().subtract(0, 'minute').format('YYYY-MM-DD HH:mm:ss'),
+                upstreamTraffic: '6.8',
+                downstreamTraffic: '14.3',
+                applicationType: commonAppTypes.includes('FTP') ? 'FTP' : '未知',
+                status: '告警',
+            },
+            {
+                key: '8',
+                sourceIp: '192.168.8.11',
+                destinationIp: '185.199.108.153',
+                outboundDestination: '英国 | 曼彻斯特',
+                outboundCount: 67,
+                protocol: 'TCP',
+                intelligenceHit: false,
+                sessionStart: dayjs().subtract(50, 'minute').format('YYYY-MM-DD HH:mm:ss'),
+                sessionEnd: dayjs().subtract(49, 'minute').format('YYYY-MM-DD HH:mm:ss'),
+                upstreamTraffic: '10.4',
+                downstreamTraffic: '18.2',
+                applicationType: commonAppTypes.includes('HTTP') ? 'HTTP' : '未知',
+                status: '监控',
+            },
+            {
+                key: '9',
+                sourceIp: '192.168.9.99',
+                destinationIp: '13.225.103.55',
+                outboundDestination: '德国 | 法兰克福',
+                outboundCount: 210,
+                protocol: 'TCP',
+                intelligenceHit: true,
+                sessionStart: dayjs().subtract(20, 'minute').format('YYYY-MM-DD HH:mm:ss'),
+                sessionEnd: dayjs().subtract(19, 'minute').format('YYYY-MM-DD HH:mm:ss'),
+                upstreamTraffic: '3.9',
+                downstreamTraffic: '11.7',
+                applicationType: commonAppTypes.includes('未知') ? '未知' : commonAppTypes[0],
+                status: '告警',
+            }
+        ];
+    }
+
+    const data = generateMainTableMockData();
 
     // 源IP TOP5 mock数据
     const sourceIpTop5 = [
@@ -723,10 +732,14 @@ const OutboundLogs: React.FC = () => {
         setTimeModalVisible(false);
     };
 
-    // 自定义流量范围输入组件
-    const TrafficRangeInput = () => {
+    // 自定义流量范围输入组件（自管理弹窗和输入状态）
+    const TrafficRangeInput = ({ value, onChange }: {
+        value?: { upstream: [number, number] | null; downstream: [number, number] | null };
+        onChange?: (val: { upstream: [number, number] | null; downstream: [number, number] | null }) => void;
+    } = {}) => {
         const [inputRef, setInputRef] = useState<HTMLDivElement | null>(null);
         const [popupPosition, setPopupPosition] = useState<'left' | 'right'>('left');
+        const [isVisible, setIsVisible] = useState(false);
         const [localRange, setLocalRange] = useState<{
             upstream: [number, number];
             downstream: [number, number];
@@ -735,9 +748,24 @@ const OutboundLogs: React.FC = () => {
             downstream: [0, 100]
         });
 
+        // 同步外部value到本地
+        useEffect(() => {
+            if (isVisible) {
+                setLocalRange({
+                    upstream: value?.upstream || [0, 100],
+                    downstream: value?.downstream || [0, 100]
+                });
+                calculatePosition();
+                document.addEventListener('mousedown', handleClickOutside);
+                return () => {
+                    document.removeEventListener('mousedown', handleClickOutside);
+                };
+            }
+        }, [isVisible, inputRef]);
+
         const handleClickOutside = (e: MouseEvent) => {
             if (inputRef && !inputRef.contains(e.target as Node)) {
-                setIsTrafficModalVisible(false);
+                setIsVisible(false);
             }
         };
 
@@ -746,8 +774,6 @@ const OutboundLogs: React.FC = () => {
                 const rect = inputRef.getBoundingClientRect();
                 const windowWidth = window.innerWidth;
                 const popupWidth = 360;
-
-                // 如果右边空间不够，就向左对齐
                 if (rect.left + popupWidth > windowWidth - 20) {
                     setPopupPosition('right');
                 } else {
@@ -756,28 +782,12 @@ const OutboundLogs: React.FC = () => {
             }
         };
 
-        // 当弹窗打开时，同步当前值到本地状态
-        useEffect(() => {
-            if (isTrafficModalVisible) {
-                setLocalRange({
-                    upstream: trafficRange.upstream || [0, 100],
-                    downstream: trafficRange.downstream || [0, 100]
-                });
-                calculatePosition();
-                document.addEventListener('mousedown', handleClickOutside);
-                return () => {
-                    document.removeEventListener('mousedown', handleClickOutside);
-                };
-            }
-        }, [isTrafficModalVisible, inputRef]);
-
         const handleConfirm = () => {
-            setTrafficRange({
+            onChange?.({
                 upstream: localRange.upstream,
                 downstream: localRange.downstream
             });
-            form.setFieldsValue({ trafficRange: localRange });
-            setIsTrafficModalVisible(false);
+            setIsVisible(false);
         };
 
         const handleReset = () => {
@@ -785,19 +795,17 @@ const OutboundLogs: React.FC = () => {
                 upstream: [0, 100],
                 downstream: [0, 100]
             });
-            // 同时重置主状态和表单值
-            setTrafficRange({ upstream: null, downstream: null });
-            form.setFieldsValue({ trafficRange: null });
+            onChange?.({ upstream: null, downstream: null });
         };
 
         const getDisplayText = () => {
-            if (!trafficRange.upstream && !trafficRange.downstream) return '';
+            if (!value?.upstream && !value?.downstream) return '';
             const parts = [];
-            if (trafficRange.upstream) {
-                parts.push(`↗${trafficRange.upstream[0]}-${trafficRange.upstream[1]}KB`);
+            if (value?.upstream) {
+                parts.push(`↗${value.upstream[0]}-${value.upstream[1]}KB`);
             }
-            if (trafficRange.downstream) {
-                parts.push(`↙${trafficRange.downstream[0]}-${trafficRange.downstream[1]}KB`);
+            if (value?.downstream) {
+                parts.push(`↙${value.downstream[0]}-${value.downstream[1]}KB`);
             }
             return parts.join(' / ');
         };
@@ -810,13 +818,10 @@ const OutboundLogs: React.FC = () => {
                     readOnly
                     style={{ width: '100%' }}
                     allowClear
-                    onClear={() => {
-                        setTrafficRange({ upstream: null, downstream: null });
-                        form.setFieldsValue({ trafficRange: null });
-                    }}
-                    onClick={() => setIsTrafficModalVisible(!isTrafficModalVisible)}
+                    onClear={() => onChange?.({ upstream: null, downstream: null })}
+                    onClick={() => setIsVisible(!isVisible)}
                 />
-                {isTrafficModalVisible && (
+                {isVisible && (
                     <div
                         style={{
                             position: 'absolute',
@@ -836,7 +841,6 @@ const OutboundLogs: React.FC = () => {
                     >
                         <div style={{ marginBottom: '16px' }}>
                             <div style={{ marginBottom: '12px', fontSize: '14px', fontWeight: 500 }}>设置流量范围</div>
-
                             {/* 上行流量设置 */}
                             <div style={{ marginBottom: '12px' }}>
                                 <div style={{ marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '4px' }}>
@@ -875,7 +879,6 @@ const OutboundLogs: React.FC = () => {
                                     />
                                 </div>
                             </div>
-
                             {/* 下行流量设置 */}
                             <div>
                                 <div style={{ marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '4px' }}>
@@ -965,21 +968,95 @@ const OutboundLogs: React.FC = () => {
     // 详情页mock数据生成（更真实）
     const generateDetailMockData = () => {
         if (!selectedLog) return [];
-        const protocols = ['TCP', 'UDP', 'HTTP', 'HTTPS'];
-        const appTypes = ['DNS', 'HTTP(S)', 'FTP', 'SSH', '未知'];
+        // 应用类型与协议的对应关系
+        const appTypes = commonAppTypes;
         const statuses = ['监控', '告警'];
         const baseIp = selectedLog.sourceIp.split('.');
         const arr = [];
         for (let i = 0; i < 20; i++) {
+            // 随机应用类型
+            let appType = appTypes[i % appTypes.length];
+            // 兜底：如果不是commonAppTypes里的，强制为'未知'
+            if (!appTypes.includes(appType)) appType = '未知';
+            // 根据应用类型分配协议
+            let protocol = 'TCP';
+            if (appType === 'DNS') {
+                protocol = i % 4 === 0 ? 'TCP' : 'UDP'; // 大部分UDP，偶尔TCP
+            } else if (appType === 'HTTP' || appType === 'HTTPS' || appType === 'FTP' || appType === 'SSH') {
+                protocol = 'TCP';
+            } else if (appType === '未知') {
+                protocol = i % 2 === 0 ? 'UDP' : 'TCP';
+            }
+            const status = statuses[i % statuses.length];
             // 生成不同的源IP和端口
             const ip = `${baseIp[0]}.${baseIp[1]}.${baseIp[2]}.${(parseInt(baseIp[3]) + i) % 255}`;
             const port = 1024 + (i * 137) % 50000;
-            const protocol = protocols[i % protocols.length];
-            const appType = appTypes[i % appTypes.length];
-            const status = statuses[i % statuses.length];
             // 时间递增
             const start = dayjs(selectedLog.sessionStart).add(i, 'minute').format('YYYY-MM-DD HH:mm:ss');
             const end = dayjs(selectedLog.sessionEnd).add(i, 'minute').format('YYYY-MM-DD HH:mm:ss');
+            // mock部分数据带详细字段
+            let requestInfo, responseInfo, dnsResponse;
+            if (appType === 'DNS') {
+                dnsResponse = {
+                    header: {
+                        id: `${1000 + i}`,
+                        qr: i % 2 === 0,
+                        opcode: 'QUERY',
+                        aa: false,
+                        tc: false,
+                        rd: true,
+                        ra: true,
+                        rcode: 'NOERROR',
+                        qdcount: 1,
+                        ancount: 1,
+                        nscount: 0,
+                        arcount: 0
+                    },
+                    answers: [
+                        { name: `sub${i}.example.com`, type: 'A', ttl: 3600, data: `1.2.3.${i}` }
+                    ],
+                    authority: [],
+                    additional: []
+                };
+            }
+            if (appType === 'HTTP') {
+                requestInfo = {
+                    protocol: protocol.toLowerCase(),
+                    url: `https://example.com/api/${i}`,
+                    dnsName: `sub${i}.example.com`,
+                    method: 'GET',
+                    headers: {
+                        'User-Agent': 'Mozilla/5.0',
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json',
+                        'X-Forwarded-For': ip,
+                        'Host': 'example.com',
+                        'Connection': 'keep-alive',
+                        'Accept-Encoding': 'gzip, deflate, br',
+                        'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
+                    },
+                    body: {
+                        payload: '{"test":1}',
+                        size: '123bytes',
+                        type: '测试',
+                        timestamp: new Date().toISOString()
+                    }
+                };
+                responseInfo = {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Server': 'nginx/1.18.0',
+                        'Date': new Date().toUTCString(),
+                        'Content-Length': '456'
+                    },
+                    statusCode: 200,
+                    body: {
+                        status: 200,
+                        message: 'Success',
+                        data: '{"result":true}'
+                    }
+                };
+            }
             arr.push({
                 key: `${selectedLog.key}-${i}`,
                 sourceIp: ip,
@@ -991,10 +1068,78 @@ const OutboundLogs: React.FC = () => {
                 status,
                 upstreamTraffic: (parseFloat(selectedLog.upstreamTraffic) + i * 0.7).toFixed(1),
                 downstreamTraffic: (parseFloat(selectedLog.downstreamTraffic) + i * 0.9).toFixed(1),
+                requestInfo,
+                responseInfo,
+                dnsResponse
             });
         }
         return arr;
     };
+
+    // 详情页筛选逻辑
+    const handleDetailSearch = () => {
+        let data = generateDetailMockData();
+        if (detailFilters.sourceIp) {
+            data = data.filter(item => item.sourceIp.includes(detailFilters.sourceIp));
+        }
+        if (detailFilters.applicationTypes && detailFilters.applicationTypes.length > 0) {
+            data = data.filter(item => detailFilters.applicationTypes.includes(item.applicationType));
+        }
+        if (detailFilters.sessionTime && detailFilters.sessionTime.length === 2) {
+            const [start, end] = detailFilters.sessionTime;
+            data = data.filter(item => {
+                const s = dayjs(item.sessionStart);
+                const e = dayjs(item.sessionEnd);
+                return (
+                    (!start || e.isAfter(start)) && (!end || s.isBefore(end))
+                );
+            });
+        }
+        if (detailFilters.status) {
+            data = data.filter(item => item.status === detailFilters.status);
+        }
+        if (detailFilters.trafficRange && (detailFilters.trafficRange[0] !== undefined || detailFilters.trafficRange[1] !== undefined)) {
+            data = data.filter(item => {
+                const total = parseFloat(item.upstreamTraffic) + parseFloat(item.downstreamTraffic);
+                const [min, max] = detailFilters.trafficRange;
+                if (typeof min === 'number' && total < min) return false;
+                if (typeof max === 'number' && total > max) return false;
+                return true;
+            });
+        }
+        setFilteredDetailData(data);
+    };
+    const handleDetailReset = () => {
+        setDetailFilters({
+            sourceIp: '',
+            applicationTypes: [],
+            sessionTime: [null, null],
+            status: '',
+            trafficRange: [undefined, undefined],
+        });
+        setFilteredDetailData(generateDetailMockData());
+    };
+
+    useEffect(() => {
+        if (isDetailVisible && selectedLog) {
+            setFilteredDetailData(generateDetailMockData());
+        }
+    }, [isDetailVisible, selectedLog]);
+
+    // 添加CSS样式覆盖展开行背景色
+    useEffect(() => {
+        const style = document.createElement('style');
+        style.textContent = `
+            .ant-table-expanded-row .ant-table-cell {
+                background-color: #fff !important;
+            }
+        `;
+        document.head.appendChild(style);
+
+        return () => {
+            document.head.removeChild(style);
+        };
+    }, []);
 
     return (
         <div>
@@ -1181,7 +1326,7 @@ const OutboundLogs: React.FC = () => {
             <Drawer
                 title={
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                        <Typography.Title level={4} style={{ margin: 0, fontSize: '18px' }}>出境日志详情</Typography.Title>
+                        <Typography.Title level={4} style={{ margin: 0, fontSize: '18px' }}>出境日志</Typography.Title>
                     </div>
                 }
                 placement="right"
@@ -1193,6 +1338,82 @@ const OutboundLogs: React.FC = () => {
                 open={isDetailVisible}
             >
                 <Space direction="vertical" style={{ width: '100%' }} size="large">
+
+                    {/* 详情页筛选区域 */}
+                    <Form
+                        layout="inline"
+                        initialValues={detailFilters}
+                        onFinish={handleDetailSearch}
+                    >
+                        <Row gutter={[4, 16]}>
+                            <Col span={6}>
+                                <Form.Item style={{ marginBottom: 0 }}>
+                                    <LabelInput
+                                        label="源IP"
+                                        placeholder="请输入源IP"
+                                        value={detailFilters.sourceIp}
+                                        allowClear
+                                        onChange={e => setDetailFilters(f => ({ ...f, sourceIp: e.target.value }))}
+                                    />
+                                </Form.Item>
+                            </Col>
+                            <Col span={6}>
+                                <Form.Item style={{ marginBottom: 0 }}>
+                                    <LabelSelect
+                                        label="应用类型"
+                                        mode="multiple"
+                                        allowClear
+                                        placeholder="请选择应用类型"
+                                        value={detailFilters.applicationTypes}
+                                        options={commonAppTypes.map(type => ({ label: type, value: type }))}
+                                        onChange={v => setDetailFilters(f => ({ ...f, applicationTypes: v }))}
+                                    />
+                                </Form.Item>
+                            </Col>
+                            <Col span={6}>
+                                <Form.Item style={{ marginBottom: 0 }}>
+                                    <LabelRangePicker
+                                        label="会话时间"
+                                        showTime={{ format: 'HH:mm:ss' }}
+                                        format="YYYY-MM-DD HH:mm:ss"
+                                        value={detailFilters.sessionTime}
+                                        onChange={v => setDetailFilters(f => ({ ...f, sessionTime: v as [dayjs.Dayjs | null, dayjs.Dayjs | null] }))}
+                                        style={{ width: '100%' }}
+                                        placeholder={["开始时间", "结束时间"]}
+                                    />
+                                </Form.Item>
+                            </Col>
+                            <Col span={6}>
+                                <Form.Item style={{ marginBottom: 0 }}>
+                                    <LabelSelect
+                                        label="状态"
+                                        allowClear
+                                        placeholder="请选择状态"
+                                        value={detailFilters.status}
+                                        options={[
+                                            { label: '监控', value: '监控' },
+                                            { label: '告警', value: '告警' },
+                                        ]}
+                                        onChange={v => setDetailFilters(f => ({ ...f, status: v }))}
+                                    />
+                                </Form.Item>
+                            </Col>
+                            <Col span={6}>
+                                <Form.Item style={{ marginBottom: 0 }}>
+                                    {/* 复用主表格的区间输入组件 */}
+                                    <TrafficRangeInput />
+                                </Form.Item>
+                            </Col>
+                            <Col span={6} style={{ display: 'flex', alignItems: 'flex-end' }}>
+                                <Form.Item style={{ marginBottom: 0 }}>
+                                    <Space>
+                                        <Button type="primary" htmlType="submit">搜索</Button>
+                                        <Button onClick={handleDetailReset}>重置</Button>
+                                    </Space>
+                                </Form.Item>
+                            </Col>
+                        </Row>
+                    </Form>
 
                     {/* 详情页批量操作按钮 */}
                     <div>
@@ -1248,6 +1469,9 @@ const OutboundLogs: React.FC = () => {
                                     dataIndex: 'status',
                                     key: 'status',
                                     width: 80,
+                                    render: (text) => (
+                                        <Tag color={text === '告警' ? 'red' : 'blue'}>{text}</Tag>
+                                    ),
                                 },
                                 {
                                     title: '出境流量',
@@ -1269,16 +1493,261 @@ const OutboundLogs: React.FC = () => {
                                     ),
                                 },
                             ]}
-                            dataSource={selectedLog ? generateDetailMockData() : []}
+                            dataSource={selectedLog ? filteredDetailData : []}
                             rowSelection={{
                                 type: 'checkbox',
                                 columnWidth: 50,
                                 selectedRowKeys: selectedRowsDetail.map(row => row.key),
                                 onChange: (_, rows) => setSelectedRowsDetail(rows),
                             }}
+                            expandable={{
+                                expandIconColumnIndex: 1,
+                                expandedRowRender: (record) => {
+                                    const type = (record.applicationType || '').toLowerCase();
+                                    return (
+                                        <>
+                                            {/* 主可视化卡片，所有类型都显示 */}
+                                            <Card
+                                                title="日志详情"
+                                                style={{ background: '#fff !important' }}
+                                            >
+                                                <OutboundTrafficVisual
+                                                    sourceInfo={{
+                                                        ip: record.sourceIp,
+                                                        port: record.sourcePort || 443
+                                                    }}
+                                                    destinationInfo={{
+                                                        ip: selectedLog?.destinationIp || '',
+                                                        port: selectedLog?.outboundCount || 0,
+                                                        isForeign: true
+                                                    }}
+                                                    protocol={record.protocol}
+                                                    url=""
+                                                    method=""
+                                                    statusCode={200}
+                                                    status={record.status}
+                                                    sessionStart={record.sessionStart}
+                                                    sessionEnd={record.sessionEnd}
+                                                    upstreamTraffic={record.upstreamTraffic}
+                                                    downstreamTraffic={record.downstreamTraffic}
+                                                    outboundDestination={selectedLog?.outboundDestination || ''}
+                                                    applicationType={record.applicationType}
+                                                    onDownloadPcap={() => {
+                                                        message.success('PCAP包下载已开始');
+                                                    }}
+                                                    onAddToBlacklist={(ip: string) => {
+                                                        setTargetIp(ip);
+                                                        setListType('black');
+                                                        setTimeModalVisible(true);
+                                                    }}
+                                                    onAddToWhitelist={(ip: string) => {
+                                                        setTargetIp(ip);
+                                                        setListType('white');
+                                                        setTimeModalVisible(true);
+                                                    }}
+                                                />
+                                            </Card>
+
+                                            {/* DNS响应 */}
+                                            {type === 'dns' && record.dnsResponse && (
+                                                <Card title="DNS响应" style={{ marginTop: 16 }}>
+                                                    <Tabs
+                                                        items={[{
+                                                            key: 'header',
+                                                            label: '报文头',
+                                                            children: (
+                                                                <Descriptions bordered column={2} size="small">
+                                                                    <Descriptions.Item label="报文标识">
+                                                                        {record.dnsResponse.header.id}
+                                                                    </Descriptions.Item>
+                                                                    <Descriptions.Item label="响应标志">
+                                                                        {record.dnsResponse.header.qr ? '响应' : '查询'}
+                                                                    </Descriptions.Item>
+                                                                    <Descriptions.Item label="操作码">
+                                                                        {record.dnsResponse.header.opcode}
+                                                                    </Descriptions.Item>
+                                                                    <Descriptions.Item label="权威应答">
+                                                                        {record.dnsResponse.header.aa ? '是' : '否'}
+                                                                    </Descriptions.Item>
+                                                                    <Descriptions.Item label="截断标志">
+                                                                        {record.dnsResponse.header.tc ? '是' : '否'}
+                                                                    </Descriptions.Item>
+                                                                    <Descriptions.Item label="期望递归">
+                                                                        {record.dnsResponse.header.rd ? '是' : '否'}
+                                                                    </Descriptions.Item>
+                                                                    <Descriptions.Item label="递归可用">
+                                                                        {record.dnsResponse.header.ra ? '是' : '否'}
+                                                                    </Descriptions.Item>
+                                                                    <Descriptions.Item label="返回码">
+                                                                        {record.dnsResponse.header.rcode}
+                                                                    </Descriptions.Item>
+                                                                    <Descriptions.Item label="问题数">
+                                                                        {record.dnsResponse.header.qdcount}
+                                                                    </Descriptions.Item>
+                                                                    <Descriptions.Item label="回答数">
+                                                                        {record.dnsResponse.header.ancount}
+                                                                    </Descriptions.Item>
+                                                                    <Descriptions.Item label="授权数">
+                                                                        {record.dnsResponse.header.nscount}
+                                                                    </Descriptions.Item>
+                                                                    <Descriptions.Item label="附加数">
+                                                                        {record.dnsResponse.header.arcount}
+                                                                    </Descriptions.Item>
+                                                                </Descriptions>
+                                                            ),
+                                                        },
+                                                        {
+                                                            key: 'answers',
+                                                            label: '应答记录',
+                                                            children: (
+                                                                <Table
+                                                                    dataSource={record.dnsResponse.answers?.map((item: { name: string; type: string; ttl: number; data: string }, index: number) => ({ ...item, key: index }))}
+                                                                    columns={[
+                                                                        { title: '域名', dataIndex: 'name', key: 'name' },
+                                                                        { title: '记录类型', dataIndex: 'type', key: 'type' },
+                                                                        { title: 'TTL', dataIndex: 'ttl', key: 'ttl' },
+                                                                        { title: '记录值', dataIndex: 'data', key: 'data' },
+                                                                    ]}
+                                                                    pagination={false}
+                                                                    size="small"
+                                                                />
+                                                            ),
+                                                        },
+                                                        {
+                                                            key: 'authority',
+                                                            label: '权威记录',
+                                                            children: (
+                                                                <Table
+                                                                    dataSource={record.dnsResponse.authority?.map((item: { name: string; type: string; ttl: number; data: string }, index: number) => ({ ...item, key: index }))}
+                                                                    columns={[
+                                                                        { title: '域名', dataIndex: 'name', key: 'name' },
+                                                                        { title: '记录类型', dataIndex: 'type', key: 'type' },
+                                                                        { title: 'TTL', dataIndex: 'ttl', key: 'ttl' },
+                                                                        { title: '记录值', dataIndex: 'data', key: 'data' },
+                                                                    ]}
+                                                                    pagination={false}
+                                                                    size="small"
+                                                                />
+                                                            ),
+                                                        },
+                                                        {
+                                                            key: 'additional',
+                                                            label: '附加记录',
+                                                            children: (
+                                                                <Table
+                                                                    dataSource={record.dnsResponse.additional?.map((item: { name: string; type: string; ttl: number; data: string }, index: number) => ({ ...item, key: index }))}
+                                                                    columns={[
+                                                                        { title: '域名', dataIndex: 'name', key: 'name' },
+                                                                        { title: '记录类型', dataIndex: 'type', key: 'type' },
+                                                                        { title: 'TTL', dataIndex: 'ttl', key: 'ttl' },
+                                                                        { title: '记录值', dataIndex: 'data', key: 'data' },
+                                                                    ]}
+                                                                    pagination={false}
+                                                                    size="small"
+                                                                />
+                                                            ),
+                                                        },
+                                                        ]}
+                                                    />
+                                                </Card>
+                                            )}
+
+                                            {/* HTTP请求与响应 */}
+                                            {type === 'http' && (
+                                                <>
+                                                    {record.requestInfo && (
+                                                        <Card title="请求信息" style={{ marginTop: 16 }}>
+                                                            <Tabs
+                                                                items={[
+                                                                    {
+                                                                        key: 'headers',
+                                                                        label: '请求头',
+                                                                        children: (
+                                                                            <Table
+                                                                                columns={[
+                                                                                    { title: '名称', dataIndex: 'name', key: 'name' },
+                                                                                    { title: '值', dataIndex: 'value', key: 'value' },
+                                                                                ]}
+                                                                                dataSource={Object.entries(record.requestInfo.headers).map(([key, value], index: number) => ({
+                                                                                    key: index,
+                                                                                    name: key,
+                                                                                    value: value
+                                                                                }))}
+                                                                                pagination={false}
+                                                                                size="small"
+                                                                            />
+                                                                        ),
+                                                                    },
+                                                                    {
+                                                                        key: 'body',
+                                                                        label: '请求体',
+                                                                        children: (
+                                                                            <pre style={{ whiteSpace: 'pre-wrap', wordWrap: 'break-word' }}>
+                                                                                {record.requestInfo.body ? JSON.stringify(record.requestInfo.body, null, 2) : ''}
+                                                                            </pre>
+                                                                        ),
+                                                                    },
+                                                                    {
+                                                                        key: 'params',
+                                                                        label: '请求参数',
+                                                                        children: <Empty description="暂无数据" />,
+                                                                    },
+                                                                ]}
+                                                            />
+                                                        </Card>
+                                                    )}
+                                                    {record.responseInfo && (
+                                                        <Card title="响应信息" style={{ marginTop: 16 }}>
+                                                            <Tabs
+                                                                items={[
+                                                                    {
+                                                                        key: 'headers',
+                                                                        label: '响应头',
+                                                                        children: (
+                                                                            <Table
+                                                                                columns={[
+                                                                                    { title: '名称', dataIndex: 'name', key: 'name' },
+                                                                                    { title: '值', dataIndex: 'value', key: 'value' },
+                                                                                ]}
+                                                                                dataSource={[
+                                                                                    {
+                                                                                        key: 'statusCode',
+                                                                                        name: '状态码',
+                                                                                        value: record.responseInfo.statusCode
+                                                                                    },
+                                                                                    ...Object.entries(record.responseInfo.headers).map(([key, value], index: number) => ({
+                                                                                        key: index,
+                                                                                        name: key,
+                                                                                        value: value
+                                                                                    }))
+                                                                                ]}
+                                                                                pagination={false}
+                                                                                size="small"
+                                                                            />
+                                                                        ),
+                                                                    },
+                                                                    {
+                                                                        key: 'body',
+                                                                        label: '响应体',
+                                                                        children: (
+                                                                            <pre style={{ whiteSpace: 'pre-wrap', wordWrap: 'break-word' }}>
+                                                                                {record.responseInfo.body ? JSON.stringify(record.responseInfo.body, null, 2) : ''}
+                                                                            </pre>
+                                                                        ),
+                                                                    },
+                                                                ]}
+                                                            />
+                                                        </Card>
+                                                    )}
+                                                </>
+                                            )}
+                                        </>
+                                    );
+                                },
+                            }}
                             pagination={{
-                                total: selectedLog ? generateDetailMockData().length : 0,
-                                pageSize: 10,
+                                total: selectedLog ? filteredDetailData.length : 0,
+                                pageSize: 20,
                                 showSizeChanger: true,
                                 showQuickJumper: true,
                                 showTotal: (total) => `共 ${total} 条记录`,

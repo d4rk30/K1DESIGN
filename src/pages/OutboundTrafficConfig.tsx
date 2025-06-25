@@ -33,7 +33,7 @@ const OutboundTrafficConfig: React.FC = () => {
                 {
                     trafficSize: 20,
                     protocol: ['TCP', 'UDP'],
-                    appType: ['HTTP(S)', 'FTP']
+                    appType: ['HTTP', 'FTP']
                 }
             ]
         }
@@ -128,7 +128,7 @@ const OutboundTrafficConfig: React.FC = () => {
                 {
                     trafficSize: 100,
                     protocol: ['TCP'],
-                    appType: ['HTTP(S)']
+                    appType: ['HTTP']
                 }
             ]
         });
@@ -338,7 +338,7 @@ const OutboundTrafficConfig: React.FC = () => {
                                                 >
                                                     <Select.Option value="TCP">TCP</Select.Option>
                                                     <Select.Option value="UDP">UDP</Select.Option>
-                                                    <Select.Option value="非TCP/UDP">非TCP/UDP</Select.Option>
+                                                    <Select.Option value="其他">其他</Select.Option>
                                                 </Select>
                                             </Form.Item>
                                         </Col>
@@ -364,13 +364,15 @@ const OutboundTrafficConfig: React.FC = () => {
                                                     placeholder="请选择"
                                                     style={{ width: '100%' }}
                                                 >
-                                                    <Select.Option value="HTTP(S)">HTTP(S)</Select.Option>
                                                     <Select.Option value="DNS">DNS</Select.Option>
-                                                    <Select.Option value="SSH">SSH</Select.Option>
+                                                    <Select.Option value="HTTP">HTTP</Select.Option>
+                                                    <Select.Option value="HTTPS">HTTPS</Select.Option>
                                                     <Select.Option value="FTP">FTP</Select.Option>
+                                                    <Select.Option value="SSH">SSH</Select.Option>
                                                     <Select.Option value="SMTP">SMTP</Select.Option>
                                                     <Select.Option value="POP3">POP3</Select.Option>
                                                     <Select.Option value="IMAP">IMAP</Select.Option>
+                                                    <Select.Option value="TELNET">TELNET</Select.Option>
                                                     <Select.Option value="其他">其他</Select.Option>
                                                 </Select>
                                             </Form.Item>
@@ -423,7 +425,7 @@ const OutboundTrafficConfig: React.FC = () => {
                                     }}>
                                         <div>1. 命中规则的出境流量显示为告警，不符合规则的出境流量显示为监控。</div>
                                         <div>2. 传输层协议和应用协议为空情况，表示全部协议和应用协议。</div>
-                                        <div>3. 多个规则之间的关系为“或”关系，即只要命中一个规则，则显示为告警。</div>
+                                        <div>3. 多个规则之间的关系为"或"关系，即只要命中一个规则，则显示为告警。</div>
                                     </div>
                                 </div>
                             </>
