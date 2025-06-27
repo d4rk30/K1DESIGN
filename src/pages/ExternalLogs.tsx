@@ -1,7 +1,7 @@
 // 1. 引入
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { Card, Table, Button, Space, Form, Row, Col, Modal, message, Typography, Tag, Drawer, Input, InputNumber, Radio, Empty, Tabs, Descriptions, Carousel, Skeleton } from 'antd';
-import { StarOutlined, StarFilled, SearchOutlined, ReloadOutlined, SaveOutlined, ExportOutlined, DeleteOutlined, CopyOutlined, ApartmentOutlined, GlobalOutlined, ApiOutlined, LeftOutlined, RightOutlined, UpOutlined, DownOutlined, CalendarOutlined, LinkOutlined } from '@ant-design/icons';
+import { Card, Table, Button, Space, Form, Row, Col, Modal, message, Typography, Tag, Drawer, Input, InputNumber, Radio, Empty, Tabs, Descriptions, Carousel } from 'antd';
+import { StarOutlined, StarFilled, SearchOutlined, ReloadOutlined, SaveOutlined, ExportOutlined, DeleteOutlined, CopyOutlined, GlobalOutlined, ApiOutlined, LeftOutlined, RightOutlined, UpOutlined, DownOutlined, CalendarOutlined, LinkOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import LabelSelect from '@/components/LabelSelect';
 import LabelInput from '@/components/LabelInput';
@@ -20,14 +20,6 @@ interface FilterValues {
     externalDomain?: string; // 外联域名/URL
     destinationIp?: string;  // 目的IP
     threatLevel?: string;    // 威胁等级
-}
-
-// 定义保存的筛选条件的类型
-interface SavedFilter {
-    id: string;           // 筛选条件的唯一标识符
-    name: string;         // 筛选条件的名称
-    conditions: FilterValues; // 筛选条件的具体内容
-    createTime: string;   // 创建时间
 }
 
 // 定义攻击日志数据的接口
@@ -378,8 +370,6 @@ const ExternalLogs: React.FC = () => {
     const [selectedRows, setSelectedRows] = useState<any[]>([]);
     const [filterValues, setFilterValues] = useState<FilterValues>({});
     const [form] = Form.useForm();
-    const [savedFilters, setSavedFilters] = useState<SavedFilter[]>([]);
-    const [filterName, setFilterName] = useState('');
     const [modalState, setModalState] = useState({
         isFilterModalVisible: false,
         isDetailVisible: false,
@@ -396,15 +386,12 @@ const ExternalLogs: React.FC = () => {
     const prevDurationRef = useRef<number>(0);
 
     // 添加IP溯源相关的状态
-    const [currentVendorPage, setCurrentVendorPage] = useState(0);
     const [activeTraceTab, setActiveTraceTab] = useState('fingerprint');
     const carouselRef = useRef<any>(null);
 
     // 添加tabs切换处理函数
     const handleTraceTabChange = (key: string) => {
         setActiveTraceTab(key);
-        // 重置厂商轮播状态
-        setCurrentVendorPage(0);
         // 重置Carousel到第一页
         if (carouselRef.current) {
             carouselRef.current.goTo(0);
@@ -416,7 +403,6 @@ const ExternalLogs: React.FC = () => {
         if (carouselRef.current) {
             carouselRef.current.goTo(0);
         }
-        setCurrentVendorPage(0);
     }, [activeTraceTab]);
 
     // 工具函数
@@ -637,39 +623,6 @@ const ExternalLogs: React.FC = () => {
         setFilterValues({});
     };
 
-    const saveToLocalStorage = (filters: SavedFilter[]) => {
-        localStorage.setItem('attackLogsSavedFilters', JSON.stringify(filters));
-        setSavedFilters(filters);
-    };
-
-    const handleSaveFilter = () => {
-        const currentValues = form.getFieldsValue();
-        if (Object.keys(currentValues).every(key => !currentValues[key])) {
-            message.warning('请至少设置一个搜索条件');
-            return;
-        }
-
-        const newFilter: SavedFilter = {
-            id: Date.now().toString(),
-            name: filterName,
-            conditions: currentValues,
-            createTime: new Date().toLocaleString()
-        };
-
-        saveToLocalStorage([...savedFilters, newFilter]);
-        toggleModal('isFilterModalVisible');
-        setFilterName('');
-        message.success('搜索条件保存成功');
-    };
-
-    // 副作用
-    useEffect(() => {
-        const saved = localStorage.getItem('attackLogsSavedFilters');
-        if (saved) {
-            setSavedFilters(JSON.parse(saved));
-        }
-    }, []);
-
     useEffect(() => {
         const savedIps = JSON.parse(localStorage.getItem('favoriteIps') || '[]');
         setFavoriteIps(savedIps.map((item: any) => item.ip));
@@ -723,53 +676,7 @@ const ExternalLogs: React.FC = () => {
         setTimeModalVisible(false);
     };
 
-    // 添加RecordDisplay组件
-    const RecordDisplay: React.FC<{
-        leftRecords: { label: string; value: string }[];
-        rightRecords: { label: string; value: string }[];
-        leftStartNumber?: number;
-        rightStartNumber?: number;
-    }> = ({ leftRecords, rightRecords, leftStartNumber = 1, rightStartNumber = 5 }) => {
-        const renderNumberColumn = (start: number, count: number) => (
-            <Col span={1} style={{ maxWidth: 30 }}>
-                <div style={{ width: 24, backgroundColor: '#E3F1FD', textAlign: 'center', padding: 4, borderRadius: 4, color: '#999' }}>
-                    {[...Array(count)].map((_, i) => (
-                        <div key={i}>{start + i}</div>
-                    ))}
-                </div>
-            </Col>
-        );
 
-        const renderRecordColumn = (records: { label: string; value: string }[]) => (
-            <>
-                <Col span={3}>
-                    <div style={{ padding: 4, color: '#999' }}>
-                        {records.map((record, i) => (
-                            <div key={i}>{record.label}</div>
-                        ))}
-                    </div>
-                </Col>
-                <Col span={8}>
-                    <div style={{ padding: 4 }}>
-                        {records.map((record, i) => (
-                            <div key={i}>{record.value}</div>
-                        ))}
-                    </div>
-                </Col>
-            </>
-        );
-
-        return (
-            <div style={{ fontSize: 14, color: '#333', fontWeight: 400, backgroundColor: '#F7FBFF', padding: '12px 16px', borderRadius: 4, border: '1px solid #f3f3f3' }}>
-                <Row gutter={[24, 24]} style={{ borderRadius: 4 }}>
-                    {renderNumberColumn(leftStartNumber, leftRecords.length)}
-                    {renderRecordColumn(leftRecords)}
-                    {renderNumberColumn(rightStartNumber, rightRecords.length)}
-                    {renderRecordColumn(rightRecords)}
-                </Row>
-            </div>
-        );
-    };
 
     // 添加TagList组件
     const TagList: React.FC<{
@@ -862,118 +769,6 @@ const ExternalLogs: React.FC = () => {
     };
 
     // 添加tabs内容渲染函数
-    const renderDNSRecords = () => {
-        const leftRecords = [
-            { label: 'A:', value: '156.254.127.112' },
-            { label: 'AAAA:', value: '-' },
-            { label: 'NS:', value: '-' },
-            { label: 'MX:', value: '-' }
-        ];
-
-        const rightRecords = [
-            { label: 'TXT:', value: '156.254.127.112' },
-            { label: 'SOA:', value: '-' },
-            { label: 'CNAME:', value: '-' }
-        ];
-
-        return <RecordDisplay leftRecords={leftRecords} rightRecords={rightRecords} />;
-    };
-
-    const renderWhois = () => {
-        const leftRecords = [
-            { label: '注册者:', value: 'REDACTED FOR PRIVACY' },
-            { label: '注册机构:', value: 'REDACTED FOR PRIVACY' },
-            { label: '邮箱:', value: '信息已设置隐私保护' },
-            { label: '地址:', value: 'Redacted for Privacy Purposes' },
-            { label: '电话:', value: 'ALLOCATED UNSPECIFIED REDACTED FOR PRIVACY' }
-        ];
-
-        const rightRecords = [
-            { label: '注册时间:', value: '2024-02-29 06:11:09' },
-            { label: '过期时间:', value: '2024-02-29 06:11:09' },
-            { label: '更新时间:', value: '2024-02-29 06:11:09' },
-            { label: '域名服务商:', value: 'Chengdu west dimension digital technology Co., LTD' },
-            { label: '域名服务器:', value: 'ns3.4cun.com; ns4.4cun.com' }
-        ];
-
-        return <RecordDisplay
-            leftRecords={leftRecords}
-            rightRecords={rightRecords}
-            leftStartNumber={1}
-            rightStartNumber={6}
-        />;
-    };
-
-    const renderSubdomains = () => {
-        return (
-            <Table
-                columns={[
-                    {
-                        title: '域名',
-                        dataIndex: 'domain',
-                        key: 'domain',
-                        width: '30%',
-                    },
-                    {
-                        title: '威胁等级',
-                        dataIndex: 'threatLevel',
-                        key: 'threatLevel',
-                        width: '20%',
-                    },
-                    {
-                        title: '创建时间',
-                        dataIndex: 'firstParseTime',
-                        key: 'firstParseTime',
-                        width: '25%',
-                    },
-                    {
-                        title: '更新时间',
-                        dataIndex: 'lastParseTime',
-                        key: 'lastParseTime',
-                        width: '25%',
-                    }
-                ]}
-                dataSource={[
-                    {
-                        key: '1',
-                        domain: 'mail.example.com',
-                        threatLevel: <Tag color="red">高危</Tag>,
-                        firstParseTime: '2024-01-15 08:30:00',
-                        lastParseTime: '2024-02-29 10:15:23'
-                    },
-                    {
-                        key: '2',
-                        domain: 'api.example.com',
-                        threatLevel: <Tag color="orange">中危</Tag>,
-                        firstParseTime: '2024-01-16 09:45:12',
-                        lastParseTime: '2024-02-29 11:20:45'
-                    },
-                    {
-                        key: '3',
-                        domain: 'blog.example.com',
-                        threatLevel: <Tag color="red">高危</Tag>,
-                        firstParseTime: '2024-01-17 14:22:33',
-                        lastParseTime: '2024-02-29 09:05:18'
-                    },
-                    {
-                        key: '4',
-                        domain: 'dev.example.com',
-                        threatLevel: <Tag color="green">低危</Tag>,
-                        firstParseTime: '2024-01-18 16:40:55',
-                        lastParseTime: '2024-02-29 08:30:42'
-                    }
-                ]}
-                pagination={{
-                    total: 4,
-                    pageSize: 10,
-                    showSizeChanger: true,
-                    showQuickJumper: true,
-                    showTotal: (total) => `共 ${total} 条记录`,
-                }}
-            />
-        );
-    };
-
     const renderFingerprint = () => {
         const fingerprintData = {
             assetTags: [
@@ -1888,7 +1683,6 @@ const ExternalLogs: React.FC = () => {
                                                                     dots={false}
                                                                     arrows={false}
                                                                     autoplay={false}
-                                                                    beforeChange={(from, to) => setCurrentVendorPage(to)}
                                                                     style={{
                                                                         padding: '0 40px',
                                                                         willChange: 'transform',

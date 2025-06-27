@@ -1,4 +1,4 @@
-import { Card, Table, Button, Space, Tag, Input, InputNumber, Row, Col, Form, Modal, message, Drawer, Typography, Tabs, Descriptions, Empty, Radio, Tooltip, Select, DatePicker } from 'antd';
+import { Card, Table, Button, Space, Tag, Input, InputNumber, Row, Col, Form, Modal, message, Drawer, Typography, Tabs, Descriptions, Empty, Radio, Tooltip } from 'antd';
 import { SearchOutlined, ReloadOutlined, SaveOutlined, StarOutlined, StarFilled, ArrowUpOutlined, ArrowDownOutlined } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import dayjs from 'dayjs';
@@ -129,11 +129,6 @@ const OutboundLogs: React.FC = () => {
     const [isFilterModalVisible, setIsFilterModalVisible] = useState(false);
     const [isIpDrawerVisible, setIsIpDrawerVisible] = useState(false);
     const [favoriteIps, setFavoriteIps] = useState<string[]>([]);
-    const [trafficRange, setTrafficRange] = useState<{
-        upstream: [number, number] | null;
-        downstream: [number, number] | null;
-    }>({ upstream: null, downstream: null });
-    const [isTrafficModalVisible, setIsTrafficModalVisible] = useState(false);
     const [selectedLog, setSelectedLog] = useState<DataType | null>(null);
     const [isDetailVisible, setIsDetailVisible] = useState(false);
     const [timeModalVisible, setTimeModalVisible] = useState(false);
@@ -655,8 +650,6 @@ const OutboundLogs: React.FC = () => {
 
     const handleReset = () => {
         form.resetFields();
-        // 同时重置流量范围状态
-        setTrafficRange({ upstream: null, downstream: null });
     };
 
     // 添加保存筛选条件的处理函数
@@ -744,16 +737,16 @@ const OutboundLogs: React.FC = () => {
             upstream: [number, number];
             downstream: [number, number];
         }>({
-            upstream: [0, 100],
-            downstream: [0, 100]
+            upstream: [0, 0],
+            downstream: [0, 0]
         });
 
         // 同步外部value到本地
         useEffect(() => {
             if (isVisible) {
                 setLocalRange({
-                    upstream: value?.upstream || [0, 100],
-                    downstream: value?.downstream || [0, 100]
+                    upstream: value?.upstream || [0, 0],
+                    downstream: value?.downstream || [0, 0]
                 });
                 calculatePosition();
                 document.addEventListener('mousedown', handleClickOutside);
@@ -792,8 +785,8 @@ const OutboundLogs: React.FC = () => {
 
         const handleReset = () => {
             setLocalRange({
-                upstream: [0, 100],
-                downstream: [0, 100]
+                upstream: [0, 0],
+                downstream: [0, 0]
             });
             onChange?.({ upstream: null, downstream: null });
         };
@@ -802,10 +795,10 @@ const OutboundLogs: React.FC = () => {
             if (!value?.upstream && !value?.downstream) return '';
             const parts = [];
             if (value?.upstream) {
-                parts.push(`↗${value.upstream[0]}-${value.upstream[1]}KB`);
+                parts.push(`↗${value.upstream[0]}KB - ↘${value.upstream[1]}KB`);
             }
             if (value?.downstream) {
-                parts.push(`↙${value.downstream[0]}-${value.downstream[1]}KB`);
+                parts.push(`↗${value.downstream[0]}KB - ↘${value.downstream[1]}KB`);
             }
             return parts.join(' / ');
         };
