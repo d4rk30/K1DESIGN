@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { Card, Row, Col, Table, Tag, Space, Button, Input, message, Modal, Form, Upload, Spin, Skeleton, Carousel } from 'antd';
+import { Card, Row, Col, Table, Tag, Space, Button, Input, message, Modal, Form, Upload, Skeleton, Carousel, Alert } from 'antd';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { SearchOutlined, ReloadOutlined, CalendarOutlined, UpOutlined, DownOutlined, CopyOutlined, ApartmentOutlined, GlobalOutlined, ApiOutlined, LinkOutlined, InboxOutlined, LeftOutlined, RightOutlined } from '@ant-design/icons';
 import LabelSelect from '@/components/LabelSelect';
@@ -12,17 +12,16 @@ const ThreatIntelligenceDetail: React.FC = () => {
     const location = useLocation();
     const navigate = useNavigate();
     const queryType = location.state?.type;
-    const [activeTabKey, setActiveTabKey] = useState<string>(queryType === 'attack' ? 'parse' : 'dnsRecords');
+    const [activeTabKey, setActiveTabKey] = useState<string>(queryType === 'attack' ? 'attackTrace' : 'dnsRecords');
     const [feedbackVisible, setFeedbackVisible] = useState(false);
     const [feedbackForm] = Form.useForm();
     const [fileList, setFileList] = useState<UploadFile[]>([]);
-    const [parseLoading, setParseLoading] = useState(true);
     const [cardLoading, setCardLoading] = useState(true);
-    const [currentVendorPage, setCurrentVendorPage] = useState(0);
     const carouselRef = useRef<any>(null);
+    const [showAlert, setShowAlert] = useState(true);
+    const [countdown, setCountdown] = useState(5);
 
     const attackTabs = [
-        { key: 'parse', tab: '外联黑域名' },
         { key: 'attackTrace', tab: '攻击实时轨迹' },
         { key: 'fingerprint', tab: '指纹信息' },
         { key: 'ports', tab: '端口信息' },
@@ -58,12 +57,10 @@ const ThreatIntelligenceDetail: React.FC = () => {
     // 使用硬编码的方式确保骨架屏在生产环境中显示
     useEffect(() => {
         // 强制显示骨架屏
-        setParseLoading(true);
         setCardLoading(true);
 
         // 使用 window.setTimeout 而不是 setTimeout，避免被优化
         const timer = window.setTimeout(() => {
-            setParseLoading(false);
             setCardLoading(false);
         }, 2000);
 
@@ -71,27 +68,43 @@ const ThreatIntelligenceDetail: React.FC = () => {
         return () => {
             window.clearTimeout(timer);
             // 重置状态
-            setParseLoading(true);
             setCardLoading(true);
         };
     }, [location.pathname, location.search]); // 使用路径和查询参数作为依赖
 
     // 标签页切换时的加载效果
     useEffect(() => {
-        if (activeTabKey === 'parse') {
-            setParseLoading(true);
+        if (activeTabKey === 'attackTrace') {
+            setCardLoading(true);
 
             // 使用 window.setTimeout 避免被优化
             const tabTimer = window.setTimeout(() => {
-                setParseLoading(false);
+                setCardLoading(false);
             }, 2000);
 
             return () => {
                 window.clearTimeout(tabTimer);
-                setParseLoading(true);
+                setCardLoading(true);
             };
         }
     }, [activeTabKey]);
+
+    useEffect(() => {
+        if (showAlert) {
+            setCountdown(5);
+            const timer = setInterval(() => {
+                setCountdown(prev => {
+                    if (prev === 1) {
+                        setShowAlert(false);
+                        clearInterval(timer);
+                        return 0;
+                    }
+                    return prev - 1;
+                });
+            }, 1000);
+            return () => clearInterval(timer);
+        }
+    }, [showAlert]);
 
     const handleTabChange = (key: string) => {
         setActiveTabKey(key);
@@ -436,87 +449,7 @@ const ThreatIntelligenceDetail: React.FC = () => {
         );
     };
 
-    const renderSkeletonRow = () => {
-        return {
-            key: Math.random(),
-            domain: <Skeleton.Input active size="small" block style={{ width: '100%', minWidth: 200 }} />,
-            threatLevel: <Skeleton.Input active size="small" block style={{ width: '100%', minWidth: 60 }} />,
-            firstParseTime: <Skeleton.Input active size="small" block style={{ width: '100%', minWidth: 150 }} />,
-            lastParseTime: <Skeleton.Input active size="small" block style={{ width: '100%', minWidth: 150 }} />
-        };
-    };
-
-    const skeletonData = Array(4).fill(null).map(renderSkeletonRow);
-
     const tabContents = {
-        parse: (
-            <Table
-                loading={false}
-                columns={[
-                    {
-                        title: '域名',
-                        dataIndex: 'domain',
-                        key: 'domain',
-                        width: '30%'
-                    },
-                    {
-                        title: '威胁等级',
-                        dataIndex: 'threatLevel',
-                        key: 'threatLevel',
-                        width: '15%'
-                    },
-                    {
-                        title: '创建时间',
-                        dataIndex: 'firstParseTime',
-                        key: 'firstParseTime',
-                        width: '27.5%'
-                    },
-                    {
-                        title: '更新时间',
-                        dataIndex: 'lastParseTime',
-                        key: 'lastParseTime',
-                        width: '27.5%'
-                    }
-                ]}
-                dataSource={(parseLoading || cardLoading) ? skeletonData : [
-                    {
-                        key: 1,
-                        domain: <span>malicious-domain1.com</span>,
-                        threatLevel: <Tag color="red">高危</Tag>,
-                        firstParseTime: <span>2023-01-01 12:00:00</span>,
-                        lastParseTime: <span>2023-12-01 15:30:00</span>
-                    },
-                    {
-                        key: 2,
-                        domain: <span>suspicious-domain2.net</span>,
-                        threatLevel: <Tag color="orange">中危</Tag>,
-                        firstParseTime: <span>2023-02-15 09:20:00</span>,
-                        lastParseTime: <span>2023-11-30 18:45:00</span>
-                    },
-                    {
-                        key: 3,
-                        domain: <span>risky-domain3.org</span>,
-                        threatLevel: <Tag color="red">高危</Tag>,
-                        firstParseTime: <span>2023-03-20 14:10:00</span>,
-                        lastParseTime: <span>2023-11-28 11:20:00</span>
-                    },
-                    {
-                        key: 4,
-                        domain: <span>unsafe-domain4.com</span>,
-                        threatLevel: <Tag color="green">低危</Tag>,
-                        firstParseTime: <span>2023-04-05 16:40:00</span>,
-                        lastParseTime: <span>2023-11-25 09:15:00</span>
-                    }
-                ]}
-                pagination={{
-                    total: 4,
-                    pageSize: 10,
-                    showSizeChanger: true,
-                    showQuickJumper: true,
-                    showTotal: (total) => `共 ${total} 条记录`,
-                }}
-            />
-        ),
         attackTrace: (
             <div>
                 <Row style={{ marginBottom: 16 }}>
@@ -932,74 +865,23 @@ const ThreatIntelligenceDetail: React.FC = () => {
                         </Row>
                         <div style={{ margin: '24px 0', borderTop: '1px solid #f0f0f0' }} />
                         <Row gutter={24}>
-                            <Col span={6}>
-                                <div style={{ display: 'flex', alignItems: 'center' }}>
-                                    <div style={{
-                                        width: 32,
-                                        height: 32,
-                                        borderRadius: '50%',
-                                        backgroundColor: '#1890ff',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        marginRight: 8
-                                    }}>
-                                        <ApartmentOutlined style={{ color: '#fff', fontSize: 16 }} />
-                                    </div>
-                                    <span style={{ color: '#999', marginRight: 8 }}>外联黑域名</span>
-                                    <span style={{ color: '#1890ff', fontSize: 20, fontWeight: 500 }}>4</span>
-                                </div>
-                            </Col>
-                            <Col span={6}>
-                                <div style={{ display: 'flex', alignItems: 'center' }}>
-                                    <div style={{
-                                        width: 32,
-                                        height: 32,
-                                        borderRadius: '50%',
-                                        backgroundColor: '#1890ff',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        marginRight: 8
-                                    }}>
-                                        <ApiOutlined style={{ color: '#fff', fontSize: 16 }} />
-                                    </div>
+                            <Col span={8}>
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start' }}>
+                                    <ApiOutlined style={{ color: '#fff', background: '#1890ff', borderRadius: '50%', fontSize: 16, width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', marginRight: 8 }} />
                                     <span style={{ color: '#999', marginRight: 8 }}>攻击实时轨迹</span>
                                     <span style={{ color: '#1890ff', fontSize: 20, fontWeight: 500 }}>3</span>
                                 </div>
                             </Col>
-                            <Col span={6}>
-                                <div style={{ display: 'flex', alignItems: 'center' }}>
-                                    <div style={{
-                                        width: 32,
-                                        height: 32,
-                                        borderRadius: '50%',
-                                        backgroundColor: '#1890ff',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        marginRight: 8
-                                    }}>
-                                        <GlobalOutlined style={{ color: '#fff', fontSize: 16 }} />
-                                    </div>
+                            <Col span={8}>
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start' }}>
+                                    <GlobalOutlined style={{ color: '#fff', background: '#1890ff', borderRadius: '50%', fontSize: 16, width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', marginRight: 8 }} />
                                     <span style={{ color: '#999', marginRight: 8 }}>端口信息</span>
                                     <span style={{ color: '#1890ff', fontSize: 20, fontWeight: 500 }}>10</span>
                                 </div>
                             </Col>
-                            <Col span={6}>
-                                <div style={{ display: 'flex', alignItems: 'center' }}>
-                                    <div style={{
-                                        width: 32,
-                                        height: 32,
-                                        borderRadius: '50%',
-                                        backgroundColor: '#1890ff',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        marginRight: 8
-                                    }}>
-                                        <LinkOutlined style={{ color: '#fff', fontSize: 16 }} />
-                                    </div>
+                            <Col span={8}>
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start' }}>
+                                    <LinkOutlined style={{ color: '#fff', background: '#1890ff', borderRadius: '50%', fontSize: 16, width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', marginRight: 8 }} />
                                     <span style={{ color: '#999', marginRight: 8 }}>同C段信息</span>
                                     <span style={{ color: '#1890ff', fontSize: 20, fontWeight: 500 }}>4</span>
                                 </div>
@@ -1141,6 +1023,39 @@ const ThreatIntelligenceDetail: React.FC = () => {
                 <Col flex="1">
                     <Row gutter={[0, 16]}>  {/* 减小行间距 */}
                         <Col span={24}>
+                            {showAlert && (
+                                <Alert
+                                    message={
+                                        <span style={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'space-between',
+                                            minHeight: 32
+                                        }}>
+                                            <span>
+                                                已完成对 8 家情报厂商的检索，5 家返回情报，3 家暂无结果，可通过左右按钮查看更多。
+                                            </span>
+                                            <span style={{}}>{countdown}秒后关闭</span>
+                                        </span>
+                                    }
+                                    type="info"
+                                    showIcon
+                                    closable
+                                    closeText={
+                                        <span style={{
+                                            color: '#1890ff',
+                                            fontSize: 15,
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            height: 32
+                                        }}>
+                                            不再提示
+                                        </span>
+                                    }
+                                    onClose={() => setShowAlert(false)}
+                                    style={{ margin: '16px 0 8px 0', fontSize: 15, minHeight: 32 }}
+                                />
+                            )}
                             {/* 威胁情报厂商轮播展示 */}
                             <div style={{ position: 'relative' }}>
                                 {/* 左侧切换按钮 */}
@@ -1227,7 +1142,6 @@ const ThreatIntelligenceDetail: React.FC = () => {
                                     dots={false}
                                     arrows={false}
                                     autoplay={false}
-                                    beforeChange={(from, to) => setCurrentVendorPage(to)}
                                     style={{
                                         padding: '0 40px'
                                     }}
@@ -1253,14 +1167,14 @@ const ThreatIntelligenceDetail: React.FC = () => {
                                 >
                                     {(() => {
                                         const allVendors = [
-                                            { logo: '/images/华为.png', name: '华为威胁情报' },
                                             { logo: '/images/奇安信.png', name: '奇安信威胁情报' },
                                             { logo: '/images/腾讯.png', name: '腾讯威胁情报' },
                                             { logo: '/images/360.png', name: '360威胁情报' },
                                             { logo: '/images/阿里.png', name: '阿里云威胁情报' },
+                                            { logo: '/images/华为.png', name: '华为威胁情报' },
                                             { logo: '/images/绿盟.png', name: '绿盟威胁情报' },
-                                            { logo: '/images/长亭.png', name: '长亭威胁情报' },
-                                            { logo: '/images/知道创宇.png', name: '知道创宇威胁情报' }
+                                            { logo: '/images/知道创宇.png', name: '知道创宇威胁情报' },
+                                            { logo: '/images/长亭.png', name: '长亭威胁情报' }
                                         ];
 
                                         return allVendors.map((vendor, index) => (
