@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { Card, Row, Col, Table, Tag, Space, Button, Input, message, Modal, Form, Upload, Skeleton, Carousel, Alert } from 'antd';
+import { Card, Row, Col, Table, Tag, Space, Button, Input, message, Modal, Form, Upload, Skeleton, Carousel, Alert, Empty } from 'antd';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { SearchOutlined, ReloadOutlined, CalendarOutlined, UpOutlined, DownOutlined, CopyOutlined, ApartmentOutlined, GlobalOutlined, ApiOutlined, LinkOutlined, InboxOutlined, LeftOutlined, RightOutlined } from '@ant-design/icons';
 import LabelSelect from '@/components/LabelSelect';
@@ -91,7 +91,7 @@ const ThreatIntelligenceDetail: React.FC = () => {
 
     useEffect(() => {
         if (showAlert) {
-            setCountdown(5);
+            setCountdown(10);
             const timer = setInterval(() => {
                 setCountdown(prev => {
                     if (prev === 1) {
@@ -1033,7 +1033,7 @@ const ThreatIntelligenceDetail: React.FC = () => {
                                             minHeight: 32
                                         }}>
                                             <span>
-                                                已完成对 8 家情报厂商的检索，5 家返回情报，3 家暂无结果，可通过左右按钮查看更多。
+                                                已完成对 8 家情报厂商的检索，7 家返回情报，1 家暂无结果，可通过左右按钮查看更多。
                                             </span>
                                             <span style={{}}>{countdown}秒后关闭</span>
                                         </span>
@@ -1218,38 +1218,59 @@ const ThreatIntelligenceDetail: React.FC = () => {
                                                     </div>
                                                 </div>
                                                 <div>
-                                                    {[
-                                                        {
-                                                            label: '威胁等级', value: index === 0 ? <Tag color="red">高危</Tag> :
-                                                                index === 1 ? <Tag color="green">低危</Tag> : <Tag color="orange">中危</Tag>
-                                                        },
-                                                        { label: '置信度', value: '高' },
-                                                        { label: '情报类型', value: '远控木马类' },
-                                                        { label: '情报归属', value: '公有情报源' },
-                                                        { label: '经纬度信息', value: '30.34324,343.3434' },
-                                                        { label: '情报相关组织', value: index === 1 ? 'APT32' : 'Lazarus' },
-                                                        { label: '关联病毒家族', value: 'Lockbit勒索病毒' },
-                                                        { label: '入库时间', value: '2024-12-11 12:03:44' },
-                                                        { label: '过期时间', value: '2024-12-31 11:22:31' }
-                                                    ].map((item, idx) => (
-                                                        <div
-                                                            key={idx}
-                                                            style={{
-                                                                padding: '12px 0',
-                                                                borderBottom: idx !== 8 ? '1px solid #f0f0f0' : 'none',
-                                                                textAlign: 'center'
-                                                            }}
-                                                        >
-                                                            <div style={{
-                                                                color: '#666',
-                                                                marginBottom: '8px',
-                                                                textAlign: 'center'
-                                                            }}>{item.label}</div>
-                                                            <div style={{
-                                                                textAlign: 'center'
-                                                            }}>{item.value}</div>
+                                                    {/* 长亭威胁情报显示空状态 */}
+                                                    {index === 7 ? (
+                                                        <div style={{
+                                                            padding: '40px 0',
+                                                            display: 'flex',
+                                                            justifyContent: 'center',
+                                                            alignItems: 'center',
+                                                            minHeight: '300px',
+                                                            marginTop: '200px'
+                                                        }}>
+                                                            <Empty
+                                                                description="暂无数据"
+                                                                image={Empty.PRESENTED_IMAGE_SIMPLE}
+                                                                style={{ fontSize: 14 }}
+                                                            />
                                                         </div>
-                                                    ))}
+                                                    ) : (
+                                                        // 其他厂商显示正常数据
+                                                        <>
+                                                            {[
+                                                                {
+                                                                    label: '威胁等级', value: index === 0 ? <Tag color="red">高危</Tag> :
+                                                                        index === 1 ? <Tag color="green">低危</Tag> : <Tag color="orange">中危</Tag>
+                                                                },
+                                                                { label: '置信度', value: '高' },
+                                                                { label: '情报类型', value: '远控木马类' },
+                                                                { label: '情报归属', value: '公有情报源' },
+                                                                { label: '经纬度信息', value: '30.34324,343.3434' },
+                                                                { label: '情报相关组织', value: index === 6 ? '--' : (index === 1 ? 'APT32' : 'Lazarus') },
+                                                                { label: '关联病毒家族', value: index === 6 ? '--' : 'Lockbit勒索病毒' },
+                                                                { label: '入库时间', value: '2024-12-11 12:03:44' },
+                                                                { label: '过期时间', value: '2024-12-31 11:22:31' }
+                                                            ].map((item, idx) => (
+                                                                <div
+                                                                    key={idx}
+                                                                    style={{
+                                                                        padding: '12px 0',
+                                                                        borderBottom: idx !== 8 ? '1px solid #f0f0f0' : 'none',
+                                                                        textAlign: 'center'
+                                                                    }}
+                                                                >
+                                                                    <div style={{
+                                                                        color: '#666',
+                                                                        marginBottom: '8px',
+                                                                        textAlign: 'center'
+                                                                    }}>{item.label}</div>
+                                                                    <div style={{
+                                                                        textAlign: 'center'
+                                                                    }}>{item.value}</div>
+                                                                </div>
+                                                            ))}
+                                                        </>
+                                                    )}
                                                 </div>
                                             </div>
                                         ));
