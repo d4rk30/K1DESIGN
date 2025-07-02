@@ -243,7 +243,7 @@ const OutboundLogs: React.FC = () => {
             ),
         },
         {
-            title: '出境地区',
+            title: '目的地址',
             dataIndex: 'outboundDestination',
             key: 'outboundDestination',
             width: 180,
@@ -260,7 +260,7 @@ const OutboundLogs: React.FC = () => {
             }
         },
         {
-            title: '出境次数',
+            title: '连接次数',
             dataIndex: 'outboundCount',
             key: 'outboundCount',
             width: 90,
@@ -289,21 +289,21 @@ const OutboundLogs: React.FC = () => {
             ),
         },
         {
-            title: '出境开始时间',
+            title: '首次连接时间',
             dataIndex: 'sessionStart',
             key: 'sessionStart',
             width: 200,
             sorter: (a, b) => dayjs(a.sessionStart).valueOf() - dayjs(b.sessionStart).valueOf(),
         },
         {
-            title: '出境结束时间',
+            title: '最近连接时间',
             dataIndex: 'sessionEnd',
             key: 'sessionEnd',
             width: 200,
             sorter: (a, b) => dayjs(a.sessionEnd).valueOf() - dayjs(b.sessionEnd).valueOf(),
         },
         {
-            title: '出境总量(MB)',
+            title: '数据总量(MB)',
             key: 'traffic',
             width: 160,
             sorter: (a, b) => (parseFloat(a.upstreamTraffic) + parseFloat(a.downstreamTraffic)) - (parseFloat(b.upstreamTraffic) + parseFloat(b.downstreamTraffic)),
@@ -1467,7 +1467,7 @@ const OutboundLogs: React.FC = () => {
                                     ),
                                 },
                                 {
-                                    title: '出境流量',
+                                    title: '数据总量',
                                     dataIndex: 'traffic',
                                     key: 'traffic',
                                     width: 140,
