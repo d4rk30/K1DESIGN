@@ -237,6 +237,20 @@ const AssetList: React.FC = () => {
         }
     };
 
+    // 监听筛选表单区域选择变化
+    const handleFilterZoneChange = (value: AssetZone) => {
+        if (value !== AssetZone.Other) {
+            filterForm.setFieldValue('otherZone', undefined);
+        }
+    };
+
+    // 监听筛选表单资产类型选择变化
+    const handleFilterAssetTypeChange = (value: AssetType) => {
+        if (value !== AssetType.Other) {
+            filterForm.setFieldValue('otherAssetType', undefined);
+        }
+    };
+
     return (
         <Card
             title={
@@ -302,6 +316,7 @@ const AssetList: React.FC = () => {
                         label="区域"
                         placeholder="请选择"
                         style={{ minWidth: 200 }}
+                        onChange={handleFilterZoneChange}
                     >
                         {Object.values(AssetZone).map(zone => (
                             <Select.Option key={zone} value={zone}>
@@ -316,6 +331,27 @@ const AssetList: React.FC = () => {
                     </LabelSelect>
                 </Form.Item>
 
+                {/* 当筛选区域选择"其他"时显示的输入框 */}
+                <Form.Item
+                    noStyle
+                    shouldUpdate={(prevValues, currentValues) => prevValues.zone !== currentValues.zone}
+                >
+                    {({ getFieldValue }) =>
+                        getFieldValue('zone') === AssetZone.Other && (
+                            <Form.Item
+                                name="otherZone"
+                                style={{ marginBottom: 0 }}
+                            >
+                                <LabelInput
+                                    label="其他区域"
+                                    placeholder="请输入其他区域名称"
+                                    style={{ minWidth: 200 }}
+                                />
+                            </Form.Item>
+                        )
+                    }
+                </Form.Item>
+
                 <Form.Item
                     name="assetType"
                     style={{ marginBottom: 0 }}
@@ -324,6 +360,7 @@ const AssetList: React.FC = () => {
                         label="资产类型"
                         placeholder="请选择"
                         style={{ minWidth: 200 }}
+                        onChange={handleFilterAssetTypeChange}
                     >
                         {Object.values(AssetType).map(type => (
                             <Select.Option key={type} value={type}>
@@ -331,6 +368,27 @@ const AssetList: React.FC = () => {
                             </Select.Option>
                         ))}
                     </LabelSelect>
+                </Form.Item>
+
+                {/* 当筛选资产类型选择"其他"时显示的输入框 */}
+                <Form.Item
+                    noStyle
+                    shouldUpdate={(prevValues, currentValues) => prevValues.assetType !== currentValues.assetType}
+                >
+                    {({ getFieldValue }) =>
+                        getFieldValue('assetType') === AssetType.Other && (
+                            <Form.Item
+                                name="otherAssetType"
+                                style={{ marginBottom: 0 }}
+                            >
+                                <LabelInput
+                                    label="其他资产类型"
+                                    placeholder="请输入其他资产类型名称"
+                                    style={{ minWidth: 200 }}
+                                />
+                            </Form.Item>
+                        )
+                    }
                 </Form.Item>
 
                 <Form.Item style={{ marginBottom: 0 }}>

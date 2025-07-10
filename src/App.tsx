@@ -31,7 +31,7 @@ import AssetList from './pages/AssetList';
 import License from './pages/License';
 import SyslogConfig from './pages/SyslogConfig';
 import Backup from './pages/Backup';
-
+import UpgradeManagement from './pages/UpgradeManagement';
 import UnderDevelopment from './pages/UnderDevelopment';
 // Set dayjs locale
 dayjs.locale('zh-cn');
@@ -90,6 +90,7 @@ const App: React.FC = () => {
             <Route path="asset-management/:groupId" element={<AssetList />} />
             <Route path="license" element={<License />} />
             <Route path="syslog-config" element={<SyslogConfig />} />
+            <Route path="upgrade" element={<UpgradeManagement />} />
             <Route path="backup" element={<Backup />} />
             {/* 404 页面 */}
             <Route path="*" element={<UnderDevelopment />} />
