@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Card, Row, Col, Space, Tag, Badge, Button, Progress, Modal, Divider, Switch, Select, TimePicker } from 'antd';
-import { PlusOutlined, DeleteOutlined, PauseCircleOutlined, PlayCircleOutlined } from '@ant-design/icons';
+import { Card, Row, Col, Space, Tag, Badge, Button, Progress, Modal, Divider, Switch, Select, TimePicker, Tooltip } from 'antd';
+import { PlusOutlined, DeleteOutlined, PauseCircleOutlined, PlayCircleOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 
 const UpgradeManagement: React.FC = () => {
@@ -17,8 +17,11 @@ const UpgradeManagement: React.FC = () => {
 
     // 自动升级相关状态
     const [autoUpgradeEnabled, setAutoUpgradeEnabled] = useState(false);
-    const [autoUpgradeModules, setAutoUpgradeModules] = useState<string[]>(['system', 'patch', 'rules']);
+    const [autoUpgradeSwitchEnabled, setAutoUpgradeSwitchEnabled] = useState(false);
     const [timeRules, setTimeRules] = useState([
+        { id: 1, weekDay: ['monday'], startTime: dayjs('02:00:00', 'HH:mm:ss'), endTime: dayjs('04:00:00', 'HH:mm:ss') }
+    ]);
+    const [upgradeTimeRules, setUpgradeTimeRules] = useState([
         { id: 1, weekDay: ['monday'], startTime: dayjs('02:00:00', 'HH:mm:ss'), endTime: dayjs('04:00:00', 'HH:mm:ss') }
     ]);
 
@@ -114,6 +117,10 @@ const UpgradeManagement: React.FC = () => {
         setAutoUpgradeEnabled(checked);
     };
 
+    const handleAutoUpgradeSwitchChange = (checked: boolean) => {
+        setAutoUpgradeSwitchEnabled(checked);
+    };
+
     const addTimeRule = () => {
         const newId = Math.max(...timeRules.map(rule => rule.id)) + 1;
         setTimeRules([
@@ -139,6 +146,31 @@ const UpgradeManagement: React.FC = () => {
         ));
     };
 
+    const addUpgradeTimeRule = () => {
+        const newId = Math.max(...upgradeTimeRules.map(rule => rule.id)) + 1;
+        setUpgradeTimeRules([
+            ...upgradeTimeRules,
+            {
+                id: newId,
+                weekDay: ['monday'],
+                startTime: dayjs('02:00:00', 'HH:mm:ss'),
+                endTime: dayjs('04:00:00', 'HH:mm:ss')
+            }
+        ]);
+    };
+
+    const removeUpgradeTimeRule = (id: number) => {
+        if (upgradeTimeRules.length > 1) {
+            setUpgradeTimeRules(upgradeTimeRules.filter(rule => rule.id !== id));
+        }
+    };
+
+    const updateUpgradeTimeRule = (id: number, field: 'weekDay' | 'startTime' | 'endTime', value: any) => {
+        setUpgradeTimeRules(upgradeTimeRules.map(rule =>
+            rule.id === id ? { ...rule, [field]: value } : rule
+        ));
+    };
+
     // 清理定时器
     useEffect(() => {
         return () => {
@@ -158,11 +190,7 @@ const UpgradeManagement: React.FC = () => {
         { label: '周日', value: 'sunday' }
     ];
 
-    const moduleOptions = [
-        { label: '系统版本', value: 'system' },
-        { label: '补丁版本', value: 'patch' },
-        { label: '规则库版本', value: 'rules' }
-    ];
+
 
     const contentList = {
         system: (
@@ -234,7 +262,7 @@ const UpgradeManagement: React.FC = () => {
                         {/* 自动升级开关 */}
                         <div style={{ marginBottom: 24 }}>
                             <Space>
-                                <span>自动升级开关</span>
+                                <span>自动下载开关</span>
                                 <Switch
                                     checked={autoUpgradeEnabled}
                                     onChange={handleAutoUpgradeChange}
@@ -242,23 +270,18 @@ const UpgradeManagement: React.FC = () => {
                             </Space>
                         </div>
 
-                        {/* 自动升级模块选择 */}
-                        <div style={{ marginBottom: 24 }}>
-                            <div style={{ marginBottom: 8 }}>自动升级模块</div>
-                            <Select
-                                value={autoUpgradeModules}
-                                onChange={setAutoUpgradeModules}
-                                options={moduleOptions}
-                                mode="multiple"
-                                placeholder="选择需要自动升级的模块"
-                                style={{ width: '100%' }}
-                                disabled={!autoUpgradeEnabled}
-                            />
-                        </div>
+
 
                         {/* 允许升级时间规则 */}
                         <div>
-                            <div style={{ marginBottom: 16 }}>允许升级时间</div>
+                            <div style={{ marginBottom: 16 }}>
+                                <Space>
+                                    <span>允许下载时间</span>
+                                    <Tooltip title="设置下载升级包的时间范围，多个条件满足其中任意一条都会执行下载。">
+                                        <ExclamationCircleOutlined style={{ color: '#1890ff', cursor: 'pointer' }} />
+                                    </Tooltip>
+                                </Space>
+                            </div>
                             {timeRules.map((rule, index) => (
                                 <div key={rule.id} style={{
                                     display: 'flex',
@@ -314,6 +337,87 @@ const UpgradeManagement: React.FC = () => {
                                 onClick={addTimeRule}
                                 style={{ marginTop: 8, width: '100%' }}
                                 disabled={!autoUpgradeEnabled}
+                            >
+                                增加时间范围
+                            </Button>
+                        </div>
+
+                        {/* 自动升级开关 */}
+                        <div style={{ marginTop: 32, marginBottom: 24 }}>
+                            <Space>
+                                <span>自动升级开关</span>
+                                <Switch
+                                    checked={autoUpgradeSwitchEnabled}
+                                    onChange={handleAutoUpgradeSwitchChange}
+                                />
+                            </Space>
+                        </div>
+
+                        {/* 允许升级时间规则 */}
+                        <div>
+                            <div style={{ marginBottom: 16 }}>
+                                <Space>
+                                    <span>允许升级时间</span>
+                                    <Tooltip title="设置升级系统的时间范围，多个条件满足其中任意一条都会执行升级。升级开始之后，如果超过时间允许范围，仍会执行到升级完成，且无法暂停。">
+                                        <ExclamationCircleOutlined style={{ color: '#1890ff', cursor: 'pointer' }} />
+                                    </Tooltip>
+                                </Space>
+                            </div>
+                            {upgradeTimeRules.map((rule, index) => (
+                                <div key={rule.id} style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '16px',
+                                    marginBottom: '12px',
+                                    padding: '12px',
+                                    background: '#fafafa',
+                                    borderRadius: '6px',
+                                    opacity: autoUpgradeSwitchEnabled ? 1 : 0.5
+                                }}>
+                                    <span style={{ minWidth: '60px' }}>升级时间范围 {index + 1}：</span>
+                                    <Select
+                                        value={rule.weekDay}
+                                        onChange={(value) => updateUpgradeTimeRule(rule.id, 'weekDay', value)}
+                                        style={{ width: 460 }}
+                                        options={weekDayOptions}
+                                        mode="multiple"
+                                        placeholder="选择星期"
+                                        maxTagCount="responsive"
+                                        disabled={!autoUpgradeSwitchEnabled}
+                                    />
+                                    <span>从</span>
+                                    <TimePicker
+                                        value={rule.startTime}
+                                        onChange={(time) => updateUpgradeTimeRule(rule.id, 'startTime', time)}
+                                        format="HH:mm:ss"
+                                        placeholder="开始时间"
+                                        disabled={!autoUpgradeSwitchEnabled}
+                                    />
+                                    <span>到</span>
+                                    <TimePicker
+                                        value={rule.endTime}
+                                        onChange={(time) => updateUpgradeTimeRule(rule.id, 'endTime', time)}
+                                        format="HH:mm:ss"
+                                        placeholder="结束时间"
+                                        disabled={!autoUpgradeSwitchEnabled}
+                                    />
+                                    {upgradeTimeRules.length > 1 && (
+                                        <Button
+                                            type="text"
+                                            icon={<DeleteOutlined />}
+                                            onClick={() => removeUpgradeTimeRule(rule.id)}
+                                            style={{ color: '#ff4d4f' }}
+                                            disabled={!autoUpgradeSwitchEnabled}
+                                        />
+                                    )}
+                                </div>
+                            ))}
+                            <Button
+                                type="dashed"
+                                icon={<PlusOutlined />}
+                                onClick={addUpgradeTimeRule}
+                                style={{ marginTop: 8, width: '100%' }}
+                                disabled={!autoUpgradeSwitchEnabled}
                             >
                                 增加时间范围
                             </Button>
