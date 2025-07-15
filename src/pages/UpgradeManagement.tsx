@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Card, Row, Col, Space, Tag, Badge, Button, Progress, Modal, Divider, Switch, Select, TimePicker, Tooltip } from 'antd';
-import { PlusOutlined, DeleteOutlined, PauseCircleOutlined, PlayCircleOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
+import { Card, Row, Col, Space, Tag, Badge, Button, Progress, Modal, Divider, Switch, Select, TimePicker, Tooltip, Upload, message, Radio, Input, Form } from 'antd';
+import { PlusOutlined, DeleteOutlined, PauseCircleOutlined, PlayCircleOutlined, ExclamationCircleOutlined, UploadOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 
 const UpgradeManagement: React.FC = () => {
@@ -14,6 +14,16 @@ const UpgradeManagement: React.FC = () => {
     const [currentStep, setCurrentStep] = useState<'download' | 'upgrade'>('download');
     const [isDownloadPaused, setIsDownloadPaused] = useState(false);
     const downloadIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
+    // 本地升级相关状态
+    const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+    const [isLocalUpgradeModalVisible, setIsLocalUpgradeModalVisible] = useState(false);
+    const [uploadProgress, setUploadProgress] = useState(0);
+    const [localUpgradeProgress, setLocalUpgradeProgress] = useState(0);
+    const [localCurrentStep, setLocalCurrentStep] = useState<'upload' | 'upgrade'>('upload');
+    const [isUploadPaused, setIsUploadPaused] = useState(false);
+    const uploadIntervalRef = useRef<NodeJS.Timeout | null>(null);
+    const upgradeCompletedRef = useRef<boolean>(false);
 
     // 自动升级相关状态
     const [autoUpgradeEnabled, setAutoUpgradeEnabled] = useState(false);
@@ -112,6 +122,105 @@ const UpgradeManagement: React.FC = () => {
         }
     };
 
+    const handleLocalUpgrade = () => {
+        setIsLocalUpgradeModalVisible(true);
+        setUploadProgress(0);
+        setLocalUpgradeProgress(0);
+        setLocalCurrentStep('upload');
+        setIsUploadPaused(false);
+        upgradeCompletedRef.current = false;
+
+        startUpload();
+    };
+
+    const startUpload = () => {
+        // 模拟5秒上传进度
+        uploadIntervalRef.current = setInterval(() => {
+            setUploadProgress(prev => {
+                if (prev >= 100) {
+                    if (uploadIntervalRef.current) {
+                        clearInterval(uploadIntervalRef.current);
+                        uploadIntervalRef.current = null;
+                    }
+                    setLocalCurrentStep('upgrade');
+                    setLocalUpgradeProgress(0);
+
+                    // 模拟5秒升级进度
+                    const upgradeInterval = setInterval(() => {
+                        setLocalUpgradeProgress(prev => {
+                            if (prev >= 100) {
+                                clearInterval(upgradeInterval);
+                                if (!upgradeCompletedRef.current) {
+                                    upgradeCompletedRef.current = true;
+                                    setTimeout(() => {
+                                        setIsLocalUpgradeModalVisible(false);
+                                        setUploadProgress(0);
+                                        setLocalUpgradeProgress(0);
+                                        setLocalCurrentStep('upload');
+                                        setIsUploadPaused(false);
+                                        setUploadedFile(null);
+                                        message.success('本地升级完成！');
+                                    }, 1000);
+                                }
+                                return 100;
+                            }
+                            return prev + 10; // 每100ms增加10%，5秒完成
+                        });
+                    }, 100);
+                    return 100;
+                }
+                return prev + 5; // 每100ms增加5%，5秒完成
+            });
+        }, 100);
+    };
+
+    const handlePauseResumeUpload = () => {
+        if (isUploadPaused) {
+            // 恢复上传
+            setIsUploadPaused(false);
+            startUpload();
+        } else {
+            // 暂停上传
+            setIsUploadPaused(true);
+            if (uploadIntervalRef.current) {
+                clearInterval(uploadIntervalRef.current);
+                uploadIntervalRef.current = null;
+            }
+        }
+    };
+
+    const handleFileUpload = (file: File) => {
+        // 检查文件类型
+        const allowedTypes = ['.bin', '.tar.gz', '.zip'];
+        const fileExtension = file.name.toLowerCase().substring(file.name.lastIndexOf('.'));
+
+        if (!allowedTypes.some(type => file.name.toLowerCase().endsWith(type))) {
+            message.error('只支持 .bin、.tar.gz、.zip 格式的升级文件');
+            return false;
+        }
+
+        // 检查文件大小 (假设最大100MB)
+        const maxSize = 100 * 1024 * 1024; // 100MB
+        if (file.size > maxSize) {
+            message.error('文件大小不能超过100MB');
+            return false;
+        }
+
+        setUploadedFile(file);
+        return false; // 阻止默认上传行为
+    };
+
+    const handleRemoveFile = () => {
+        setUploadedFile(null);
+        message.info('已移除上传的文件');
+    };
+
+    const getFileExtension = (fileName: string | undefined): string => {
+        if (!fileName) return '未知';
+        const parts = fileName.split('.');
+        return parts.length > 1 ? parts[parts.length - 1].toUpperCase() : '未知';
+    };
+
     // 自动升级相关函数
     const handleAutoUpgradeChange = (checked: boolean) => {
         setAutoUpgradeEnabled(checked);
@@ -171,11 +280,32 @@ const UpgradeManagement: React.FC = () => {
         ));
     };
 
+    // FTP升级相关状态
+    const [ftpProtocol, setFtpProtocol] = useState<'SFTP' | 'FTP'>('SFTP');
+    const [ftpForm] = Form.useForm();
+
+    const handleFtpUpgrade = () => {
+        ftpForm.validateFields().then(values => {
+            console.log('FTP升级参数:', values);
+            message.success('FTP升级功能待实现');
+        }).catch(errorInfo => {
+            console.log('表单验证失败:', errorInfo);
+        });
+    };
+
+    const handleFtpReset = () => {
+        ftpForm.resetFields();
+        setFtpProtocol('SFTP');
+    };
+
     // 清理定时器
     useEffect(() => {
         return () => {
             if (downloadIntervalRef.current) {
                 clearInterval(downloadIntervalRef.current);
+            }
+            if (uploadIntervalRef.current) {
+                clearInterval(uploadIntervalRef.current);
             }
         };
     }, []);
@@ -197,30 +327,32 @@ const UpgradeManagement: React.FC = () => {
             <div style={{ width: 1280, margin: '0 auto' }}>
                 <div>
                     <h3 style={{ marginBottom: 16, marginLeft: 8 }}>在线升级</h3>
-                    <Space style={{ width: '100%', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <Space>
-                            <Button type="primary" onClick={handleCheckUpdate}>
-                                检查更新
-                            </Button>
-                            <Button
-                                type="default"
-                                disabled={!hasNewVersion}
-                                onClick={() => {
-                                    if (hasNewVersion) {
-                                        setIsConfirmModalVisible(true);
-                                    }
-                                }}
-                            >
-                                升级
-                            </Button>
+                    <div style={{ paddingLeft: 8 }}>
+                        <Space style={{ width: '100%', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <Space>
+                                <Button type="primary" onClick={handleCheckUpdate}>
+                                    检查更新
+                                </Button>
+                                <Button
+                                    type="default"
+                                    disabled={!hasNewVersion}
+                                    onClick={() => {
+                                        if (hasNewVersion) {
+                                            setIsConfirmModalVisible(true);
+                                        }
+                                    }}
+                                >
+                                    升级
+                                </Button>
+                            </Space>
+                            {hasNewVersion && (
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    <span style={{ color: 'rgba(0, 0, 0, 0.65)' }}>发现最新版本：</span>
+                                    <Tag color="blue">{latestVersion}</Tag>
+                                </div>
+                            )}
                         </Space>
-                        {hasNewVersion && (
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                <span style={{ color: 'rgba(0, 0, 0, 0.65)' }}>发现最新版本：</span>
-                                <Tag color="blue">{latestVersion}</Tag>
-                            </div>
-                        )}
-                    </Space>
+                    </div>
                 </div>
 
                 <Divider />
@@ -228,7 +360,61 @@ const UpgradeManagement: React.FC = () => {
                 {/* 本地升级区域 */}
                 <div>
                     <h3 style={{ marginBottom: 16, marginLeft: 8 }}>本地升级</h3>
-                    {/* 本地升级内容 */}
+                    <div style={{ paddingLeft: 8 }}>
+                        <Space style={{ width: '100%', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <Space>
+                                <Upload
+                                    beforeUpload={handleFileUpload}
+                                    showUploadList={false}
+                                    accept=".bin,.tar.gz,.zip"
+                                >
+                                    <Button icon={<UploadOutlined />}>
+                                        上传文件
+                                    </Button>
+                                </Upload>
+                                <Button
+                                    type="primary"
+                                    disabled={!uploadedFile}
+                                    onClick={() => {
+                                        if (uploadedFile) {
+                                            handleLocalUpgrade();
+                                        }
+                                    }}
+                                >
+                                    升级
+                                </Button>
+                            </Space>
+                            <div></div>
+                        </Space>
+
+                        {uploadedFile && (
+                            <div style={{ marginTop: 16 }}>
+                                <Card size="small" style={{ background: '#fafafa' }}>
+                                    <div style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'space-between'
+                                    }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                            <span style={{ color: 'rgba(0, 0, 0, 0.65)' }}>已选择文件：</span>
+                                            <Tag color="blue">{uploadedFile.name}</Tag>
+                                            <span style={{ color: 'rgba(0, 0, 0, 0.45)', fontSize: '12px' }}>
+                                                ({(uploadedFile.size / 1024 / 1024).toFixed(2)} MB)
+                                            </span>
+                                        </div>
+                                        <Button
+                                            type="text"
+                                            size="small"
+                                            onClick={handleRemoveFile}
+                                            style={{ color: '#ff4d4f' }}
+                                        >
+                                            移除
+                                        </Button>
+                                    </div>
+                                </Card>
+                            </div>
+                        )}
+                    </div>
                 </div>
 
                 <Divider />
@@ -236,7 +422,87 @@ const UpgradeManagement: React.FC = () => {
                 {/* 通过FTP服务器升级区域 */}
                 <div>
                     <h3 style={{ marginBottom: 16, marginLeft: 8 }}>通过FTP服务器升级</h3>
-                    {/* 通过FTP服务器升级内容 */}
+                    <div style={{ paddingLeft: 8 }}>
+                        <Form
+                            form={ftpForm}
+                            layout="vertical"
+                            style={{ maxWidth: 600 }}
+                            initialValues={{
+                                protocol: 'SFTP',
+                                path: '',
+                                username: '',
+                                password: ''
+                            }}
+                        >
+                            <Form.Item
+                                label="协议类型"
+                                name="protocol"
+                                rules={[{ required: true, message: '请选择协议类型' }]}
+                            >
+                                <Radio.Group
+                                    value={ftpProtocol}
+                                    onChange={(e) => setFtpProtocol(e.target.value)}
+                                    buttonStyle="solid"
+                                >
+                                    <Radio.Button value="SFTP">SFTP</Radio.Button>
+                                    <Radio.Button value="FTP">FTP</Radio.Button>
+                                </Radio.Group>
+                            </Form.Item>
+
+                            <Form.Item
+                                label="升级包路径"
+                                name="path"
+                                rules={[
+                                    { required: true, message: '请输入升级包路径' },
+                                    { pattern: /^[\/\w\-\.]+$/, message: '请输入有效的路径格式' }
+                                ]}
+                            >
+                                <Input
+                                    placeholder="请输入升级包在服务器上的完整路径，如：/upgrade/package.bin"
+                                    style={{ width: '100%' }}
+                                />
+                            </Form.Item>
+
+                            <Form.Item
+                                label="登录名"
+                                name="username"
+                                rules={[
+                                    { required: true, message: '请输入登录名' },
+                                    { min: 1, max: 50, message: '登录名长度应在1-50个字符之间' }
+                                ]}
+                            >
+                                <Input
+                                    placeholder="请输入FTP服务器登录名"
+                                    style={{ width: '100%' }}
+                                />
+                            </Form.Item>
+
+                            <Form.Item
+                                label="登录密码"
+                                name="password"
+                                rules={[
+                                    { required: true, message: '请输入登录密码' },
+                                    { min: 6, message: '密码长度至少6个字符' }
+                                ]}
+                            >
+                                <Input.Password
+                                    placeholder="请输入FTP服务器登录密码"
+                                    style={{ width: '100%' }}
+                                />
+                            </Form.Item>
+
+                            <Form.Item>
+                                <Space>
+                                    <Button type="primary" onClick={handleFtpUpgrade}>
+                                        升级
+                                    </Button>
+                                    <Button onClick={handleFtpReset}>
+                                        重置
+                                    </Button>
+                                </Space>
+                            </Form.Item>
+                        </Form>
+                    </div>
                 </div>
 
                 <Divider />
@@ -573,6 +839,60 @@ const UpgradeManagement: React.FC = () => {
                 </div>
             </Modal>
 
+            {/* 本地升级进度模态对话框 */}
+            <Modal
+                open={isLocalUpgradeModalVisible}
+                footer={null}
+                closable={false}
+                maskClosable={false}
+                width={500}
+            >
+                <div style={{ padding: '20px 0' }}>
+                    {localCurrentStep === 'upload' && (
+                        <div>
+                            <div style={{ marginBottom: 16 }}>
+                                <h4>正在上传升级文件...</h4>
+                                <p style={{ color: 'rgba(0, 0, 0, 0.65)', margin: 0 }}>
+                                    正在上传文件 {uploadedFile?.name}
+                                </p>
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                <Progress
+                                    percent={uploadProgress}
+                                    status={uploadProgress === 100 ? 'success' : 'active'}
+                                    style={{ flex: 1 }}
+                                />
+                                <Button
+                                    type="text"
+                                    icon={isUploadPaused ? <PlayCircleOutlined /> : <PauseCircleOutlined />}
+                                    onClick={handlePauseResumeUpload}
+                                    disabled={uploadProgress === 100}
+                                    style={{
+                                        color: isUploadPaused ? '#52c41a' : '#1890ff',
+                                        fontSize: '16px'
+                                    }}
+                                />
+                            </div>
+                        </div>
+                    )}
+
+                    {localCurrentStep === 'upgrade' && (
+                        <div>
+                            <div style={{ marginBottom: 16 }}>
+                                <h4>正在升级系统...</h4>
+                                <p style={{ color: 'rgba(0, 0, 0, 0.65)', margin: 0 }}>
+                                    正在安装本地升级文件，请勿关闭系统
+                                </p>
+                            </div>
+                            <Progress
+                                percent={localUpgradeProgress}
+                                status={localUpgradeProgress === 100 ? 'success' : 'active'}
+                            />
+                        </div>
+                    )}
+                </div>
+            </Modal>
+
             {/* 升级确认弹窗 */}
             <Modal
                 title="升级确认"
@@ -615,6 +935,8 @@ const UpgradeManagement: React.FC = () => {
                     </div>
                 </div>
             </Modal>
+
+
         </div>
     );
 };
