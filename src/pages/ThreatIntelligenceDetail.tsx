@@ -413,52 +413,83 @@ const ThreatIntelligenceDetail: React.FC = () => {
 
     const PortCard: React.FC<{
         port: number;
-        time: string;
-        protocol: string;
-        serviceName: string;
-        version: string;
-    }> = ({ port, time, protocol, serviceName, version }) => {
+        service: string;
+    }> = ({ port, service }) => {
         return (
             <div style={{
-                padding: '16px 0',
-                border: '1px solid #f3f3f3',
-                borderRadius: 6,
-                minWidth: 320,
-            }}>
-                <Row>
-                    <Col style={{
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        position: 'relative',
-                        padding: '0 16px'
-                    }}>
-                        <div style={{ fontSize: 16, fontWeight: 500, color: '#333' }}>端口</div>
-                        <div style={{ fontSize: 30, color: '#0E7CFD', marginTop: 16, fontWeight: 700 }}>{port}</div>
-                        <div style={{
-                            position: 'absolute',
-                            right: 0,
-                            top: '50%',
-                            transform: 'translateY(-50%)',
-                            width: 1,
-                            height: '100%',
-                            backgroundColor: '#f3f3f3'
-                        }} />
-                    </Col>
-                    <Col style={{ padding: '0 32px 0 16px' }}>
-                        <Space direction="vertical" size={8} style={{ width: '100%' }}>
-                            <div>
-                                <CalendarOutlined style={{ marginRight: 8 }} />
-                                {time}
-                            </div>
-                            <div>服务协议：{protocol}</div>
-                            <div>服务名称：{serviceName || '-'}</div>
-                            <div>版本信息：{version || '-'}</div>
-                        </Space>
-                    </Col>
-                </Row>
-            </div >
+                padding: '24px 20px',
+                border: '1px solid #f0f0f0',
+                borderRadius: 8,
+                backgroundColor: '#fff',
+                boxShadow: '0 1px 2px rgba(0,0,0,0.03)',
+                transition: 'all 0.2s ease',
+                cursor: 'pointer',
+                height: '120px',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'center',
+                alignItems: 'center',
+                position: 'relative',
+                overflow: 'hidden'
+            }}
+                onMouseEnter={(e) => {
+                    e.currentTarget.style.borderColor = '#1890ff';
+                    e.currentTarget.style.boxShadow = '0 4px 12px rgba(24, 144, 255, 0.15)';
+                    e.currentTarget.style.transform = 'translateY(-2px)';
+                }}
+                onMouseLeave={(e) => {
+                    e.currentTarget.style.borderColor = '#f0f0f0';
+                    e.currentTarget.style.boxShadow = '0 1px 2px rgba(0,0,0,0.03)';
+                    e.currentTarget.style.transform = 'translateY(0)';
+                }}
+            >
+                {/* 背景装饰 */}
+                <div style={{
+                    position: 'absolute',
+                    top: -20,
+                    right: -20,
+                    width: 60,
+                    height: 60,
+                    background: 'linear-gradient(135deg, #1890ff10, #1890ff05)',
+                    borderRadius: '50%',
+                    zIndex: 0
+                }} />
+
+                {/* 端口号 */}
+                <div style={{
+                    fontSize: 32,
+                    fontWeight: 700,
+                    color: '#1890ff',
+                    lineHeight: 1,
+                    marginBottom: 8,
+                    zIndex: 1
+                }}>
+                    {port}
+                </div>
+
+                {/* 服务名称 */}
+                <div style={{
+                    fontSize: 14,
+                    fontWeight: 500,
+                    color: '#666',
+                    textAlign: 'center',
+                    zIndex: 1,
+                    letterSpacing: '0.5px'
+                }}>
+                    服务：{service}
+                </div>
+
+                {/* 底部装饰线 */}
+                <div style={{
+                    position: 'absolute',
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
+                    height: 3,
+                    background: 'linear-gradient(90deg, #1890ff, #40a9ff)',
+                    zIndex: 1
+                }} />
+            </div>
         );
     };
 
@@ -466,33 +497,44 @@ const ThreatIntelligenceDetail: React.FC = () => {
         const [expanded, setExpanded] = useState(false);
 
         const portsData = [
-            { port: 21, time: '2023-12-01 15:30:00', protocol: 'FTP', serviceName: 'vsftpd', version: '3.0.3' },
-            { port: 22, time: '2023-12-01 15:30:00', protocol: 'SSH', serviceName: 'OpenSSH', version: '8.2p1' },
-            { port: 80, time: '2023-12-01 15:30:00', protocol: 'HTTP', serviceName: 'nginx', version: '1.18.0' },
-            { port: 443, time: '2023-12-01 15:30:00', protocol: 'HTTPS', serviceName: 'nginx', version: '1.18.0' },
-            { port: 3306, time: '2023-12-01 15:30:00', protocol: 'MySQL', serviceName: 'MySQL', version: '8.0.23' },
-            { port: 6379, time: '2023-12-01 15:30:00', protocol: 'Redis', serviceName: 'Redis', version: '6.0.9' },
-            { port: 8080, time: '2023-12-01 15:30:00', protocol: 'HTTP', serviceName: 'Tomcat', version: '9.0.41' },
-            { port: 9000, time: '2023-12-01 15:30:00', protocol: 'HTTP', serviceName: '', version: '' },
-            { port: 9090, time: '2023-12-01 15:30:00', protocol: 'HTTP', serviceName: '', version: '' },
-            { port: 27017, time: '2023-12-01 15:30:00', protocol: 'MongoDB', serviceName: 'MongoDB', version: '4.4.3' }
+            { port: 21, service: 'FTP' },
+            { port: 22, service: 'SSH' },
+            { port: 23, service: 'Telnet' },
+            { port: 25, service: 'SMTP' },
+            { port: 53, service: 'DNS' },
+            { port: 80, service: 'HTTP' },
+            { port: 110, service: 'POP3' },
+            { port: 143, service: 'IMAP' },
+            { port: 443, service: 'HTTPS' },
+            { port: 993, service: 'IMAPS' },
+            { port: 995, service: 'POP3S' },
+            { port: 1433, service: 'MSSQL' },
+            { port: 1521, service: 'Oracle' },
+            { port: 3306, service: 'MySQL' },
+            { port: 3389, service: 'RDP' },
+            { port: 5432, service: 'PostgreSQL' },
+            { port: 5900, service: 'VNC' },
+            { port: 6379, service: 'Redis' },
+            { port: 8080, service: 'HTTP Proxy' },
+            { port: 8443, service: 'HTTPS Alt' },
+            { port: 27017, service: 'MongoDB' }
         ];
 
-        const displayPorts = expanded ? portsData : portsData.slice(0, 4);
+        const displayPorts = expanded ? portsData : portsData.slice(0, 12);
 
         return (
             <div style={{ position: 'relative' }}>
-                <Row gutter={[24, 24]} style={{
+                <Row gutter={[16, 16]} style={{
                     marginBottom: portsData.length > 5 ? 16 : 0,
                 }}>
                     {displayPorts.map((port, index) => (
-                        <Col key={index} span={6} style={{ paddingLeft: 12, paddingRight: 12 }}>
+                        <Col key={index} span={4} style={{ paddingLeft: 8, paddingRight: 8 }}>
                             <PortCard {...port} />
                         </Col>
                     ))}
                 </Row>
 
-                {portsData.length > 4 && (
+                {portsData.length > 12 && (
                     <div style={{
                         position: 'absolute',
                         bottom: -32,
