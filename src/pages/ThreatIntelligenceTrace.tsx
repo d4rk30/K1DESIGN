@@ -1,12 +1,37 @@
-import React from 'react';
-import { Input, Button, Space } from 'antd';
+import React, { useState } from 'react';
+import { Input, Button, Space, message } from 'antd';
 import { useNavigate } from 'react-router-dom';
 
 const ThreatIntelligenceTrace: React.FC = () => {
     const navigate = useNavigate();
+    const [inputValue, setInputValue] = useState('');
 
     const handleSearch = (type: 'attack' | 'external') => {
-        navigate('detail', { state: { type } });
+        const ipRegex = /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
+        const domainRegex = /^(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,6}$/;
+
+        if (!inputValue.trim()) {
+            message.error('请输入查询内容');
+            return;
+        }
+
+        if (type === 'attack') {
+            if (!ipRegex.test(inputValue)) {
+                message.error('攻击情报仅支持输入IP');
+                return;
+            }
+            navigate('detail', { state: { type, query: inputValue, inputType: 'ip' } });
+        } else { // external
+            const isIp = ipRegex.test(inputValue);
+            const isDomain = domainRegex.test(inputValue);
+
+            if (!isIp && !isDomain) {
+                message.error('外联情报查询请输入有效的IP或域名');
+                return;
+            }
+            const inputType = isIp ? 'ip' : 'domain';
+            navigate('detail', { state: { type, query: inputValue, inputType } });
+        }
     };
 
     return (
@@ -78,6 +103,8 @@ const ThreatIntelligenceTrace: React.FC = () => {
                             size="large"
                             placeholder="攻击情报仅支持输入IP；外联情报支持IP、域名和URL"
                             style={{ flex: 1 }}
+                            value={inputValue}
+                            onChange={(e) => setInputValue(e.target.value)}
                         />
                         <Space>
                             <Button
@@ -113,4 +140,4 @@ const ThreatIntelligenceTrace: React.FC = () => {
     );
 };
 
-export default ThreatIntelligenceTrace; 
+export default ThreatIntelligenceTrace;

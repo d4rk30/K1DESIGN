@@ -12,7 +12,10 @@ const ThreatIntelligenceDetail: React.FC = () => {
     const location = useLocation();
     const navigate = useNavigate();
     const queryType = location.state?.type;
-    const [activeTabKey, setActiveTabKey] = useState<string>(queryType === 'attack' ? 'attackTrace' : 'dnsRecords');
+    const inputType = location.state?.inputType;
+    const query = location.state?.query;
+
+    const [activeTabKey, setActiveTabKey] = useState<string>('attackTrace');
     const [feedbackVisible, setFeedbackVisible] = useState(false);
     const [feedbackForm] = Form.useForm();
     const [fileList, setFileList] = useState<UploadFile[]>([]);
@@ -28,18 +31,46 @@ const ThreatIntelligenceDetail: React.FC = () => {
         { key: 'reverseDomain', tab: '反查域名' }
     ];
 
-    const externalTabs = [
+    const externalTabsDomain = [
         { key: 'dnsRecords', tab: 'DNS解析记录' },
         { key: 'whois', tab: 'WHOIS' },
         { key: 'fingerprint', tab: '指纹信息' },
         { key: 'subdomains', tab: '子域名' }
     ];
 
+    const externalTabsIp = [
+        { key: 'fingerprint', tab: '指纹信息' },
+        { key: 'ports', tab: '端口信息' },
+        { key: 'sameSegment', tab: '同C段信息' },
+        { key: 'reverseDomain', tab: '反查域名' }
+    ];
+
+    const getTabs = () => {
+        if (queryType === 'attack') {
+            return attackTabs;
+        }
+        if (queryType === 'external') {
+            if (inputType === 'ip') {
+                return externalTabsIp;
+            }
+            return externalTabsDomain;
+        }
+        return [];
+    };
+
     useEffect(() => {
         if (!location.state?.type) {
             navigate('/threat-intelligence-trace');
         }
     }, [location.state, navigate]);
+
+    useEffect(() => {
+        const tabs = getTabs();
+        if (tabs.length > 0) {
+            setActiveTabKey(tabs[0].key);
+        }
+    }, [queryType, inputType]);
+
 
     useEffect(() => {
         if (showAlert) {
@@ -447,16 +478,12 @@ const ThreatIntelligenceDetail: React.FC = () => {
             { port: 27017, time: '2023-12-01 15:30:00', protocol: 'MongoDB', serviceName: 'MongoDB', version: '4.4.3' }
         ];
 
-        // 根据展开状态决定显示全部端口数据还是仅显示前5个
         const displayPorts = expanded ? portsData : portsData.slice(0, 4);
 
         return (
-            // 外层容器，使用相对定位以便放置展开/收起按钮
             <div style={{ position: 'relative' }}>
                 <Row gutter={[24, 24]} style={{
                     marginBottom: portsData.length > 5 ? 16 : 0,
-                    // marginLeft: 0,
-                    // marginRight: 0
                 }}>
                     {displayPorts.map((port, index) => (
                         <Col key={index} span={6} style={{ paddingLeft: 12, paddingRight: 12 }}>
@@ -465,20 +492,17 @@ const ThreatIntelligenceDetail: React.FC = () => {
                     ))}
                 </Row>
 
-                {/* 当端口数据超过5条时显示展开/收起按钮 */}
                 {portsData.length > 4 && (
                     <div style={{
-                        // 使用绝对定位将按钮固定在底部中间
                         position: 'absolute',
                         bottom: -32,
                         left: '50%',
-                        transform: 'translateX(-50%)',  // 水平居中对齐
+                        transform: 'translateX(-50%)',
                         cursor: 'pointer',
                         color: '#0E7CFD'
                     }}
                         onClick={() => setExpanded(!expanded)}
                     >
-                        {/* 根据展开状态显示向上或向下箭头图标 */}
                         {expanded ? <UpOutlined /> : <DownOutlined />}
                     </div>
                 )}
@@ -599,11 +623,9 @@ const ThreatIntelligenceDetail: React.FC = () => {
                 />
             </div>
         ),
-        // 外联情报查询的tab内容
         dnsRecords: renderDNSRecords(),
         whois: renderWhois(),
         subdomains: renderSubdomains(),
-        // 攻击情报查询的其他tab内容
         fingerprint: renderFingerprint(),
         ports: renderPorts(),
         sameSegment: <Table
@@ -837,7 +859,7 @@ const ThreatIntelligenceDetail: React.FC = () => {
         console.log('Uploaded files:', fileList);
         message.success('反馈提交成功');
         setFeedbackVisible(false);
-        setFileList([]); // 清空文件列表
+        setFileList([]);
         feedbackForm.resetFields();
     };
 
@@ -859,11 +881,11 @@ const ThreatIntelligenceDetail: React.FC = () => {
                                     <Space size={36} align="center">
                                         <Space align="center">
                                             <span style={{ fontSize: 24, fontWeight: 500, display: 'flex', alignItems: 'center' }}>
-                                                192.168.1.109
+                                                {query}
                                                 <CopyOutlined
                                                     style={{ cursor: 'pointer', color: '#1890ff', fontSize: 14, marginLeft: 8 }}
                                                     onClick={() => {
-                                                        navigator.clipboard.writeText('192.168.1.109');
+                                                        navigator.clipboard.writeText(query);
                                                         message.success('IP已复制到剪贴板');
                                                     }}
                                                 />
@@ -1016,12 +1038,12 @@ const ThreatIntelligenceDetail: React.FC = () => {
                                         <Space size={36} align="center">
                                             <Space align="center">
                                                 <span style={{ fontSize: 24, fontWeight: 500, display: 'flex', alignItems: 'center' }}>
-                                                    pro.csocools.com
+                                                    {query}
                                                     <CopyOutlined
                                                         style={{ cursor: 'pointer', color: '#1890ff', fontSize: 14, marginLeft: 8 }}
                                                         onClick={() => {
-                                                            navigator.clipboard.writeText('pro.csocools.com');
-                                                            message.success('IP已复制到剪贴板');
+                                                            navigator.clipboard.writeText(query);
+                                                            message.success('已复制到剪贴板');
                                                         }}
                                                     />
                                                 </span>
@@ -1072,232 +1094,128 @@ const ThreatIntelligenceDetail: React.FC = () => {
                         </Col>
                         <Col span={24}>
                             <Row gutter={0}>
+                                {inputType === 'domain' ? (
+                                    <>
+                                        <Col span={6}>
+                                            <div style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'flex-start' }}>
+                                                <div style={{ width: 32, height: 32, borderRadius: '50%', backgroundColor: '#1890ff', display: 'flex', alignItems: 'center', justifyContent: 'center', marginRight: 8 }}>
+                                                    <ApartmentOutlined style={{ color: '#fff', fontSize: 16 }} />
+                                                </div>
+                                                <span style={{ color: '#999', marginRight: 8 }}>DNS解析记录</span>
+                                                <span style={{ color: '#1890ff', fontSize: 20, fontWeight: 500 }}>2</span>
+                                            </div>
+                                        </Col>
+                                        <Col span={6}>
+                                            <div style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'flex-start' }}>
+                                                <div style={{ width: 32, height: 32, borderRadius: '50%', backgroundColor: '#1890ff', display: 'flex', alignItems: 'center', justifyContent: 'center', marginRight: 8 }}>
+                                                    <GlobalOutlined style={{ color: '#fff', fontSize: 16 }} />
+                                                </div>
+                                                <span style={{ color: '#999', marginRight: 8 }}>子域名</span>
+                                                <span style={{ color: '#1890ff', fontSize: 20, fontWeight: 500 }}>4</span>
+                                            </div>
+                                        </Col>
+                                    </>
+                                ) : (
+                                    <>
+                                        <Col span={6}>
+                                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start' }}>
+                                                <GlobalOutlined style={{ color: '#fff', background: '#1890ff', borderRadius: '50%', fontSize: 16, width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', marginRight: 8 }} />
+                                                <span style={{ color: '#999', marginRight: 8 }}>端口信息</span>
+                                                <span style={{ color: '#1890ff', fontSize: 20, fontWeight: 500 }}>10</span>
+                                            </div>
+                                        </Col>
+                                        <Col span={6}>
+                                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start' }}>
+                                                <LinkOutlined style={{ color: '#fff', background: '#1890ff', borderRadius: '50%', fontSize: 16, width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', marginRight: 8 }} />
+                                                <span style={{ color: '#999', marginRight: 8 }}>同C段信息</span>
+                                                <span style={{ color: '#1890ff', fontSize: 20, fontWeight: 500 }}>4</span>
+                                            </div>
+                                        </Col>
+                                        <Col span={6}>
+                                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start' }}>
+                                                <ApartmentOutlined style={{ color: '#fff', background: '#1890ff', borderRadius: '50%', fontSize: 16, width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', marginRight: 8 }} />
+                                                <span style={{ color: '#999', marginRight: 8 }}>反查域名</span>
+                                                <span style={{ color: '#1890ff', fontSize: 20, fontWeight: 500 }}>5</span>
+                                            </div>
+                                        </Col>
+                                    </>
+                                )}
                                 <Col span={6}>
-                                    <div style={{
-                                        width: '100%',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'flex-start'
-                                    }}>
-                                        <div style={{
-                                            width: 32,
-                                            height: 32,
-                                            borderRadius: '50%',
-                                            backgroundColor: '#1890ff',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'center',
-                                            marginRight: 8
-                                        }}>
-                                            <ApartmentOutlined style={{ color: '#fff', fontSize: 16 }} />
-                                        </div>
-                                        <span style={{ color: '#999', marginRight: 8 }}>DNS解析记录</span>
-                                        <span style={{ color: '#1890ff', fontSize: 20, fontWeight: 500 }}>2</span>
-                                    </div>
-                                </Col>
-                                <Col span={6}>
-                                    <div style={{
-                                        width: '100%',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'flex-start'
-                                    }}>
-                                        <div style={{
-                                            width: 32,
-                                            height: 32,
-                                            borderRadius: '50%',
-                                            backgroundColor: '#1890ff',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'center',
-                                            marginRight: 8
-                                        }}>
-                                            <GlobalOutlined style={{ color: '#fff', fontSize: 16 }} />
-                                        </div>
-                                        <span style={{ color: '#999', marginRight: 8 }}>子域名</span>
-                                        <span style={{ color: '#1890ff', fontSize: 20, fontWeight: 500 }}>4</span>
-                                    </div>
-                                </Col>
-                                <Col span={6}>
-                                    <div style={{
-                                        width: '100%',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'flex-start'
-                                    }}>
-                                        <div style={{
-                                            width: 32,
-                                            height: 32,
-                                            borderRadius: '50%',
-                                            backgroundColor: '#1890ff',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'center',
-                                            marginRight: 8
-                                        }}>
+                                    <div style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'flex-start' }}>
+                                        <div style={{ width: 32, height: 32, borderRadius: '50%', backgroundColor: '#1890ff', display: 'flex', alignItems: 'center', justifyContent: 'center', marginRight: 8 }}>
                                             <ApiOutlined style={{ color: '#fff', fontSize: 16 }} />
                                         </div>
                                         <span style={{ color: '#999', marginRight: 8 }}>情报厂商总数</span>
                                         <span style={{ color: '#1890ff', fontSize: 20, fontWeight: 500 }}>8</span>
                                     </div>
                                 </Col>
-                                <Col span={6}>
-                                    {/* 空置列，用于对齐 */}
-                                </Col>
                             </Row>
                         </Col>
                     </Row>
                 </Col>
             </Row>
-            <div style={{
-                height: '1px',
-                background: '#f0f0f0',
-                margin: '16px 0 8px 0'  // 减小分隔线的上下间距
-            }} />
+            <div style={{ height: '1px', background: '#f0f0f0', margin: '16px 0 8px 0' }} />
             <Row>
                 <Col flex="1">
-                    <Row gutter={[0, 16]}>  {/* 减小行间距 */}
+                    <Row gutter={[0, 16]}>
                         <Col span={24}>
                             {showAlert && (
                                 <Alert
                                     message={
-                                        <span style={{
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'space-between',
-                                            minHeight: 32
-                                        }}>
+                                        <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', minHeight: 32 }}>
                                             <span>
                                                 已完成对 8 家情报厂商的检索，7 家返回情报，1 家暂无结果，可通过左右按钮查看更多。
                                             </span>
-                                            <span style={{}}>{countdown}秒后关闭</span>
+                                            <span>{countdown}秒后关闭</span>
                                         </span>
                                     }
                                     type="info"
                                     showIcon
                                     closable
-                                    closeText={
-                                        <span style={{
-                                            color: '#1890ff',
-                                            fontSize: 15,
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            height: 32
-                                        }}>
-                                            不再提示
-                                        </span>
-                                    }
+                                    closeText={<span style={{ color: '#1890ff', fontSize: 15, display: 'flex', alignItems: 'center', height: 32 }}>不再提示</span>}
                                     onClose={() => setShowAlert(false)}
                                     style={{ margin: '16px 0 8px 0', fontSize: 15, minHeight: 32 }}
                                 />
                             )}
-                            {/* 威胁情报厂商轮播展示 */}
                             <div style={{ position: 'relative' }}>
-                                {/* 左侧切换按钮 */}
                                 <div
                                     style={{
-                                        position: 'absolute',
-                                        left: -40,
-                                        top: '50%',
-                                        transform: 'translateY(-50%)',
-                                        width: 32,
-                                        height: 32,
-                                        borderRadius: '50%',
-                                        backgroundColor: '#fff',
-                                        border: '1px solid #d9d9d9',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        cursor: 'pointer',
-                                        zIndex: 10,
-                                        boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-                                        transition: 'all 0.3s'
+                                        position: 'absolute', left: -40, top: '50%', transform: 'translateY(-50%)',
+                                        width: 32, height: 32, borderRadius: '50%', backgroundColor: '#fff', border: '1px solid #d9d9d9',
+                                        display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', zIndex: 10,
+                                        boxShadow: '0 2px 8px rgba(0,0,0,0.1)', transition: 'all 0.3s'
                                     }}
-                                    onMouseEnter={(e) => {
-                                        e.currentTarget.style.backgroundColor = '#f0f9ff';
-                                        e.currentTarget.style.borderColor = '#1890ff';
-                                        e.currentTarget.style.boxShadow = '0 4px 12px rgba(24, 144, 255, 0.15)';
-                                    }}
-                                    onMouseLeave={(e) => {
-                                        e.currentTarget.style.backgroundColor = '#fff';
-                                        e.currentTarget.style.borderColor = '#d9d9d9';
-                                        e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)';
-                                    }}
-                                    onClick={() => {
-                                        if (carouselRef.current) {
-                                            carouselRef.current.prev();
-                                        }
-                                    }}
+                                    onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#f0f9ff'; e.currentTarget.style.borderColor = '#1890ff'; e.currentTarget.style.boxShadow = '0 4px 12px rgba(24, 144, 255, 0.15)'; }}
+                                    onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#fff'; e.currentTarget.style.borderColor = '#d9d9d9'; e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)'; }}
+                                    onClick={() => { if (carouselRef.current) carouselRef.current.prev(); }}
                                 >
                                     <LeftOutlined style={{ fontSize: 14, color: '#666' }} />
                                 </div>
-
-                                {/* 右侧切换按钮 */}
                                 <div
                                     style={{
-                                        position: 'absolute',
-                                        right: -40,
-                                        top: '50%',
-                                        transform: 'translateY(-50%)',
-                                        width: 32,
-                                        height: 32,
-                                        borderRadius: '50%',
-                                        backgroundColor: '#fff',
-                                        border: '1px solid #d9d9d9',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        cursor: 'pointer',
-                                        zIndex: 10,
-                                        boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-                                        transition: 'all 0.3s'
+                                        position: 'absolute', right: -40, top: '50%', transform: 'translateY(-50%)',
+                                        width: 32, height: 32, borderRadius: '50%', backgroundColor: '#fff', border: '1px solid #d9d9d9',
+                                        display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', zIndex: 10,
+                                        boxShadow: '0 2px 8px rgba(0,0,0,0.1)', transition: 'all 0.3s'
                                     }}
-                                    onMouseEnter={(e) => {
-                                        e.currentTarget.style.backgroundColor = '#f0f9ff';
-                                        e.currentTarget.style.borderColor = '#1890ff';
-                                        e.currentTarget.style.boxShadow = '0 4px 12px rgba(24, 144, 255, 0.15)';
-                                    }}
-                                    onMouseLeave={(e) => {
-                                        e.currentTarget.style.backgroundColor = '#fff';
-                                        e.currentTarget.style.borderColor = '#d9d9d9';
-                                        e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)';
-                                    }}
-                                    onClick={() => {
-                                        if (carouselRef.current) {
-                                            carouselRef.current.next();
-                                        }
-                                    }}
+                                    onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#f0f9ff'; e.currentTarget.style.borderColor = '#1890ff'; e.currentTarget.style.boxShadow = '0 4px 12px rgba(24, 144, 255, 0.15)'; }}
+                                    onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#fff'; e.currentTarget.style.borderColor = '#d9d9d9'; e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)'; }}
+                                    onClick={() => { if (carouselRef.current) carouselRef.current.next(); }}
                                 >
                                     <RightOutlined style={{ fontSize: 14, color: '#666' }} />
                                 </div>
-
-                                {/* 厂商数据 - 使用Ant Design Carousel高级配置 */}
                                 <Carousel
                                     ref={carouselRef}
                                     dots={false}
                                     arrows={false}
                                     autoplay={false}
-                                    style={{
-                                        padding: '0 40px'
-                                    }}
+                                    style={{ padding: '0 40px' }}
                                     slidesToShow={5}
                                     slidesToScroll={1}
                                     infinite={true}
                                     responsive={[
-                                        {
-                                            breakpoint: 1200,
-                                            settings: {
-                                                slidesToShow: 4,
-                                                slidesToScroll: 1
-                                            }
-                                        },
-                                        {
-                                            breakpoint: 768,
-                                            settings: {
-                                                slidesToShow: 3,
-                                                slidesToScroll: 1
-                                            }
-                                        }
+                                        { breakpoint: 1200, settings: { slidesToShow: 4, slidesToScroll: 1 } },
+                                        { breakpoint: 768, settings: { slidesToShow: 3, slidesToScroll: 1 } }
                                     ]}
                                 >
                                     {(() => {
@@ -1314,69 +1232,23 @@ const ThreatIntelligenceDetail: React.FC = () => {
 
                                         return allVendors.map((vendor, index) => (
                                             <div key={index} style={{ padding: '0 8px' }}>
-                                                <div style={{
-                                                    padding: '8px 0',
-                                                    marginBottom: '8px',
-                                                    height: '40px',
-                                                    position: 'relative'
-                                                }}>
-                                                    <div style={{
-                                                        position: 'relative',
-                                                        width: 'fit-content',
-                                                        margin: '0 auto',
-                                                        height: '40px',
-                                                        lineHeight: '40px'
-                                                    }}>
-                                                        <div style={{
-                                                            position: 'absolute',
-                                                            right: '100%',
-                                                            top: '47%',
-                                                            transform: 'translateY(-50%)',
-                                                            marginRight: '12px'
-                                                        }}>
-                                                            <img
-                                                                src={vendor.logo}
-                                                                alt={vendor.name}
-                                                                style={{
-                                                                    width: 32,
-                                                                    height: 32
-                                                                }}
-                                                            />
+                                                <div style={{ padding: '8px 0', marginBottom: '8px', height: '40px', position: 'relative' }}>
+                                                    <div style={{ position: 'relative', width: 'fit-content', margin: '0 auto', height: '40px', lineHeight: '40px' }}>
+                                                        <div style={{ position: 'absolute', right: '100%', top: '47%', transform: 'translateY(-50%)', marginRight: '12px' }}>
+                                                            <img src={vendor.logo} alt={vendor.name} style={{ width: 32, height: 32 }} />
                                                         </div>
-                                                        <span style={{
-                                                            fontSize: 16,
-                                                            fontWeight: 500,
-                                                            whiteSpace: 'nowrap'
-                                                        }}>
-                                                            {vendor.name}
-                                                        </span>
+                                                        <span style={{ fontSize: 16, fontWeight: 500, whiteSpace: 'nowrap' }}>{vendor.name}</span>
                                                     </div>
                                                 </div>
                                                 <div>
-                                                    {/* 长亭威胁情报显示空状态 */}
                                                     {index === 7 ? (
-                                                        <div style={{
-                                                            padding: '40px 0',
-                                                            display: 'flex',
-                                                            justifyContent: 'center',
-                                                            alignItems: 'center',
-                                                            minHeight: '300px',
-                                                            marginTop: '200px'
-                                                        }}>
-                                                            <Empty
-                                                                description="暂无数据"
-                                                                image={Empty.PRESENTED_IMAGE_SIMPLE}
-                                                                style={{ fontSize: 14 }}
-                                                            />
+                                                        <div style={{ padding: '40px 0', display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '300px', marginTop: '200px' }}>
+                                                            <Empty description="暂无数据" image={Empty.PRESENTED_IMAGE_SIMPLE} style={{ fontSize: 14 }} />
                                                         </div>
                                                     ) : (
-                                                        // 其他厂商显示正常数据
                                                         <>
                                                             {[
-                                                                {
-                                                                    label: '威胁等级', value: index === 0 ? <Tag color="red">高危</Tag> :
-                                                                        index === 1 ? <Tag color="green">低危</Tag> : <Tag color="orange">中危</Tag>
-                                                                },
+                                                                { label: '威胁等级', value: index === 0 ? <Tag color="red">高危</Tag> : index === 1 ? <Tag color="green">低危</Tag> : <Tag color="orange">中危</Tag> },
                                                                 { label: '置信度', value: '高' },
                                                                 { label: '情报类型', value: '远控木马类' },
                                                                 { label: '情报相关组织', value: index === 6 ? '--' : (index === 1 ? 'APT32' : 'Lazarus') },
@@ -1384,22 +1256,9 @@ const ThreatIntelligenceDetail: React.FC = () => {
                                                                 { label: '入库时间', value: '2024-12-11 12:03:44' },
                                                                 { label: '过期时间', value: '2024-12-31 11:22:31' }
                                                             ].map((item, idx) => (
-                                                                <div
-                                                                    key={idx}
-                                                                    style={{
-                                                                        padding: '12px 0',
-                                                                        borderBottom: idx !== 6 ? '1px solid #f0f0f0' : 'none',
-                                                                        textAlign: 'center'
-                                                                    }}
-                                                                >
-                                                                    <div style={{
-                                                                        color: '#666',
-                                                                        marginBottom: '8px',
-                                                                        textAlign: 'center'
-                                                                    }}>{item.label}</div>
-                                                                    <div style={{
-                                                                        textAlign: 'center'
-                                                                    }}>{item.value}</div>
+                                                                <div key={idx} style={{ padding: '12px 0', borderBottom: idx !== 6 ? '1px solid #f0f0f0' : 'none', textAlign: 'center' }}>
+                                                                    <div style={{ color: '#666', marginBottom: '8px', textAlign: 'center' }}>{item.label}</div>
+                                                                    <div style={{ textAlign: 'center' }}>{item.value}</div>
                                                                 </div>
                                                             ))}
                                                         </>
@@ -1425,24 +1284,16 @@ const ThreatIntelligenceDetail: React.FC = () => {
                         <Col flex="auto">
                             <Input
                                 placeholder={'攻击情报仅支持输入IP，外联情报支持IP、域名和URL'}
-                                style={{
-                                    height: 40,
-                                    border: '1px solid #f0f0f0',
-                                }}
+                                style={{ height: 40, border: '1px solid #f0f0f0' }}
+                                defaultValue={query}
                             />
                         </Col>
                         <Col>
                             <Space>
-                                <Button
-                                    type={'default'}
-                                    style={{ height: 40 }}
-                                >
+                                <Button type={'default'} style={{ height: 40 }}>
                                     攻击情报查询
                                 </Button>
-                                <Button
-                                    type={'default'}
-                                    style={{ height: 40 }}
-                                >
+                                <Button type={'default'} style={{ height: 40 }}>
                                     外联情报查询
                                 </Button>
                             </Space>
@@ -1456,7 +1307,7 @@ const ThreatIntelligenceDetail: React.FC = () => {
                 </Col>
                 <Col span={24}>
                     <Card
-                        tabList={queryType === 'attack' ? attackTabs : externalTabs}
+                        tabList={getTabs()}
                         activeTabKey={activeTabKey}
                         onTabChange={handleTabChange}
                     >
@@ -1471,7 +1322,7 @@ const ThreatIntelligenceDetail: React.FC = () => {
                 open={feedbackVisible}
                 onCancel={() => {
                     setFeedbackVisible(false);
-                    setFileList([]); // 关闭时清空文件列表
+                    setFileList([]);
                     feedbackForm.resetFields();
                 }}
                 footer={null}
@@ -1480,31 +1331,19 @@ const ThreatIntelligenceDetail: React.FC = () => {
                 <Form
                     form={feedbackForm}
                     onFinish={handleFeedback}
-                    initialValues={{
-                        intelContent: location.state?.type === 'attack' ? '192.168.1.109' : 'pro.csocools.com'
-                    }}
+                    initialValues={{ intelContent: query }}
                 >
                     <Form.Item
                         name="intelContent"
                         rules={[{ required: true, message: '请输入情报内容' }]}
                     >
-                        <LabelInput
-                            label="情报内容"
-                            required
-                            placeholder="请输入情报内容"
-                            disabled
-                        />
+                        <LabelInput label="情报内容" required placeholder="请输入情报内容" disabled />
                     </Form.Item>
                     <Form.Item
                         name="feedbackContent"
                         rules={[{ required: true, message: '请输入反馈内容' }]}
                     >
-                        <LabelTextArea
-                            label="反馈内容"
-                            required
-                            placeholder="请输入反馈内容"
-                            rows={4}
-                        />
+                        <LabelTextArea label="反馈内容" required placeholder="请输入反馈内容" rows={4} />
                     </Form.Item>
                     <Form.Item
                         name="attachments"
@@ -1512,29 +1351,16 @@ const ThreatIntelligenceDetail: React.FC = () => {
                         rules={[{ required: true, message: '请上传附件' }]}
                     >
                         <Upload.Dragger {...uploadProps}>
-                            <p className="ant-upload-drag-icon">
-                                <InboxOutlined />
-                            </p>
-                            <p className="ant-upload-text">
-                                上传附件
-                            </p>
-                            <p className="ant-upload-hint" style={{
-                                color: '#999',
-                                fontSize: 12,
-                                paddingLeft: 16,
-                                paddingRight: 16
-                            }}>
+                            <p className="ant-upload-drag-icon"><InboxOutlined /></p>
+                            <p className="ant-upload-text">上传附件</p>
+                            <p className="ant-upload-hint" style={{ color: '#999', fontSize: 12, paddingLeft: 16, paddingRight: 16 }}>
                                 支持png、jpg、jpeg、gif、pdf、docx、doc格式，最多上传5个文件，单个文件不超过5MB。
                             </p>
                         </Upload.Dragger>
                     </Form.Item>
                     <Form.Item style={{ marginBottom: 0, textAlign: 'right' }}>
                         <Space>
-                            <Button onClick={() => {
-                                setFeedbackVisible(false);
-                                setFileList([]); // 关闭时清空文件列表
-                                feedbackForm.resetFields();
-                            }}>
+                            <Button onClick={() => { setFeedbackVisible(false); setFileList([]); feedbackForm.resetFields(); }}>
                                 取消
                             </Button>
                             <Button type="primary" htmlType="submit">
@@ -1548,4 +1374,4 @@ const ThreatIntelligenceDetail: React.FC = () => {
     );
 };
 
-export default ThreatIntelligenceDetail; 
+export default ThreatIntelligenceDetail;
