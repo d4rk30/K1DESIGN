@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { Card, Row, Col, Table, Tag, Space, Button, Input, message, Modal, Form, Upload, Skeleton, Carousel, Alert, Empty } from 'antd';
+import { Card, Row, Col, Table, Tag, Space, Button, Input, message, Modal, Form, Upload, Carousel, Alert, Empty } from 'antd';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { SearchOutlined, ReloadOutlined, CalendarOutlined, UpOutlined, DownOutlined, CopyOutlined, ApartmentOutlined, GlobalOutlined, ApiOutlined, LinkOutlined, InboxOutlined, LeftOutlined, RightOutlined } from '@ant-design/icons';
 import LabelSelect from '@/components/LabelSelect';
@@ -16,7 +16,6 @@ const ThreatIntelligenceDetail: React.FC = () => {
     const [feedbackVisible, setFeedbackVisible] = useState(false);
     const [feedbackForm] = Form.useForm();
     const [fileList, setFileList] = useState<UploadFile[]>([]);
-    const [cardLoading, setCardLoading] = useState(true);
     const carouselRef = useRef<any>(null);
     const [showAlert, setShowAlert] = useState(true);
     const [countdown, setCountdown] = useState(5);
@@ -25,7 +24,8 @@ const ThreatIntelligenceDetail: React.FC = () => {
         { key: 'attackTrace', tab: '攻击实时轨迹' },
         { key: 'fingerprint', tab: '指纹信息' },
         { key: 'ports', tab: '端口信息' },
-        { key: 'sameSegment', tab: '同C段信息' }
+        { key: 'sameSegment', tab: '同C段信息' },
+        { key: 'reverseDomain', tab: '反查域名' }
     ];
 
     const externalTabs = [
@@ -40,54 +40,6 @@ const ThreatIntelligenceDetail: React.FC = () => {
             navigate('/threat-intelligence-trace');
         }
     }, [location.state, navigate]);
-
-    useEffect(() => {
-        if (!location.state?.type) {
-            navigate('/threat-intelligence-trace');
-        } else {
-            // 模拟卡片数据加载
-            setCardLoading(true);
-            const timer = setTimeout(() => {
-                setCardLoading(false);
-            }, 2000);
-            return () => clearTimeout(timer);
-        }
-    }, [location.state, navigate]);
-
-    // 使用硬编码的方式确保骨架屏在生产环境中显示
-    useEffect(() => {
-        // 强制显示骨架屏
-        setCardLoading(true);
-
-        // 使用 window.setTimeout 而不是 setTimeout，避免被优化
-        const timer = window.setTimeout(() => {
-            setCardLoading(false);
-        }, 2000);
-
-        // 确保清理函数不会被优化掉
-        return () => {
-            window.clearTimeout(timer);
-            // 重置状态
-            setCardLoading(true);
-        };
-    }, [location.pathname, location.search]); // 使用路径和查询参数作为依赖
-
-    // 标签页切换时的加载效果
-    useEffect(() => {
-        if (activeTabKey === 'attackTrace') {
-            setCardLoading(true);
-
-            // 使用 window.setTimeout 避免被优化
-            const tabTimer = window.setTimeout(() => {
-                setCardLoading(false);
-            }, 2000);
-
-            return () => {
-                window.clearTimeout(tabTimer);
-                setCardLoading(true);
-            };
-        }
-    }, [activeTabKey]);
 
     useEffect(() => {
         if (showAlert) {
@@ -158,20 +110,105 @@ const ThreatIntelligenceDetail: React.FC = () => {
     };
 
     const renderDNSRecords = () => {
-        const leftRecords = [
-            { label: 'A:', value: '156.254.127.112' },
-            { label: 'AAAA:', value: '-' },
-            { label: 'NS:', value: '-' },
-            { label: 'MX:', value: '-' }
-        ];
-
-        const rightRecords = [
-            { label: 'TXT:', value: '156.254.127.112' },
-            { label: 'SOA:', value: '-' },
-            { label: 'CNAME:', value: '-' }
-        ];
-
-        return <RecordDisplay leftRecords={leftRecords} rightRecords={rightRecords} />;
+        return (
+            <Table
+                columns={[
+                    {
+                        title: '解析结果',
+                        dataIndex: 'resolveResult',
+                        key: 'resolveResult',
+                        width: '25%',
+                    },
+                    {
+                        title: '地理位置',
+                        dataIndex: 'location',
+                        key: 'location',
+                        width: '25%',
+                        render: ({ country, city }) => {
+                            const FlagComponent = getFlagComponent(country);
+                            return (
+                                <Space>
+                                    {FlagComponent && <FlagComponent style={{ width: 16 }} />}
+                                    <span>{country} | {city}</span>
+                                </Space>
+                            );
+                        },
+                    },
+                    {
+                        title: 'ASN',
+                        dataIndex: 'asn',
+                        key: 'asn',
+                        width: '25%',
+                    },
+                    {
+                        title: '记录类型',
+                        dataIndex: 'recordType',
+                        key: 'recordType',
+                        width: '25%',
+                        render: (type) => <Tag color="blue">{type}</Tag>
+                    }
+                ]}
+                dataSource={[
+                    {
+                        key: '1',
+                        resolveResult: '156.254.127.112',
+                        location: {
+                            country: '美国',
+                            city: '洛杉矶'
+                        },
+                        asn: 'AS7922 Comcast Cable Communications',
+                        recordType: 'A记录'
+                    },
+                    {
+                        key: '2',
+                        resolveResult: '2001:db8::1',
+                        location: {
+                            country: '中国',
+                            city: '北京'
+                        },
+                        asn: 'AS4134 China Telecom',
+                        recordType: 'AAAA记录'
+                    },
+                    {
+                        key: '3',
+                        resolveResult: 'ns1.example.com',
+                        location: {
+                            country: '德国',
+                            city: '柏林'
+                        },
+                        asn: 'AS3320 Deutsche Telekom AG',
+                        recordType: 'NS记录'
+                    },
+                    {
+                        key: '4',
+                        resolveResult: 'mail.example.com',
+                        location: {
+                            country: '英国',
+                            city: '伦敦'
+                        },
+                        asn: 'AS2856 British Telecommunications PLC',
+                        recordType: 'MX记录'
+                    },
+                    {
+                        key: '5',
+                        resolveResult: 'v=spf1 include:_spf.google.com ~all',
+                        location: {
+                            country: '法国',
+                            city: '巴黎'
+                        },
+                        asn: 'AS3215 Orange S.A.',
+                        recordType: 'TXT记录'
+                    }
+                ]}
+                pagination={{
+                    total: 5,
+                    pageSize: 10,
+                    showSizeChanger: true,
+                    showQuickJumper: true,
+                    showTotal: (total) => `共 ${total} 条记录`,
+                }}
+            />
+        );
     };
 
     const renderWhois = () => {
@@ -676,6 +713,74 @@ const ThreatIntelligenceDetail: React.FC = () => {
                 showQuickJumper: true,
                 showTotal: (total) => `共 ${total} 条记录`,
             }}
+        />,
+        reverseDomain: <Table
+            columns={[
+                {
+                    title: '域名',
+                    dataIndex: 'domain',
+                    key: 'domain',
+                    width: '40%',
+                },
+                {
+                    title: '情报状态',
+                    dataIndex: 'intelStatus',
+                    key: 'intelStatus',
+                    width: '30%',
+                    render: (status) => {
+                        const colors: Record<string, string> = {
+                            '有效': 'green',
+                            '未知': 'orange'
+                        };
+                        return <Tag color={colors[status]}>{status}</Tag>;
+                    }
+                },
+                {
+                    title: '情报类型',
+                    dataIndex: 'intelType',
+                    key: 'intelType',
+                    width: '30%',
+                }
+            ]}
+            dataSource={[
+                {
+                    key: '1',
+                    domain: 'malware.example.com',
+                    intelStatus: '有效',
+                    intelType: '远控木马'
+                },
+                {
+                    key: '2',
+                    domain: 'phishing.test.org',
+                    intelStatus: '有效',
+                    intelType: '钓鱼网站'
+                },
+                {
+                    key: '3',
+                    domain: 'botnet.attack.net',
+                    intelStatus: '未知',
+                    intelType: '僵尸网络'
+                },
+                {
+                    key: '4',
+                    domain: 'spam.mail.com',
+                    intelStatus: '未知',
+                    intelType: '垃圾邮件'
+                },
+                {
+                    key: '5',
+                    domain: 'c2.server.io',
+                    intelStatus: '有效',
+                    intelType: 'C2服务器'
+                }
+            ]}
+            pagination={{
+                total: 5,
+                pageSize: 10,
+                showSizeChanger: true,
+                showQuickJumper: true,
+                showTotal: (total) => `共 ${total} 条记录`,
+            }}
         />
     };
 
@@ -815,21 +920,13 @@ const ThreatIntelligenceDetail: React.FC = () => {
                             <Col xs={6}>
                                 <div style={{ display: 'flex' }}>
                                     <span style={{ color: '#999' }}>运营商：</span>
-                                    {cardLoading ? (
-                                        <Skeleton.Input active size="small" style={{ width: 120 }} />
-                                    ) : (
-                                        <span>EstNOC OY</span>
-                                    )}
+                                    <span>EstNOC OY</span>
                                 </div>
                             </Col>
                             <Col xs={6}>
                                 <div style={{ display: 'flex' }}>
                                     <span style={{ color: '#999' }}>ASN：</span>
-                                    {cardLoading ? (
-                                        <Skeleton.Input active size="small" style={{ width: 120 }} />
-                                    ) : (
-                                        <span>206804</span>
-                                    )}
+                                    <span>206804</span>
                                 </div>
                             </Col>
                             <Col xs={6}>
@@ -865,25 +962,32 @@ const ThreatIntelligenceDetail: React.FC = () => {
                         </Row>
                         <div style={{ margin: '24px 0', borderTop: '1px solid #f0f0f0' }} />
                         <Row gutter={24}>
-                            <Col span={8}>
+                            <Col span={6}>
                                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start' }}>
                                     <ApiOutlined style={{ color: '#fff', background: '#1890ff', borderRadius: '50%', fontSize: 16, width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', marginRight: 8 }} />
                                     <span style={{ color: '#999', marginRight: 8 }}>攻击实时轨迹</span>
                                     <span style={{ color: '#1890ff', fontSize: 20, fontWeight: 500 }}>3</span>
                                 </div>
                             </Col>
-                            <Col span={8}>
+                            <Col span={6}>
                                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start' }}>
                                     <GlobalOutlined style={{ color: '#fff', background: '#1890ff', borderRadius: '50%', fontSize: 16, width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', marginRight: 8 }} />
                                     <span style={{ color: '#999', marginRight: 8 }}>端口信息</span>
                                     <span style={{ color: '#1890ff', fontSize: 20, fontWeight: 500 }}>10</span>
                                 </div>
                             </Col>
-                            <Col span={8}>
+                            <Col span={6}>
                                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start' }}>
                                     <LinkOutlined style={{ color: '#fff', background: '#1890ff', borderRadius: '50%', fontSize: 16, width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', marginRight: 8 }} />
                                     <span style={{ color: '#999', marginRight: 8 }}>同C段信息</span>
                                     <span style={{ color: '#1890ff', fontSize: 20, fontWeight: 500 }}>4</span>
+                                </div>
+                            </Col>
+                            <Col span={6}>
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start' }}>
+                                    <ApartmentOutlined style={{ color: '#fff', background: '#1890ff', borderRadius: '50%', fontSize: 16, width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', marginRight: 8 }} />
+                                    <span style={{ color: '#999', marginRight: 8 }}>反查域名</span>
+                                    <span style={{ color: '#1890ff', fontSize: 20, fontWeight: 500 }}>5</span>
                                 </div>
                             </Col>
                         </Row>
@@ -939,8 +1043,36 @@ const ThreatIntelligenceDetail: React.FC = () => {
                             </Space>
                         </Col>
                         <Col span={24}>
+                            <Row wrap gutter={[24, 12]}>
+                                <Col xs={6}>
+                                    <div style={{ display: 'flex' }}>
+                                        <span style={{ color: '#999' }}>情报归属：</span>
+                                        <span>公有情报源</span>
+                                    </div>
+                                </Col>
+                                <Col xs={6}>
+                                    <div style={{ display: 'flex' }}>
+                                        <span style={{ color: '#999' }}>运营商：</span>
+                                        <span>--</span>
+                                    </div>
+                                </Col>
+                                <Col xs={6}>
+                                    <div style={{ display: 'flex' }}>
+                                        <span style={{ color: '#999' }}>归属地：</span>
+                                        <span>--</span>
+                                    </div>
+                                </Col>
+                                <Col xs={6}>
+                                    <div style={{ display: 'flex' }}>
+                                        <span style={{ color: '#999' }}>经纬度：</span>
+                                        <span>--</span>
+                                    </div>
+                                </Col>
+                            </Row>
+                        </Col>
+                        <Col span={24}>
                             <Row gutter={0}>
-                                <Col span={8}>
+                                <Col span={6}>
                                     <div style={{
                                         width: '100%',
                                         display: 'flex',
@@ -963,7 +1095,7 @@ const ThreatIntelligenceDetail: React.FC = () => {
                                         <span style={{ color: '#1890ff', fontSize: 20, fontWeight: 500 }}>2</span>
                                     </div>
                                 </Col>
-                                <Col span={8}>
+                                <Col span={6}>
                                     <div style={{
                                         width: '100%',
                                         display: 'flex',
@@ -986,7 +1118,7 @@ const ThreatIntelligenceDetail: React.FC = () => {
                                         <span style={{ color: '#1890ff', fontSize: 20, fontWeight: 500 }}>4</span>
                                     </div>
                                 </Col>
-                                <Col span={8}>
+                                <Col span={6}>
                                     <div style={{
                                         width: '100%',
                                         display: 'flex',
@@ -1005,9 +1137,12 @@ const ThreatIntelligenceDetail: React.FC = () => {
                                         }}>
                                             <ApiOutlined style={{ color: '#fff', fontSize: 16 }} />
                                         </div>
-                                        <span style={{ color: '#999', marginRight: 8 }}>情报厂商</span>
+                                        <span style={{ color: '#999', marginRight: 8 }}>情报厂商总数</span>
                                         <span style={{ color: '#1890ff', fontSize: 20, fontWeight: 500 }}>8</span>
                                     </div>
+                                </Col>
+                                <Col span={6}>
+                                    {/* 空置列，用于对齐 */}
                                 </Col>
                             </Row>
                         </Col>
@@ -1244,8 +1379,6 @@ const ThreatIntelligenceDetail: React.FC = () => {
                                                                 },
                                                                 { label: '置信度', value: '高' },
                                                                 { label: '情报类型', value: '远控木马类' },
-                                                                { label: '情报归属', value: '公有情报源' },
-                                                                { label: '经纬度信息', value: '30.34324,343.3434' },
                                                                 { label: '情报相关组织', value: index === 6 ? '--' : (index === 1 ? 'APT32' : 'Lazarus') },
                                                                 { label: '关联病毒家族', value: index === 6 ? '--' : 'Lockbit勒索病毒' },
                                                                 { label: '入库时间', value: '2024-12-11 12:03:44' },
@@ -1255,7 +1388,7 @@ const ThreatIntelligenceDetail: React.FC = () => {
                                                                     key={idx}
                                                                     style={{
                                                                         padding: '12px 0',
-                                                                        borderBottom: idx !== 8 ? '1px solid #f0f0f0' : 'none',
+                                                                        borderBottom: idx !== 6 ? '1px solid #f0f0f0' : 'none',
                                                                         textAlign: 'center'
                                                                     }}
                                                                 >

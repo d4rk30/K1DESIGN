@@ -81,6 +81,7 @@ const AntiMappingAssets: React.FC = () => {
             title: '被测绘次数',
             dataIndex: 'mappingCount',
             key: 'mappingCount',
+            sorter: (a, b) => a.mappingCount - b.mappingCount,
             render: (count: number) => {
                 let color = 'blue';
                 return (
