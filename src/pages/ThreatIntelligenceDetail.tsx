@@ -1055,14 +1055,14 @@ const ThreatIntelligenceDetail: React.FC = () => {
     const renderExternalContent = () => (
         <>
             <Row gutter={[24, 24]} align="middle">
-                <Col span={2}>
+                <Col style={{ width: 200, marginRight: 24 }}>
                     <img
                         src="/images/ThreatOut.png"
                         alt="威胁分数"
                         style={{ width: '100%' }}
                     />
                 </Col>
-                <Col span={22}>
+                <Col flex="1">
                     <Row gutter={[0, 16]}>
                         <Col span={24}>
                             <div style={{ marginBottom: 8 }}>
