@@ -192,7 +192,6 @@ const UpgradeManagement: React.FC = () => {
     const handleFileUpload = (file: File) => {
         // 检查文件类型
         const allowedTypes = ['.bin', '.tar.gz', '.zip'];
-        const fileExtension = file.name.toLowerCase().substring(file.name.lastIndexOf('.'));
 
         if (!allowedTypes.some(type => file.name.toLowerCase().endsWith(type))) {
             message.error('只支持 .bin、.tar.gz、.zip 格式的升级文件');
@@ -213,12 +212,6 @@ const UpgradeManagement: React.FC = () => {
     const handleRemoveFile = () => {
         setUploadedFile(null);
         message.info('已移除上传的文件');
-    };
-
-    const getFileExtension = (fileName: string | undefined): string => {
-        if (!fileName) return '未知';
-        const parts = fileName.split('.');
-        return parts.length > 1 ? parts[parts.length - 1].toUpperCase() : '未知';
     };
 
     // 自动升级相关函数
