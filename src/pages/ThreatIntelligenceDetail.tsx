@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { Card, Row, Col, Table, Tag, Space, Button, Input, message, Modal, Form, Upload, Carousel, Alert, Empty } from 'antd';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { SearchOutlined, ReloadOutlined, CalendarOutlined, UpOutlined, DownOutlined, CopyOutlined, ApartmentOutlined, GlobalOutlined, ApiOutlined, LinkOutlined, InboxOutlined, LeftOutlined, RightOutlined } from '@ant-design/icons';
+import { SearchOutlined, ReloadOutlined, UpOutlined, DownOutlined, CopyOutlined, ApartmentOutlined, GlobalOutlined, ApiOutlined, LinkOutlined, InboxOutlined, LeftOutlined, RightOutlined } from '@ant-design/icons';
 import LabelSelect from '@/components/LabelSelect';
 import { US, CN, GB, FR, DE, RU } from 'country-flag-icons/react/3x2';
 import LabelInput from '@/components/LabelInput';
@@ -479,16 +479,7 @@ const ThreatIntelligenceDetail: React.FC = () => {
                     服务：{service}
                 </div>
 
-                {/* 底部装饰线 */}
-                <div style={{
-                    position: 'absolute',
-                    bottom: 0,
-                    left: 0,
-                    right: 0,
-                    height: 3,
-                    background: 'linear-gradient(90deg, #1890ff, #40a9ff)',
-                    zIndex: 1
-                }} />
+
             </div>
         );
     };
@@ -1416,4 +1407,4 @@ const ThreatIntelligenceDetail: React.FC = () => {
     );
 };
 
-export default ThreatIntelligenceDetail;
+export default ThreatIntelligenceDetail; 
