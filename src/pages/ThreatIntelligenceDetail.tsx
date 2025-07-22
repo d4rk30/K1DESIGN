@@ -156,13 +156,7 @@ const ThreatIntelligenceDetail: React.FC = () => {
                         key: 'location',
                         width: '25%',
                         render: ({ country, city }) => {
-                            const FlagComponent = getFlagComponent(country);
-                            return (
-                                <Space>
-                                    {FlagComponent && <FlagComponent style={{ width: 16 }} />}
-                                    <span>{country} | {city}</span>
-                                </Space>
-                            );
+                            return <span>{country} | {city}</span>;
                         },
                     },
                     {
@@ -188,7 +182,7 @@ const ThreatIntelligenceDetail: React.FC = () => {
                             city: '洛杉矶'
                         },
                         asn: 'AS7922 Comcast Cable Communications',
-                        recordType: 'A记录'
+                        recordType: 'A'
                     },
                     {
                         key: '2',
@@ -198,37 +192,37 @@ const ThreatIntelligenceDetail: React.FC = () => {
                             city: '北京'
                         },
                         asn: 'AS4134 China Telecom',
-                        recordType: 'AAAA记录'
+                        recordType: 'AAAA'
                     },
                     {
                         key: '3',
-                        resolveResult: 'ns1.example.com',
+                        resolveResult: '3.46.8.12',
                         location: {
                             country: '德国',
                             city: '柏林'
                         },
                         asn: 'AS3320 Deutsche Telekom AG',
-                        recordType: 'NS记录'
+                        recordType: 'NS'
                     },
                     {
                         key: '4',
-                        resolveResult: 'mail.example.com',
+                        resolveResult: '5.99.6.3',
                         location: {
                             country: '英国',
                             city: '伦敦'
                         },
                         asn: 'AS2856 British Telecommunications PLC',
-                        recordType: 'MX记录'
+                        recordType: 'MX'
                     },
                     {
                         key: '5',
-                        resolveResult: 'v=spf1 include:_spf.google.com ~all',
+                        resolveResult: '3.55.67.23',
                         location: {
                             country: '法国',
                             city: '巴黎'
                         },
                         asn: 'AS3215 Orange S.A.',
-                        recordType: 'TXT记录'
+                        recordType: 'TXT'
                     }
                 ]}
                 pagination={{
@@ -550,14 +544,14 @@ const ThreatIntelligenceDetail: React.FC = () => {
                     <Col flex="auto">
                         <Space>
                             <LabelSelect
-                                label="所属行业"
-                                placeholder="请选择"
-                                style={{ width: 200 }}
+                                label="历史攻击单位"
+                                placeholder="请选择历史攻击单位"
+                                style={{ width: 300 }}
                                 options={[
-                                    { label: '金融行业', value: '金融行业' },
-                                    { label: '教育行业', value: '教育行业' },
-                                    { label: '医疗行业', value: '医疗行业' },
-                                    { label: '政府机构', value: '政府机构' }
+                                    { label: '中******部', value: '中******部' },
+                                    { label: '航******院', value: '航******院' },
+                                    { label: '天******公司', value: '天******公司' },
+                                    { label: '北******局', value: '北******局' }
                                 ]}
                             />
                             <LabelSelect
@@ -622,7 +616,7 @@ const ThreatIntelligenceDetail: React.FC = () => {
                             key: '1',
                             lastAttackTime: '2023-12-01 15:30:00',
                             target: '192.168.1.109',
-                            historyTargets: 'XXX部门',
+                            historyTargets: '北*******部',
                             industry: '金融行业',
                             attackType: 'SQL注入',
                             attackCount: 156
@@ -631,7 +625,7 @@ const ThreatIntelligenceDetail: React.FC = () => {
                             key: '2',
                             lastAttackTime: '2023-11-30 18:45:00',
                             target: '192.168.1.109',
-                            historyTargets: 'XXX医院',
+                            historyTargets: '上*******院',
                             industry: '教育行业',
                             attackType: 'XSS攻击',
                             attackCount: 89
@@ -640,7 +634,7 @@ const ThreatIntelligenceDetail: React.FC = () => {
                             key: '3',
                             lastAttackTime: '2023-11-28 11:20:00',
                             target: '192.168.1.109',
-                            historyTargets: 'XX科技公司',
+                            historyTargets: '中*******公司',
                             industry: '政府机构',
                             attackType: 'DDoS攻击',
                             attackCount: 234
