@@ -282,12 +282,14 @@ const ThreatIntelligenceDetail: React.FC = () => {
                         dataIndex: 'firstParseTime',
                         key: 'firstParseTime',
                         width: '25%',
+                        sorter: (a, b) => new Date(a.firstParseTime).getTime() - new Date(b.firstParseTime).getTime(),
                     },
                     {
                         title: '更新时间',
                         dataIndex: 'lastParseTime',
                         key: 'lastParseTime',
                         width: '25%',
+                        sorter: (a, b) => new Date(a.lastParseTime).getTime() - new Date(b.lastParseTime).getTime(),
                     }
                 ]}
                 dataSource={[
@@ -584,6 +586,7 @@ const ThreatIntelligenceDetail: React.FC = () => {
                             title: '最近攻击时间',
                             dataIndex: 'lastAttackTime',
                             key: 'lastAttackTime',
+                            sorter: (a, b) => new Date(a.lastAttackTime).getTime() - new Date(b.lastAttackTime).getTime(),
                         },
                         {
                             title: '攻击目标',
@@ -609,6 +612,7 @@ const ThreatIntelligenceDetail: React.FC = () => {
                             title: '攻击次数',
                             dataIndex: 'attackCount',
                             key: 'attackCount',
+                            sorter: (a, b) => a.attackCount - b.attackCount,
                         }
                     ]}
                     dataSource={[
@@ -698,11 +702,13 @@ const ThreatIntelligenceDetail: React.FC = () => {
                     title: '创建时间',
                     dataIndex: 'firstAttackTime',
                     key: 'firstAttackTime',
+                    sorter: (a, b) => new Date(a.firstAttackTime).getTime() - new Date(b.firstAttackTime).getTime(),
                 },
                 {
                     title: '更新时间',
                     dataIndex: 'updateTime',
                     key: 'updateTime',
+                    sorter: (a, b) => new Date(a.updateTime).getTime() - new Date(b.updateTime).getTime(),
                 }
             ]}
             dataSource={[
