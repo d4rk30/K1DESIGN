@@ -31,6 +31,7 @@ const ThreatIntelligenceDetail: React.FC = () => {
     const [whoisLoading, setWhoisLoading] = useState(false);
     const [subdomainsLoading, setSubdomainsLoading] = useState(false);
     const [statsLoading, setStatsLoading] = useState(true);
+    const [vendorLoadingList, setVendorLoadingList] = useState(Array(8).fill(true));
 
     const attackTabs = [
         { key: 'attackTrace', tab: '攻击实时轨迹' },
@@ -159,11 +160,13 @@ const ThreatIntelligenceDetail: React.FC = () => {
 
     useEffect(() => {
         setStatsLoading(true);
+        setVendorLoadingList(Array(8).fill(true));
         const timer = setTimeout(() => {
             setStatsLoading(false);
+            setVendorLoadingList(Array(8).fill(false));
         }, 1000);
         return () => clearTimeout(timer);
-    }, [activeTabKey, queryType, inputType]);
+    }, [queryType, inputType]);
 
     const handleTabChange = (key: string) => {
         setActiveTabKey(key);
@@ -1214,10 +1217,16 @@ const ThreatIntelligenceDetail: React.FC = () => {
                                 </Row>
                             </div>
                             <Space size={8} wrap>
-                                <Tag color="blue">SQL注入</Tag>
-                                <Tag color="blue">XSS攻击</Tag>
-                                <Tag color="blue">DDoS攻击</Tag>
-                                <Tag color="blue">暴力破解</Tag>
+                                {statsLoading ? (
+                                    <Spin size="small" style={{ marginLeft: 0 }} />
+                                ) : (
+                                    <>
+                                        <Tag color="blue">SQL注入</Tag>
+                                        <Tag color="blue">XSS攻击</Tag>
+                                        <Tag color="blue">DDoS攻击</Tag>
+                                        <Tag color="blue">暴力破解</Tag>
+                                    </>
+                                )}
                             </Space>
                         </Col>
                         <Col span={24}>
@@ -1225,25 +1234,25 @@ const ThreatIntelligenceDetail: React.FC = () => {
                                 <Col xs={6}>
                                     <div style={{ display: 'flex' }}>
                                         <span style={{ color: '#999' }}>情报归属：</span>
-                                        <span>公有情报源</span>
+                                        {statsLoading ? <Spin size="small" style={{ marginLeft: 4, marginRight: 4 }} /> : <span>公有情报源</span>}
                                     </div>
                                 </Col>
                                 <Col xs={6}>
                                     <div style={{ display: 'flex' }}>
                                         <span style={{ color: '#999' }}>运营商：</span>
-                                        <span>--</span>
+                                        {statsLoading ? <Spin size="small" style={{ marginLeft: 4, marginRight: 4 }} /> : <span>--</span>}
                                     </div>
                                 </Col>
                                 <Col xs={6}>
                                     <div style={{ display: 'flex' }}>
                                         <span style={{ color: '#999' }}>归属地：</span>
-                                        <span>--</span>
+                                        {statsLoading ? <Spin size="small" style={{ marginLeft: 4, marginRight: 4 }} /> : <span>--</span>}
                                     </div>
                                 </Col>
                                 <Col xs={6}>
                                     <div style={{ display: 'flex' }}>
                                         <span style={{ color: '#999' }}>经纬度：</span>
-                                        <span>--</span>
+                                        {statsLoading ? <Spin size="small" style={{ marginLeft: 4, marginRight: 4 }} /> : <span>--</span>}
                                     </div>
                                 </Col>
                             </Row>
@@ -1315,7 +1324,7 @@ const ThreatIntelligenceDetail: React.FC = () => {
                 <Col flex="1">
                     <Row gutter={[0, 16]}>
                         <Col span={24}>
-                            {showAlert && (
+                            {showAlert && vendorLoadingList.every(v => v === false) && (
                                 <Alert
                                     message={
                                         <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', minHeight: 32 }}>
@@ -1398,26 +1407,32 @@ const ThreatIntelligenceDetail: React.FC = () => {
                                                 </div>
                                                 <div>
                                                     {index === 7 ? (
-                                                        <div style={{ padding: '40px 0', display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '300px', marginTop: '200px' }}>
+                                                        <div style={{ padding: '40px 0', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
                                                             <Empty description="暂无数据" image={Empty.PRESENTED_IMAGE_SIMPLE} style={{ fontSize: 14 }} />
                                                         </div>
                                                     ) : (
-                                                        <>
-                                                            {[
-                                                                { label: '威胁等级', value: index === 0 ? <Tag color="red">高危</Tag> : index === 1 ? <Tag color="green">低危</Tag> : <Tag color="orange">中危</Tag> },
-                                                                { label: '置信度', value: '高' },
-                                                                { label: '情报类型', value: '远控木马类' },
-                                                                { label: '情报相关组织', value: index === 6 ? '--' : (index === 1 ? 'APT32' : 'Lazarus') },
-                                                                { label: '关联病毒家族', value: index === 6 ? '--' : 'Lockbit勒索病毒' },
-                                                                { label: '入库时间', value: '2024-12-11 12:03:44' },
-                                                                { label: '过期时间', value: '2024-12-31 11:22:31' }
-                                                            ].map((item, idx) => (
-                                                                <div key={idx} style={{ padding: '12px 0', borderBottom: idx !== 6 ? '1px solid #f0f0f0' : 'none', textAlign: 'center' }}>
-                                                                    <div style={{ color: '#666', marginBottom: '8px', textAlign: 'center' }}>{item.label}</div>
-                                                                    <div style={{ textAlign: 'center' }}>{item.value}</div>
-                                                                </div>
-                                                            ))}
-                                                        </>
+                                                        vendorLoadingList[index] ? (
+                                                            <div style={{ height: 180, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                                                                <Spin size="large" />
+                                                            </div>
+                                                        ) : (
+                                                            <>
+                                                                {[
+                                                                    { label: '威胁等级', value: index === 0 ? <Tag color="red">高危</Tag> : index === 1 ? <Tag color="green">低危</Tag> : <Tag color="orange">中危</Tag> },
+                                                                    { label: '置信度', value: '高' },
+                                                                    { label: '情报类型', value: '远控木马类' },
+                                                                    { label: '情报相关组织', value: index === 6 ? '--' : (index === 1 ? 'APT32' : 'Lazarus') },
+                                                                    { label: '关联病毒家族', value: index === 6 ? '--' : 'Lockbit勒索病毒' },
+                                                                    { label: '入库时间', value: '2024-12-11 12:03:44' },
+                                                                    { label: '过期时间', value: '2024-12-31 11:22:31' }
+                                                                ].map((item, idx) => (
+                                                                    <div key={idx} style={{ padding: '12px 0', borderBottom: idx !== 6 ? '1px solid #f0f0f0' : 'none', textAlign: 'center' }}>
+                                                                        <div style={{ color: '#666', marginBottom: '8px', textAlign: 'center' }}>{item.label}</div>
+                                                                        <div style={{ textAlign: 'center' }}>{item.value}</div>
+                                                                    </div>
+                                                                ))}
+                                                            </>
+                                                        )
                                                     )}
                                                 </div>
                                             </div>
@@ -1446,10 +1461,22 @@ const ThreatIntelligenceDetail: React.FC = () => {
                         </Col>
                         <Col>
                             <Space>
-                                <Button type={'default'} style={{ height: 40 }}>
+                                <Button type={'default'} style={{ height: 40 }}
+                                    onClick={() => {
+                                        setStatsLoading(true);
+                                        setTimeout(() => setStatsLoading(false), 1000);
+                                        // 这里可以加实际的查询逻辑
+                                    }}
+                                >
                                     攻击情报查询
                                 </Button>
-                                <Button type={'default'} style={{ height: 40 }}>
+                                <Button type={'default'} style={{ height: 40 }}
+                                    onClick={() => {
+                                        setStatsLoading(true);
+                                        setTimeout(() => setStatsLoading(false), 1000);
+                                        // 这里可以加实际的查询逻辑
+                                    }}
+                                >
                                     外联情报查询
                                 </Button>
                             </Space>
