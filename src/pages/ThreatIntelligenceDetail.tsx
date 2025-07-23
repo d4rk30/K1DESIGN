@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { Card, Row, Col, Table, Tag, Space, Button, Input, message, Modal, Form, Upload, Carousel, Alert, Empty } from 'antd';
+import { Card, Row, Col, Table, Tag, Space, Button, Input, message, Modal, Form, Upload, Carousel, Alert, Empty, Spin, Skeleton } from 'antd';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { SearchOutlined, ReloadOutlined, UpOutlined, DownOutlined, CopyOutlined, ApartmentOutlined, GlobalOutlined, ApiOutlined, LinkOutlined, InboxOutlined, LeftOutlined, RightOutlined } from '@ant-design/icons';
 import LabelSelect from '@/components/LabelSelect';
@@ -22,6 +22,15 @@ const ThreatIntelligenceDetail: React.FC = () => {
     const carouselRef = useRef<any>(null);
     const [showAlert, setShowAlert] = useState(true);
     const [countdown, setCountdown] = useState(5);
+    const [attackTraceLoading, setAttackTraceLoading] = useState(true);
+    const [fingerprintLoading, setFingerprintLoading] = useState(false);
+    const [portsLoading, setPortsLoading] = useState(false);
+    const [sameSegmentLoading, setSameSegmentLoading] = useState(false);
+    const [reverseDomainLoading, setReverseDomainLoading] = useState(false);
+    const [dnsRecordsLoading, setDnsRecordsLoading] = useState(false);
+    const [whoisLoading, setWhoisLoading] = useState(false);
+    const [subdomainsLoading, setSubdomainsLoading] = useState(false);
+    const [statsLoading, setStatsLoading] = useState(true);
 
     const attackTabs = [
         { key: 'attackTrace', tab: '攻击实时轨迹' },
@@ -88,6 +97,73 @@ const ThreatIntelligenceDetail: React.FC = () => {
             return () => clearInterval(timer);
         }
     }, [showAlert]);
+
+    useEffect(() => {
+        if (activeTabKey === 'attackTrace') {
+            setAttackTraceLoading(true);
+            const timer = setTimeout(() => {
+                setAttackTraceLoading(false);
+            }, 1000);
+            return () => clearTimeout(timer);
+        }
+        if (activeTabKey === 'fingerprint') {
+            setFingerprintLoading(true);
+            const timer = setTimeout(() => {
+                setFingerprintLoading(false);
+            }, 1000);
+            return () => clearTimeout(timer);
+        }
+        if (activeTabKey === 'ports') {
+            setPortsLoading(true);
+            const timer = setTimeout(() => {
+                setPortsLoading(false);
+            }, 1000);
+            return () => clearTimeout(timer);
+        }
+        if (activeTabKey === 'sameSegment') {
+            setSameSegmentLoading(true);
+            const timer = setTimeout(() => {
+                setSameSegmentLoading(false);
+            }, 1000);
+            return () => clearTimeout(timer);
+        }
+        if (activeTabKey === 'reverseDomain') {
+            setReverseDomainLoading(true);
+            const timer = setTimeout(() => {
+                setReverseDomainLoading(false);
+            }, 1000);
+            return () => clearTimeout(timer);
+        }
+        if (activeTabKey === 'dnsRecords') {
+            setDnsRecordsLoading(true);
+            const timer = setTimeout(() => {
+                setDnsRecordsLoading(false);
+            }, 1000);
+            return () => clearTimeout(timer);
+        }
+        if (activeTabKey === 'whois') {
+            setWhoisLoading(true);
+            const timer = setTimeout(() => {
+                setWhoisLoading(false);
+            }, 1000);
+            return () => clearTimeout(timer);
+        }
+        if (activeTabKey === 'subdomains') {
+            setSubdomainsLoading(true);
+            const timer = setTimeout(() => {
+                setSubdomainsLoading(false);
+            }, 1000);
+            return () => clearTimeout(timer);
+        }
+    }, [activeTabKey]);
+
+    useEffect(() => {
+        setStatsLoading(true);
+        const timer = setTimeout(() => {
+            setStatsLoading(false);
+        }, 1000);
+        return () => clearTimeout(timer);
+    }, [activeTabKey, queryType, inputType]);
 
     const handleTabChange = (key: string) => {
         setActiveTabKey(key);
@@ -480,7 +556,8 @@ const ThreatIntelligenceDetail: React.FC = () => {
         );
     };
 
-    const renderPorts = () => {
+    // 将renderPorts改为组件
+    const RenderPorts: React.FC = () => {
         const [expanded, setExpanded] = useState(false);
 
         const portsData = [
@@ -539,126 +616,8 @@ const ThreatIntelligenceDetail: React.FC = () => {
         );
     };
 
-    const tabContents = {
-        attackTrace: (
-            <div>
-                <Row style={{ marginBottom: 16 }}>
-                    <Col flex="auto">
-                        <Space>
-                            <LabelSelect
-                                label="历史攻击单位"
-                                placeholder="请选择历史攻击单位"
-                                style={{ width: 300 }}
-                                options={[
-                                    { label: '中******部', value: '中******部' },
-                                    { label: '航******院', value: '航******院' },
-                                    { label: '天******公司', value: '天******公司' },
-                                    { label: '北******局', value: '北******局' }
-                                ]}
-                            />
-                            <LabelSelect
-                                label="攻击类型"
-                                placeholder="请选择"
-                                style={{ width: 200 }}
-                                options={[
-                                    { label: 'SQL注入', value: 'SQL注入' },
-                                    { label: 'XSS攻击', value: 'XSS攻击' },
-                                    { label: 'DDOS攻击', value: 'DDOS攻击' },
-                                    { label: '暴力破解', value: '暴力破解' }
-                                ]}
-                            />
-                        </Space>
-                    </Col>
-                    <Col>
-                        <Space>
-                            <Button type="primary" icon={<SearchOutlined />}>
-                                查询
-                            </Button>
-                            <Button icon={<ReloadOutlined />}>
-                                重置
-                            </Button>
-                        </Space>
-                    </Col>
-                </Row>
-                <Table
-                    columns={[
-                        {
-                            title: '最近攻击时间',
-                            dataIndex: 'lastAttackTime',
-                            key: 'lastAttackTime',
-                            sorter: (a, b) => new Date(a.lastAttackTime).getTime() - new Date(b.lastAttackTime).getTime(),
-                        },
-                        {
-                            title: '攻击目标',
-                            dataIndex: 'target',
-                            key: 'target',
-                        },
-                        {
-                            title: '历史攻击单位',
-                            dataIndex: 'historyTargets',
-                            key: 'historyTargets',
-                        },
-                        {
-                            title: '所属行业',
-                            dataIndex: 'industry',
-                            key: 'industry',
-                        },
-                        {
-                            title: '攻击类型',
-                            dataIndex: 'attackType',
-                            key: 'attackType',
-                        },
-                        {
-                            title: '攻击次数',
-                            dataIndex: 'attackCount',
-                            key: 'attackCount',
-                            sorter: (a, b) => a.attackCount - b.attackCount,
-                        }
-                    ]}
-                    dataSource={[
-                        {
-                            key: '1',
-                            lastAttackTime: '2023-12-01 15:30:00',
-                            target: '192.168.1.109',
-                            historyTargets: '北*******部',
-                            industry: '金融行业',
-                            attackType: 'SQL注入',
-                            attackCount: 156
-                        },
-                        {
-                            key: '2',
-                            lastAttackTime: '2023-11-30 18:45:00',
-                            target: '192.168.1.109',
-                            historyTargets: '上*******院',
-                            industry: '教育行业',
-                            attackType: 'XSS攻击',
-                            attackCount: 89
-                        },
-                        {
-                            key: '3',
-                            lastAttackTime: '2023-11-28 11:20:00',
-                            target: '192.168.1.109',
-                            historyTargets: '中*******公司',
-                            industry: '政府机构',
-                            attackType: 'DDoS攻击',
-                            attackCount: 234
-                        }
-                    ]}
-                    pagination={{
-                        total: 3,
-                        pageSize: 10,
-                        showSizeChanger: true,
-                        showQuickJumper: true,
-                        showTotal: (total) => `共 ${total} 条记录`,
-                    }}
-                />
-            </div>
-        ),
-        dnsRecords: renderDNSRecords(),
-        whois: renderWhois(),
-        subdomains: renderSubdomains(),
-        fingerprint: renderFingerprint(),
-        ports: renderPorts(),
+    // 保证tabContentsRaw定义在tabContents前面，且只包含纯JSX
+    const tabContentsRaw = {
         sameSegment: <Table
             columns={[
                 {
@@ -689,6 +648,7 @@ const ThreatIntelligenceDetail: React.FC = () => {
                     dataIndex: 'location',
                     key: 'location',
                     render: ({ country, city }) => {
+                        // getFlagComponent不是hook，只是普通函数
                         const FlagComponent = getFlagComponent(country);
                         return (
                             <Space>
@@ -839,6 +799,163 @@ const ThreatIntelligenceDetail: React.FC = () => {
         />
     };
 
+    // tabContents所有tab都用Spin包裹，Spin的children始终渲染（loading时渲染占位div，否则渲染内容），不提前return
+    const tabContents = {
+        attackTrace: (
+            <Spin spinning={attackTraceLoading} tip="" size="large">
+                {attackTraceLoading ? <div style={{ minHeight: 200 }} /> : (
+                    <div>
+                        <Row style={{ marginBottom: 16 }}>
+                            <Col flex="auto">
+                                <Space>
+                                    <LabelSelect
+                                        label="历史攻击单位"
+                                        placeholder="请选择历史攻击单位"
+                                        style={{ width: 300 }}
+                                        options={[
+                                            { label: '中******部', value: '中******部' },
+                                            { label: '航******院', value: '航******院' },
+                                            { label: '天******公司', value: '天******公司' },
+                                            { label: '北******局', value: '北******局' }
+                                        ]}
+                                    />
+                                    <LabelSelect
+                                        label="攻击类型"
+                                        placeholder="请选择"
+                                        style={{ width: 200 }}
+                                        options={[
+                                            { label: 'SQL注入', value: 'SQL注入' },
+                                            { label: 'XSS攻击', value: 'XSS攻击' },
+                                            { label: 'DDOS攻击', value: 'DDOS攻击' },
+                                            { label: '暴力破解', value: '暴力破解' }
+                                        ]}
+                                    />
+                                </Space>
+                            </Col>
+                            <Col>
+                                <Space>
+                                    <Button type="primary" icon={<SearchOutlined />}>
+                                        查询
+                                    </Button>
+                                    <Button icon={<ReloadOutlined />}>
+                                        重置
+                                    </Button>
+                                </Space>
+                            </Col>
+                        </Row>
+                        <Table
+                            columns={[
+                                {
+                                    title: '最近攻击时间',
+                                    dataIndex: 'lastAttackTime',
+                                    key: 'lastAttackTime',
+                                    sorter: (a, b) => new Date(a.lastAttackTime).getTime() - new Date(b.lastAttackTime).getTime(),
+                                },
+                                {
+                                    title: '攻击目标',
+                                    dataIndex: 'target',
+                                    key: 'target',
+                                },
+                                {
+                                    title: '历史攻击单位',
+                                    dataIndex: 'historyTargets',
+                                    key: 'historyTargets',
+                                },
+                                {
+                                    title: '所属行业',
+                                    dataIndex: 'industry',
+                                    key: 'industry',
+                                },
+                                {
+                                    title: '攻击类型',
+                                    dataIndex: 'attackType',
+                                    key: 'attackType',
+                                },
+                                {
+                                    title: '攻击次数',
+                                    dataIndex: 'attackCount',
+                                    key: 'attackCount',
+                                    sorter: (a, b) => a.attackCount - b.attackCount,
+                                }
+                            ]}
+                            dataSource={[
+                                {
+                                    key: '1',
+                                    lastAttackTime: '2023-12-01 15:30:00',
+                                    target: '192.168.1.109',
+                                    historyTargets: '北*******部',
+                                    industry: '金融行业',
+                                    attackType: 'SQL注入',
+                                    attackCount: 156
+                                },
+                                {
+                                    key: '2',
+                                    lastAttackTime: '2023-11-30 18:45:00',
+                                    target: '192.168.1.109',
+                                    historyTargets: '上*******院',
+                                    industry: '教育行业',
+                                    attackType: 'XSS攻击',
+                                    attackCount: 89
+                                },
+                                {
+                                    key: '3',
+                                    lastAttackTime: '2023-11-28 11:20:00',
+                                    target: '192.168.1.109',
+                                    historyTargets: '中*******公司',
+                                    industry: '政府机构',
+                                    attackType: 'DDoS攻击',
+                                    attackCount: 234
+                                }
+                            ]}
+                            pagination={{
+                                total: 3,
+                                pageSize: 10,
+                                showSizeChanger: true,
+                                showQuickJumper: true,
+                                showTotal: (total) => `共 ${total} 条记录`,
+                            }}
+                        />
+                    </div>
+                )}
+            </Spin>
+        ),
+        dnsRecords: (
+            <Spin spinning={dnsRecordsLoading} tip="" size="large">
+                {dnsRecordsLoading ? <div style={{ minHeight: 200 }} /> : renderDNSRecords()}
+            </Spin>
+        ),
+        whois: (
+            <Spin spinning={whoisLoading} tip="" size="large">
+                {whoisLoading ? <div style={{ minHeight: 200 }} /> : renderWhois()}
+            </Spin>
+        ),
+        subdomains: (
+            <Spin spinning={subdomainsLoading} tip="" size="large">
+                {subdomainsLoading ? <div style={{ minHeight: 200 }} /> : renderSubdomains()}
+            </Spin>
+        ),
+        fingerprint: (
+            <Spin spinning={fingerprintLoading} tip="" size="large">
+                {fingerprintLoading ? <div style={{ minHeight: 200 }} /> : renderFingerprint()}
+            </Spin>
+        ),
+        ports: (
+            <Spin spinning={portsLoading} tip="" size="large">
+                {portsLoading ? <div style={{ minHeight: 200 }} /> : <RenderPorts />}
+            </Spin>
+        ),
+        sameSegment: (
+            <Spin spinning={sameSegmentLoading} tip="" size="large">
+                {sameSegmentLoading ? <div style={{ minHeight: 200 }} /> : tabContentsRaw.sameSegment}
+            </Spin>
+        ),
+        reverseDomain: (
+            <Spin spinning={reverseDomainLoading} tip="" size="large">
+                {reverseDomainLoading ? <div style={{ minHeight: 200 }} /> : tabContentsRaw.reverseDomain}
+            </Spin>
+        )
+    };
+
     const getFlagComponent = (country: string) => {
         const componentMap: { [key: string]: any } = {
             '美国': US,
@@ -934,10 +1051,16 @@ const ThreatIntelligenceDetail: React.FC = () => {
                             </Row>
                         </div>
                         <Space size={8} wrap>
-                            <Tag color="blue">SQL注入</Tag>
-                            <Tag color="blue">XSS攻击</Tag>
-                            <Tag color="blue">DDoS攻击</Tag>
-                            <Tag color="blue">暴力破解</Tag>
+                            {statsLoading ? (
+                                <Spin size="small" style={{ marginLeft: 0 }} />
+                            ) : (
+                                <>
+                                    <Tag color="blue">SQL注入</Tag>
+                                    <Tag color="blue">XSS攻击</Tag>
+                                    <Tag color="blue">DDoS攻击</Tag>
+                                    <Tag color="blue">暴力破解</Tag>
+                                </>
+                            )}
                         </Space>
                     </Col>
                     <Col span={24}>
@@ -945,73 +1068,73 @@ const ThreatIntelligenceDetail: React.FC = () => {
                             <Col xs={6}>
                                 <div style={{ display: 'flex' }}>
                                     <span style={{ color: '#999' }}>威胁等级：</span>
-                                    <Tag color="red">高危</Tag>
+                                    {statsLoading ? <Spin size="small" style={{ marginLeft: 4, marginRight: 4 }} /> : <Tag color="red">高危</Tag>}
                                 </div>
                             </Col>
                             <Col xs={6}>
                                 <div style={{ display: 'flex' }}>
                                     <span style={{ color: '#999' }}>置信度：</span>
-                                    <span>高</span>
+                                    {statsLoading ? <Spin size="small" style={{ marginLeft: 4, marginRight: 4 }} /> : <span>高</span>}
                                 </div>
                             </Col>
                             <Col xs={6}>
                                 <div style={{ display: 'flex' }}>
                                     <span style={{ color: '#999' }}>活跃度：</span>
-                                    <span>中</span>
+                                    {statsLoading ? <Spin size="small" style={{ marginLeft: 4, marginRight: 4 }} /> : <span>中</span>}
                                 </div>
                             </Col>
                             <Col xs={6}>
                                 <div style={{ display: 'flex' }}>
                                     <span style={{ color: '#999' }}>情报类型：</span>
-                                    <span>蠕虫</span>
+                                    {statsLoading ? <Spin size="small" style={{ marginLeft: 4, marginRight: 4 }} /> : <span>蠕虫</span>}
                                 </div>
                             </Col>
                             <Col xs={6}>
                                 <div style={{ display: 'flex' }}>
                                     <span style={{ color: '#999' }}>情报归属：</span>
-                                    <span>公有情报源</span>
+                                    {statsLoading ? <Spin size="small" style={{ marginLeft: 4, marginRight: 4 }} /> : <span>公有情报源</span>}
                                 </div>
                             </Col>
                             <Col xs={6}>
                                 <div style={{ display: 'flex' }}>
                                     <span style={{ color: '#999' }}>运营商：</span>
-                                    <span>EstNOC OY</span>
+                                    {statsLoading ? <Spin size="small" style={{ marginLeft: 4, marginRight: 4 }} /> : <span>EstNOC OY</span>}
                                 </div>
                             </Col>
                             <Col xs={6}>
                                 <div style={{ display: 'flex' }}>
                                     <span style={{ color: '#999' }}>ASN：</span>
-                                    <span>206804</span>
+                                    {statsLoading ? <Spin size="small" style={{ marginLeft: 4, marginRight: 4 }} /> : <span>206804</span>}
                                 </div>
                             </Col>
                             <Col xs={6}>
                                 <div style={{ display: 'flex', height: '22px' }}>
                                     <span style={{ color: '#999' }}>经纬度信息：</span>
-                                    <span>30.34324,343.3434</span>
+                                    {statsLoading ? <Spin size="small" style={{ marginLeft: 4, marginRight: 4 }} /> : <span>30.34324,343.3434</span>}
                                 </div>
                             </Col>
                             <Col xs={6}>
                                 <div style={{ display: 'flex', height: '22px' }}>
                                     <span style={{ color: '#999' }}>情报相关组织：</span>
-                                    <span>Lazarus</span>
+                                    {statsLoading ? <Spin size="small" style={{ marginLeft: 4, marginRight: 4 }} /> : <span>Lazarus</span>}
                                 </div>
                             </Col>
                             <Col xs={6}>
                                 <div style={{ display: 'flex', height: '22px' }}>
                                     <span style={{ color: '#999' }}>关联病毒家族：</span>
-                                    <span>Lockbit勒索病毒</span>
+                                    {statsLoading ? <Spin size="small" style={{ marginLeft: 4, marginRight: 4 }} /> : <span>Lockbit勒索病毒</span>}
                                 </div>
                             </Col>
                             <Col xs={6}>
                                 <div style={{ display: 'flex', height: '22px' }}>
                                     <span style={{ color: '#999' }}>入库时间：</span>
-                                    <span>2024-12-31 11:22:31</span>
+                                    {statsLoading ? <Spin size="small" style={{ marginLeft: 4, marginRight: 4 }} /> : <span>2024-12-31 11:22:31</span>}
                                 </div>
                             </Col>
                             <Col xs={6}>
                                 <div style={{ display: 'flex', height: '22px' }}>
                                     <span style={{ color: '#999' }}>过期时间：</span>
-                                    <span>2024-12-31 11:22:31</span>
+                                    {statsLoading ? <Spin size="small" style={{ marginLeft: 4, marginRight: 4 }} /> : <span>2024-12-31 11:22:31</span>}
                                 </div>
                             </Col>
                         </Row>
@@ -1021,28 +1144,28 @@ const ThreatIntelligenceDetail: React.FC = () => {
                                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start' }}>
                                     <ApiOutlined style={{ color: '#fff', background: '#1890ff', borderRadius: '50%', fontSize: 16, width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', marginRight: 8 }} />
                                     <span style={{ color: '#999', marginRight: 8 }}>攻击实时轨迹</span>
-                                    <span style={{ color: '#1890ff', fontSize: 20, fontWeight: 500 }}>3</span>
+                                    {statsLoading ? <Spin size="small" style={{ marginLeft: 4, marginRight: 4 }} /> : <span style={{ color: '#1890ff', fontSize: 20, fontWeight: 500 }}>3</span>}
                                 </div>
                             </Col>
                             <Col span={6}>
                                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start' }}>
                                     <GlobalOutlined style={{ color: '#fff', background: '#1890ff', borderRadius: '50%', fontSize: 16, width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', marginRight: 8 }} />
                                     <span style={{ color: '#999', marginRight: 8 }}>端口信息</span>
-                                    <span style={{ color: '#1890ff', fontSize: 20, fontWeight: 500 }}>10</span>
+                                    {statsLoading ? <Spin size="small" style={{ marginLeft: 4, marginRight: 4 }} /> : <span style={{ color: '#1890ff', fontSize: 20, fontWeight: 500 }}>10</span>}
                                 </div>
                             </Col>
                             <Col span={6}>
                                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start' }}>
                                     <LinkOutlined style={{ color: '#fff', background: '#1890ff', borderRadius: '50%', fontSize: 16, width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', marginRight: 8 }} />
                                     <span style={{ color: '#999', marginRight: 8 }}>同C段信息</span>
-                                    <span style={{ color: '#1890ff', fontSize: 20, fontWeight: 500 }}>4</span>
+                                    {statsLoading ? <Spin size="small" style={{ marginLeft: 4, marginRight: 4 }} /> : <span style={{ color: '#1890ff', fontSize: 20, fontWeight: 500 }}>4</span>}
                                 </div>
                             </Col>
                             <Col span={6}>
                                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start' }}>
                                     <ApartmentOutlined style={{ color: '#fff', background: '#1890ff', borderRadius: '50%', fontSize: 16, width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', marginRight: 8 }} />
                                     <span style={{ color: '#999', marginRight: 8 }}>反查域名</span>
-                                    <span style={{ color: '#1890ff', fontSize: 20, fontWeight: 500 }}>5</span>
+                                    {statsLoading ? <Spin size="small" style={{ marginLeft: 4, marginRight: 4 }} /> : <span style={{ color: '#1890ff', fontSize: 20, fontWeight: 500 }}>5</span>}
                                 </div>
                             </Col>
                         </Row>
@@ -1135,7 +1258,7 @@ const ThreatIntelligenceDetail: React.FC = () => {
                                                     <ApartmentOutlined style={{ color: '#fff', fontSize: 16 }} />
                                                 </div>
                                                 <span style={{ color: '#999', marginRight: 8 }}>DNS解析记录</span>
-                                                <span style={{ color: '#1890ff', fontSize: 20, fontWeight: 500 }}>2</span>
+                                                {statsLoading ? <Spin size="small" style={{ marginLeft: 4, marginRight: 4 }} /> : <span style={{ color: '#1890ff', fontSize: 20, fontWeight: 500 }}>2</span>}
                                             </div>
                                         </Col>
                                         <Col span={6}>
@@ -1144,7 +1267,7 @@ const ThreatIntelligenceDetail: React.FC = () => {
                                                     <GlobalOutlined style={{ color: '#fff', fontSize: 16 }} />
                                                 </div>
                                                 <span style={{ color: '#999', marginRight: 8 }}>子域名</span>
-                                                <span style={{ color: '#1890ff', fontSize: 20, fontWeight: 500 }}>4</span>
+                                                {statsLoading ? <Spin size="small" style={{ marginLeft: 4, marginRight: 4 }} /> : <span style={{ color: '#1890ff', fontSize: 20, fontWeight: 500 }}>4</span>}
                                             </div>
                                         </Col>
                                     </>
@@ -1154,21 +1277,21 @@ const ThreatIntelligenceDetail: React.FC = () => {
                                             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start' }}>
                                                 <GlobalOutlined style={{ color: '#fff', background: '#1890ff', borderRadius: '50%', fontSize: 16, width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', marginRight: 8 }} />
                                                 <span style={{ color: '#999', marginRight: 8 }}>端口信息</span>
-                                                <span style={{ color: '#1890ff', fontSize: 20, fontWeight: 500 }}>10</span>
+                                                {statsLoading ? <Spin size="small" style={{ marginLeft: 4, marginRight: 4 }} /> : <span style={{ color: '#1890ff', fontSize: 20, fontWeight: 500 }}>10</span>}
                                             </div>
                                         </Col>
                                         <Col span={6}>
                                             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start' }}>
                                                 <LinkOutlined style={{ color: '#fff', background: '#1890ff', borderRadius: '50%', fontSize: 16, width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', marginRight: 8 }} />
                                                 <span style={{ color: '#999', marginRight: 8 }}>同C段信息</span>
-                                                <span style={{ color: '#1890ff', fontSize: 20, fontWeight: 500 }}>4</span>
+                                                {statsLoading ? <Spin size="small" style={{ marginLeft: 4, marginRight: 4 }} /> : <span style={{ color: '#1890ff', fontSize: 20, fontWeight: 500 }}>4</span>}
                                             </div>
                                         </Col>
                                         <Col span={6}>
                                             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start' }}>
                                                 <ApartmentOutlined style={{ color: '#fff', background: '#1890ff', borderRadius: '50%', fontSize: 16, width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', marginRight: 8 }} />
                                                 <span style={{ color: '#999', marginRight: 8 }}>反查域名</span>
-                                                <span style={{ color: '#1890ff', fontSize: 20, fontWeight: 500 }}>5</span>
+                                                {statsLoading ? <Spin size="small" style={{ marginLeft: 4, marginRight: 4 }} /> : <span style={{ color: '#1890ff', fontSize: 20, fontWeight: 500 }}>5</span>}
                                             </div>
                                         </Col>
                                     </>
@@ -1179,7 +1302,7 @@ const ThreatIntelligenceDetail: React.FC = () => {
                                             <ApiOutlined style={{ color: '#fff', fontSize: 16 }} />
                                         </div>
                                         <span style={{ color: '#999', marginRight: 8 }}>情报厂商总数</span>
-                                        <span style={{ color: '#1890ff', fontSize: 20, fontWeight: 500 }}>8</span>
+                                        {statsLoading ? <Spin size="small" style={{ marginLeft: 4, marginRight: 4 }} /> : <span style={{ color: '#1890ff', fontSize: 20, fontWeight: 500 }}>8</span>}
                                     </div>
                                 </Col>
                             </Row>
