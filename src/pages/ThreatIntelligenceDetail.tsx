@@ -7,6 +7,7 @@ import { US, CN, GB, FR, DE, RU } from 'country-flag-icons/react/3x2';
 import LabelInput from '@/components/LabelInput';
 import LabelTextArea from '@/components/LabelTextArea';
 import type { UploadFile, UploadProps } from 'antd';
+import ReactECharts from 'echarts-for-react';
 
 const ThreatIntelligenceDetail: React.FC = () => {
     const location = useLocation();
@@ -1483,6 +1484,324 @@ const ThreatIntelligenceDetail: React.FC = () => {
                         </Col>
                     </Row>
                 </Col>
+                {/* 新增无标题卡片 */}
+                <Col span={24}>
+                    <Card>
+                        <Row>
+                            <Col span={3}>
+                                {/* ECharts 环形图 */}
+                                <ReactECharts
+                                    style={{ width: '160px', height: 160 }}
+                                    option={{
+                                        series: [
+                                            {
+                                                type: 'pie',
+                                                radius: ['70%', '90%'],
+                                                avoidLabelOverlap: false,
+                                                label: { show: false },
+                                                labelLine: { show: false },
+                                                itemStyle: {
+                                                    borderRadius: 12,
+                                                    borderColor: '#fff',
+                                                    borderWidth: 2,
+                                                },
+                                                data: [
+                                                    {
+                                                        value: 67,
+                                                        name: '高危',
+                                                        itemStyle: {
+                                                            color: {
+                                                                type: 'linear',
+                                                                x: 0,
+                                                                y: 0,
+                                                                x2: 0,
+                                                                y2: 1,
+                                                                colorStops: [
+                                                                    { offset: 0, color: '#f5222d' }, // 顶部
+                                                                    { offset: 1, color: '#ffa39e' }  // 底部
+                                                                ]
+                                                            }
+                                                        }
+                                                    },
+                                                    { value: 33, name: '安全', itemStyle: { color: '#f5f5f5' } },
+                                                ],
+                                            },
+                                        ],
+                                        graphic: [
+                                            {
+                                                type: 'text',
+                                                left: 'center',
+                                                top: '30%',
+                                                style: {
+                                                    text: '2',
+                                                    fontSize: 48,
+                                                    fontWeight: 'bold',
+                                                    fill: '#f5222d',
+                                                    textAlign: 'center'
+                                                }
+                                            },
+                                            {
+                                                type: 'text',
+                                                left: 'center',
+                                                top: '60%',
+                                                style: {
+                                                    text: '/3',
+                                                    fontSize: 16,
+                                                    fill: '#999',
+                                                    textAlign: 'center'
+                                                }
+                                            }
+                                        ],
+                                        tooltip: { show: false },
+                                        legend: { show: false },
+                                    }}
+                                />
+                                <div style={{
+                                    textAlign: 'center',
+                                    marginTop: 8,
+                                    fontSize: 14,
+                                    color: '#f5222d',
+                                    width: '160px',
+                                    fontWeight: 500,
+                                    background: 'linear-gradient(to right, #ffffff, #fff1f0, #ffffff)',
+                                    padding: '4px 8px',
+                                    borderRadius: '4px'
+                                }}>
+                                    威胁统计
+                                </div>
+                            </Col>
+                            <Col span={18}>
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+                                    <div style={{ display: 'flex', alignItems: 'center' }}>
+                                        <span style={{ fontSize: 32, fontWeight: 600, color: '#222', marginRight: 12 }}>
+                                            {query}
+                                        </span>
+                                        <Tag>
+                                            攻击情报
+                                        </Tag>
+                                        <span
+                                            style={{
+                                                cursor: 'pointer',
+                                                color: '#bfbfbf',
+                                                fontSize: 16,
+                                                display: 'inline-flex',
+                                                alignItems: 'center',
+                                                marginLeft: 8
+                                            }}
+                                            onClick={() => {
+                                                if (navigator && navigator.clipboard) {
+                                                    navigator.clipboard.writeText(query);
+                                                    message.success('已复制到剪贴板');
+                                                } else {
+                                                    // 兼容性处理
+                                                    const input = document.createElement('input');
+                                                    input.value = query;
+                                                    document.body.appendChild(input);
+                                                    input.select();
+                                                    document.execCommand('copy');
+                                                    document.body.removeChild(input);
+                                                    message.success('已复制到剪贴板');
+                                                }
+                                            }}
+                                        >
+                                            <CopyOutlined />
+                                        </span>
+                                    </div>
+                                    <Button
+                                        onClick={() => setFeedbackVisible(true)}
+                                        style={{ marginRight: 60 }}
+                                    >
+                                        误报反馈
+                                    </Button>
+                                </div>
+
+                                {/* 情报厂商表格 */}
+                                <div style={{ marginTop: 16 }}>
+                                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
+                                        <thead>
+                                            <tr style={{ height: 40 }}>
+                                                <th style={{ textAlign: 'left', padding: '8px 16px', color: '#8c8c8c', fontWeight: 400 }}>情报厂商</th>
+                                                <th style={{ textAlign: 'center', padding: '8px 16px', color: '#8c8c8c', fontWeight: 400 }}>是否有效</th>
+                                                <th style={{ textAlign: 'center', padding: '8px 16px', color: '#8c8c8c', fontWeight: 400 }}>置信度</th>
+                                                <th style={{ textAlign: 'center', padding: '8px 16px', color: '#8c8c8c', fontWeight: 400 }}>威胁等级</th>
+                                                <th style={{ textAlign: 'center', padding: '8px 16px', color: '#8c8c8c', fontWeight: 400 }}>资产/威胁类型</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr style={{ height: 48 }}>
+                                                <td style={{ padding: '8px 16px', fontWeight: 500 }}>公安一所</td>
+                                                <td style={{ textAlign: 'center', padding: '8px 16px' }}>
+                                                    <Tag color="green" style={{ fontSize: 12 }}>
+                                                        永久有效
+                                                    </Tag>
+                                                </td>
+                                                <td style={{ textAlign: 'center', padding: '8px 16px' }}>
+                                                    <div style={{ display: 'flex', justifyContent: 'center', gap: '2px' }}>
+                                                        <span style={{ color: '#fadb14', fontSize: 16 }}>★</span>
+                                                        <span style={{ color: '#fadb14', fontSize: 16 }}>★</span>
+                                                        <span style={{ color: '#fadb14', fontSize: 16 }}>★</span>
+                                                    </div>
+                                                </td>
+                                                <td style={{ textAlign: 'center', padding: '8px 16px' }}>
+                                                    <div style={{ display: 'flex', justifyContent: 'center', gap: '4px' }}>
+                                                        {[1, 2, 3].map(i => (
+                                                            <div key={i} style={{
+                                                                width: 16,
+                                                                height: 16,
+                                                                borderRadius: '50%',
+                                                                backgroundColor: '#f5222d',
+                                                                display: 'flex',
+                                                                alignItems: 'center',
+                                                                justifyContent: 'center'
+                                                            }}>
+                                                                <img
+                                                                    src="/images/skull-2-line.png"
+                                                                    alt="skull"
+                                                                    style={{
+                                                                        width: 10,
+                                                                        height: 10,
+                                                                        filter: 'brightness(0) invert(1)'
+                                                                    }}
+                                                                />
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </td>
+                                                <td style={{ textAlign: 'center', padding: '8px 16px' }}>
+                                                    <Tag color="#f5222d" style={{ fontSize: 12 }}>
+                                                        普通木马
+                                                    </Tag>
+                                                </td>
+                                            </tr>
+                                            {[
+                                                { name: '知道创宇', hasData: true },
+                                                { name: '绿盟', hasData: false }
+                                            ].map((vendor, index) => (
+                                                <tr key={index} style={{ height: 48 }}>
+                                                    <td style={{ padding: '8px 16px', fontWeight: 500 }}>{vendor.name}</td>
+                                                    <td style={{ textAlign: 'center', padding: '8px 16px' }}>
+                                                        {vendor.name === '知道创宇' ? (
+                                                            <Tag color="green" style={{ fontSize: 12 }}>
+                                                                永久有效
+                                                            </Tag>
+                                                        ) : (
+                                                            <Tag color="default" style={{ fontSize: 12 }}>
+                                                                无数据
+                                                            </Tag>
+                                                        )}
+                                                    </td>
+                                                    <td style={{ textAlign: 'center', padding: '8px 16px' }}>
+                                                        <div style={{ display: 'flex', justifyContent: 'center', gap: '2px' }}>
+                                                            {vendor.name === '知道创宇' ?
+                                                                [1, 2, 3].map(i => (
+                                                                    <span key={i} style={{ color: '#fadb14', fontSize: 16 }}>★</span>
+                                                                )) :
+                                                                [1, 2, 3].map(i => (
+                                                                    <span key={i} style={{ color: '#d9d9d9', fontSize: 16 }}>★</span>
+                                                                ))
+                                                            }
+                                                        </div>
+                                                    </td>
+                                                    <td style={{ textAlign: 'center', padding: '8px 16px' }}>
+                                                        <div style={{ display: 'flex', justifyContent: 'center', gap: '4px' }}>
+                                                            {vendor.name === '知道创宇' ?
+                                                                [1, 2, 3].map(i => (
+                                                                    <div key={i} style={{
+                                                                        width: 16,
+                                                                        height: 16,
+                                                                        borderRadius: '50%',
+                                                                        backgroundColor: i <= 2 ? '#f5222d' : '#d9d9d9',
+                                                                        display: 'flex',
+                                                                        alignItems: 'center',
+                                                                        justifyContent: 'center'
+                                                                    }}>
+                                                                        <img
+                                                                            src="/images/skull-2-line.png"
+                                                                            alt="skull"
+                                                                            style={{
+                                                                                width: 10,
+                                                                                height: 10,
+                                                                                filter: 'brightness(0) invert(1)'
+                                                                            }}
+                                                                        />
+                                                                    </div>
+                                                                )) :
+                                                                [1, 2, 3].map(i => (
+                                                                    <div key={i} style={{
+                                                                        width: 16,
+                                                                        height: 16,
+                                                                        borderRadius: '50%',
+                                                                        backgroundColor: '#d9d9d9',
+                                                                        display: 'flex',
+                                                                        alignItems: 'center',
+                                                                        justifyContent: 'center'
+                                                                    }}>
+                                                                        <img
+                                                                            src="/images/skull-2-line.png"
+                                                                            alt="skull"
+                                                                            style={{
+                                                                                width: 10,
+                                                                                height: 10,
+                                                                                filter: 'brightness(0) invert(1)'
+                                                                            }}
+                                                                        />
+                                                                    </div>
+                                                                ))
+                                                            }
+                                                        </div>
+                                                    </td>
+                                                    <td style={{ textAlign: 'center', padding: '8px 16px', color: '#8c8c8c' }}>
+                                                        {vendor.name === '知道创宇' ? (
+                                                            <Tag color="#f5222d" style={{ fontSize: 12 }}>
+                                                                恶意软件
+                                                            </Tag>
+                                                        ) : '--'}
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </Col>
+                            <Col span={3}>
+                                {/* 信息字段区域 */}
+                                <div style={{
+                                    padding: '16px',
+                                    border: '1px solid #f0f0f0',
+                                    borderRadius: '6px',
+                                    backgroundColor: '#fff'
+                                }}>
+                                    <div style={{ marginBottom: 16 }}>
+                                        <div style={{ color: '#8c8c8c', fontSize: 13, marginBottom: 4 }}>
+                                            运营商/注册商
+                                        </div>
+                                        <div style={{ color: '#262626', fontSize: 14 }}>
+                                            --
+                                        </div>
+                                    </div>
+
+                                    <div style={{ marginBottom: 16 }}>
+                                        <div style={{ color: '#8c8c8c', fontSize: 13, marginBottom: 4 }}>
+                                            地理位置
+                                        </div>
+                                        <div style={{ color: '#262626', fontSize: 14 }}>
+                                            --
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <div style={{ color: '#8c8c8c', fontSize: 13, marginBottom: 4 }}>
+                                            经纬度
+                                        </div>
+                                        <div style={{ color: '#262626', fontSize: 14 }}>
+                                            --
+                                        </div>
+                                    </div>
+                                </div>
+                            </Col>
+                        </Row>
+                    </Card>
+                </Col>
                 <Col span={24}>
                     <Card styles={{ body: { padding: '24px' } }}>
                         {queryType === 'attack' ? renderAttackContent() : renderExternalContent()}
@@ -1557,4 +1876,4 @@ const ThreatIntelligenceDetail: React.FC = () => {
     );
 };
 
-export default ThreatIntelligenceDetail; 
+export default ThreatIntelligenceDetail;

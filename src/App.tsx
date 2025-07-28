@@ -33,6 +33,7 @@ import SyslogConfig from './pages/SyslogConfig';
 import Backup from './pages/Backup';
 import UpgradeManagement from './pages/UpgradeManagement';
 import UnderDevelopment from './pages/UnderDevelopment';
+import MaintenanceTools from './pages/MaintenanceTools';
 // Set dayjs locale
 dayjs.locale('zh-cn');
 
@@ -92,6 +93,7 @@ const App: React.FC = () => {
             <Route path="syslog-config" element={<SyslogConfig />} />
             <Route path="upgrade" element={<UpgradeManagement />} />
             <Route path="backup" element={<Backup />} />
+            <Route path="maintenance-tools" element={<MaintenanceTools />} />
             {/* 404 页面 */}
             <Route path="*" element={<UnderDevelopment />} />
           </Route>
