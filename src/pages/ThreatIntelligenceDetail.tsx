@@ -1,13 +1,28 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { Card, Row, Col, Table, Tag, Space, Button, Input, message, Modal, Form, Upload, Carousel, Alert, Empty, Spin, Collapse } from 'antd';
+import { Card, Row, Col, Table, Tag, Space, Button, Input, message, Modal, Form, Upload, Carousel, Alert, Empty, Spin } from 'antd';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { SearchOutlined, ReloadOutlined, UpOutlined, DownOutlined, CopyOutlined, ApartmentOutlined, GlobalOutlined, ApiOutlined, LinkOutlined, InboxOutlined, LeftOutlined, RightOutlined, StarFilled } from '@ant-design/icons';
+import { SearchOutlined, ReloadOutlined, UpOutlined, DownOutlined, CopyOutlined, ApartmentOutlined, GlobalOutlined, ApiOutlined, LinkOutlined, InboxOutlined, LeftOutlined, RightOutlined, StarFilled, StarOutlined } from '@ant-design/icons';
 import LabelSelect from '@/components/LabelSelect';
 import { US, CN, GB, FR, DE, RU } from 'country-flag-icons/react/3x2';
 import LabelInput from '@/components/LabelInput';
 import LabelTextArea from '@/components/LabelTextArea';
 import type { UploadFile, UploadProps } from 'antd';
 import ReactECharts from 'echarts-for-react';
+
+// 置信度星星组件
+const ConfidenceStars: React.FC<{ level: number }> = ({ level }) => {
+    return (
+        <div style={{ display: 'flex', gap: '2px' }}>
+            {[1, 2, 3].map((star) => (
+                star <= level ? (
+                    <StarFilled key={star} style={{ color: '#faad14', fontSize: 16 }} />
+                ) : (
+                    <StarOutlined key={star} style={{ color: '#d9d9d9', fontSize: 16 }} />
+                )
+            ))}
+        </div>
+    );
+};
 
 // 自定义波浪移动loading组件
 const WaveLoading: React.FC<{ size?: number; color?: string }> = ({ size = 12, color = '#1890ff' }) => {
@@ -44,6 +59,39 @@ const WaveLoading: React.FC<{ size?: number; color?: string }> = ({ size = 12, c
     );
 };
 
+const VendorCardWithLoading: React.FC<{
+    vendor: string;
+    isLoading: boolean;
+    children: React.ReactNode;
+}> = ({ isLoading, children }) => {
+    return (
+        <div style={{ position: 'relative' }}>
+            {children}
+            {isLoading && (
+                <div
+                    style={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        backgroundColor: 'rgba(255, 255, 255, 0.8)',
+                        backdropFilter: 'blur(4px)',
+                        WebkitBackdropFilter: 'blur(4px)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        zIndex: 10,
+                        borderRadius: '6px'
+                    }}
+                >
+                    <WaveLoading size={8} color="#1890ff" />
+                </div>
+            )}
+        </div>
+    );
+};
+
 const ThreatIntelligenceDetail: React.FC = () => {
     const location = useLocation();
     const navigate = useNavigate();
@@ -70,8 +118,19 @@ const ThreatIntelligenceDetail: React.FC = () => {
     const [vendorLoadingList, setVendorLoadingList] = useState(Array(8).fill(true));
     const [overviewFieldsLoading, setOverviewFieldsLoading] = useState(true);
     const [currentSlide, setCurrentSlide] = useState(0);
-    const [activeDetail, setActiveDetail] = useState<string | null>(null);
     const [communicationModalVisible, setCommunicationModalVisible] = useState(false);
+    const [currentVendor, setCurrentVendor] = useState<string>('');
+    const [virusFamilyModalVisible, setVirusFamilyModalVisible] = useState(false);
+    const [currentVirusFamily, setCurrentVirusFamily] = useState<string>('');
+    const [threatTypeModalVisible, setThreatTypeModalVisible] = useState(false);
+    const [vendorLoadingStates, setVendorLoadingStates] = useState({
+        '奇安信': true,
+        '腾讯': true,
+        '360': true,
+        '华为': true,
+        '阿里云': true,
+        '长亭': true
+    });
 
     const attackTabs = [
         { key: 'attackTrace', tab: '攻击实时轨迹' },
@@ -146,6 +205,28 @@ const ThreatIntelligenceDetail: React.FC = () => {
         }, 2000); // 2秒后显示内容
 
         return () => clearTimeout(timer);
+    }, []);
+
+    // 控制多源威胁情报厂商的loading状态
+    useEffect(() => {
+        const timers: NodeJS.Timeout[] = [];
+
+        // 为每个厂商设置不同的loading时间，模拟真实场景
+        const vendors = ['奇安信', '腾讯', '360', '华为', '阿里云', '长亭'];
+        vendors.forEach((vendor, index) => {
+            const timer = setTimeout(() => {
+                setVendorLoadingStates(prev => ({
+                    ...prev,
+                    [vendor]: false
+                }));
+            }, 1500 + index * 300); // 1.5秒到3.3秒之间，每个厂商间隔300ms
+
+            timers.push(timer);
+        });
+
+        return () => {
+            timers.forEach(timer => clearTimeout(timer));
+        };
     }, []);
 
     useEffect(() => {
@@ -851,11 +932,15 @@ const ThreatIntelligenceDetail: React.FC = () => {
         />
     };
 
-    // tabContents所有tab都用Spin包裹，Spin的children始终渲染（loading时渲染占位div，否则渲染内容），不提前return
+    // tabContents所有tab都用WaveLoading样式，loading时渲染占位div，否则渲染内容
     const tabContents = {
         attackTrace: (
-            <Spin spinning={attackTraceLoading} tip="" size="large">
-                {attackTraceLoading ? <div style={{ minHeight: 200 }} /> : (
+            <div>
+                {attackTraceLoading ? (
+                    <div style={{ minHeight: 200, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <WaveLoading size={8} color="#1890ff" />
+                    </div>
+                ) : (
                     <div>
                         <Row style={{ marginBottom: 16 }}>
                             <Col flex="auto">
@@ -969,42 +1054,70 @@ const ThreatIntelligenceDetail: React.FC = () => {
                         />
                     </div>
                 )}
-            </Spin>
+            </div>
         ),
         dnsRecords: (
-            <Spin spinning={dnsRecordsLoading} tip="" size="large">
-                {dnsRecordsLoading ? <div style={{ minHeight: 200 }} /> : renderDNSRecords()}
-            </Spin>
+            <div>
+                {dnsRecordsLoading ? (
+                    <div style={{ minHeight: 200, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <WaveLoading size={8} color="#1890ff" />
+                    </div>
+                ) : renderDNSRecords()}
+            </div>
         ),
         whois: (
-            <Spin spinning={whoisLoading} tip="" size="large">
-                {whoisLoading ? <div style={{ minHeight: 200 }} /> : renderWhois()}
-            </Spin>
+            <div>
+                {whoisLoading ? (
+                    <div style={{ minHeight: 200, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <WaveLoading size={8} color="#1890ff" />
+                    </div>
+                ) : renderWhois()}
+            </div>
         ),
         subdomains: (
-            <Spin spinning={subdomainsLoading} tip="" size="large">
-                {subdomainsLoading ? <div style={{ minHeight: 200 }} /> : renderSubdomains()}
-            </Spin>
+            <div>
+                {subdomainsLoading ? (
+                    <div style={{ minHeight: 200, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <WaveLoading size={8} color="#1890ff" />
+                    </div>
+                ) : renderSubdomains()}
+            </div>
         ),
         fingerprint: (
-            <Spin spinning={fingerprintLoading} tip="" size="large">
-                {fingerprintLoading ? <div style={{ minHeight: 200 }} /> : renderFingerprint()}
-            </Spin>
+            <div>
+                {fingerprintLoading ? (
+                    <div style={{ minHeight: 200, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <WaveLoading size={8} color="#1890ff" />
+                    </div>
+                ) : renderFingerprint()}
+            </div>
         ),
         ports: (
-            <Spin spinning={portsLoading} tip="" size="large">
-                {portsLoading ? <div style={{ minHeight: 200 }} /> : <RenderPorts />}
-            </Spin>
+            <div>
+                {portsLoading ? (
+                    <div style={{ minHeight: 200, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <WaveLoading size={8} color="#1890ff" />
+                    </div>
+                ) : <RenderPorts />}
+            </div>
         ),
         sameSegment: (
-            <Spin spinning={sameSegmentLoading} tip="" size="large">
-                {sameSegmentLoading ? <div style={{ minHeight: 200 }} /> : tabContentsRaw.sameSegment}
-            </Spin>
+            <div>
+                {sameSegmentLoading ? (
+                    <div style={{ minHeight: 200, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <WaveLoading size={8} color="#1890ff" />
+                    </div>
+                ) : tabContentsRaw.sameSegment}
+            </div>
         ),
         reverseDomain: (
-            <Spin spinning={reverseDomainLoading} tip="" size="large">
-                {reverseDomainLoading ? <div style={{ minHeight: 200 }} /> : tabContentsRaw.reverseDomain}
-            </Spin>
+            <div>
+                {reverseDomainLoading ? (
+                    <div style={{ minHeight: 200, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <WaveLoading size={8} color="#1890ff" />
+                    </div>
+                ) : tabContentsRaw.reverseDomain}
+            </div>
         )
     };
 
@@ -1065,167 +1178,7 @@ const ThreatIntelligenceDetail: React.FC = () => {
         feedbackForm.resetFields();
     };
 
-    const renderAttackContent = () => (
-        <Row>
-            <Col style={{ width: 200, marginRight: 24 }}>
-                <img
-                    src="/images/ThreatIn.png"
-                    alt="威胁分数"
-                    style={{ width: '100%' }}
-                />
-            </Col>
-            <Col flex="1">
-                <Row gutter={[0, 24]}>
-                    <Col span={24}>
-                        <div style={{ marginBottom: 8 }}>
-                            <Row justify="space-between" align="middle">
-                                <Col>
-                                    <Space size={36} align="center">
-                                        <Space align="center">
-                                            <span style={{ fontSize: 24, fontWeight: 500, display: 'flex', alignItems: 'center' }}>
-                                                {query}
-                                                <CopyOutlined
-                                                    style={{ cursor: 'pointer', color: '#1890ff', fontSize: 14, marginLeft: 8 }}
-                                                    onClick={() => {
-                                                        navigator.clipboard.writeText(query);
-                                                        message.success('IP已复制到剪贴板');
-                                                    }}
-                                                />
-                                            </span>
-                                        </Space>
-                                    </Space>
-                                </Col>
-                                <Col>
-                                    <Button onClick={() => setFeedbackVisible(true)}>
-                                        误报反馈
-                                    </Button>
-                                </Col>
-                            </Row>
-                        </div>
-                        <Space size={8} wrap>
-                            {statsLoading ? (
-                                <Spin size="small" style={{ marginLeft: 0 }} />
-                            ) : (
-                                <>
-                                    <Tag color="blue">SQL注入</Tag>
-                                    <Tag color="blue">XSS攻击</Tag>
-                                    <Tag color="blue">DDoS攻击</Tag>
-                                    <Tag color="blue">暴力破解</Tag>
-                                </>
-                            )}
-                        </Space>
-                    </Col>
-                    <Col span={24}>
-                        <Row wrap gutter={[24, 12]}>
-                            <Col xs={6}>
-                                <div style={{ display: 'flex' }}>
-                                    <span style={{ color: '#999' }}>威胁等级：</span>
-                                    {statsLoading ? <Spin size="small" style={{ marginLeft: 4, marginRight: 4 }} /> : <Tag color="red">高危</Tag>}
-                                </div>
-                            </Col>
-                            <Col xs={6}>
-                                <div style={{ display: 'flex' }}>
-                                    <span style={{ color: '#999' }}>置信度：</span>
-                                    {statsLoading ? <Spin size="small" style={{ marginLeft: 4, marginRight: 4 }} /> : <span>高</span>}
-                                </div>
-                            </Col>
-                            <Col xs={6}>
-                                <div style={{ display: 'flex' }}>
-                                    <span style={{ color: '#999' }}>活跃度：</span>
-                                    {statsLoading ? <Spin size="small" style={{ marginLeft: 4, marginRight: 4 }} /> : <span>中</span>}
-                                </div>
-                            </Col>
-                            <Col xs={6}>
-                                <div style={{ display: 'flex' }}>
-                                    <span style={{ color: '#999' }}>情报类型：</span>
-                                    {statsLoading ? <Spin size="small" style={{ marginLeft: 4, marginRight: 4 }} /> : <span>蠕虫</span>}
-                                </div>
-                            </Col>
-                            <Col xs={6}>
-                                <div style={{ display: 'flex' }}>
-                                    <span style={{ color: '#999' }}>情报归属：</span>
-                                    {statsLoading ? <Spin size="small" style={{ marginLeft: 4, marginRight: 4 }} /> : <span>公有情报源</span>}
-                                </div>
-                            </Col>
-                            <Col xs={6}>
-                                <div style={{ display: 'flex' }}>
-                                    <span style={{ color: '#999' }}>运营商：</span>
-                                    {statsLoading ? <Spin size="small" style={{ marginLeft: 4, marginRight: 4 }} /> : <span>EstNOC OY</span>}
-                                </div>
-                            </Col>
-                            <Col xs={6}>
-                                <div style={{ display: 'flex' }}>
-                                    <span style={{ color: '#999' }}>ASN：</span>
-                                    {statsLoading ? <Spin size="small" style={{ marginLeft: 4, marginRight: 4 }} /> : <span>206804</span>}
-                                </div>
-                            </Col>
-                            <Col xs={6}>
-                                <div style={{ display: 'flex', height: '22px' }}>
-                                    <span style={{ color: '#999' }}>经纬度信息：</span>
-                                    {statsLoading ? <Spin size="small" style={{ marginLeft: 4, marginRight: 4 }} /> : <span>30.34324,343.3434</span>}
-                                </div>
-                            </Col>
-                            <Col xs={6}>
-                                <div style={{ display: 'flex', height: '22px' }}>
-                                    <span style={{ color: '#999' }}>情报相关组织：</span>
-                                    {statsLoading ? <Spin size="small" style={{ marginLeft: 4, marginRight: 4 }} /> : <span>Lazarus</span>}
-                                </div>
-                            </Col>
-                            <Col xs={6}>
-                                <div style={{ display: 'flex', height: '22px' }}>
-                                    <span style={{ color: '#999' }}>关联病毒家族：</span>
-                                    {statsLoading ? <Spin size="small" style={{ marginLeft: 4, marginRight: 4 }} /> : <span>Lockbit勒索病毒</span>}
-                                </div>
-                            </Col>
-                            <Col xs={6}>
-                                <div style={{ display: 'flex', height: '22px' }}>
-                                    <span style={{ color: '#999' }}>入库时间：</span>
-                                    {statsLoading ? <Spin size="small" style={{ marginLeft: 4, marginRight: 4 }} /> : <span>2024-12-31 11:22:31</span>}
-                                </div>
-                            </Col>
-                            <Col xs={6}>
-                                <div style={{ display: 'flex', height: '22px' }}>
-                                    <span style={{ color: '#999' }}>过期时间：</span>
-                                    {statsLoading ? <Spin size="small" style={{ marginLeft: 4, marginRight: 4 }} /> : <span>2024-12-31 11:22:31</span>}
-                                </div>
-                            </Col>
-                        </Row>
-                        <div style={{ margin: '24px 0', borderTop: '1px solid #f0f0f0' }} />
-                        <Row gutter={24}>
-                            <Col span={6}>
-                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start' }}>
-                                    <ApiOutlined style={{ color: '#fff', background: '#1890ff', borderRadius: '50%', fontSize: 16, width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', marginRight: 8 }} />
-                                    <span style={{ color: '#999', marginRight: 8 }}>攻击实时轨迹</span>
-                                    {statsLoading ? <Spin size="small" style={{ marginLeft: 4, marginRight: 4 }} /> : <span style={{ color: '#1890ff', fontSize: 20, fontWeight: 500 }}>3</span>}
-                                </div>
-                            </Col>
-                            <Col span={6}>
-                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start' }}>
-                                    <GlobalOutlined style={{ color: '#fff', background: '#1890ff', borderRadius: '50%', fontSize: 16, width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', marginRight: 8 }} />
-                                    <span style={{ color: '#999', marginRight: 8 }}>端口信息</span>
-                                    {statsLoading ? <Spin size="small" style={{ marginLeft: 4, marginRight: 4 }} /> : <span style={{ color: '#1890ff', fontSize: 20, fontWeight: 500 }}>10</span>}
-                                </div>
-                            </Col>
-                            <Col span={6}>
-                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start' }}>
-                                    <LinkOutlined style={{ color: '#fff', background: '#1890ff', borderRadius: '50%', fontSize: 16, width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', marginRight: 8 }} />
-                                    <span style={{ color: '#999', marginRight: 8 }}>同C段信息</span>
-                                    {statsLoading ? <Spin size="small" style={{ marginLeft: 4, marginRight: 4 }} /> : <span style={{ color: '#1890ff', fontSize: 20, fontWeight: 500 }}>4</span>}
-                                </div>
-                            </Col>
-                            <Col span={6}>
-                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start' }}>
-                                    <ApartmentOutlined style={{ color: '#fff', background: '#1890ff', borderRadius: '50%', fontSize: 16, width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', marginRight: 8 }} />
-                                    <span style={{ color: '#999', marginRight: 8 }}>反查域名</span>
-                                    {statsLoading ? <Spin size="small" style={{ marginLeft: 4, marginRight: 4 }} /> : <span style={{ color: '#1890ff', fontSize: 20, fontWeight: 500 }}>5</span>}
-                                </div>
-                            </Col>
-                        </Row>
-                    </Col>
-                </Row>
-            </Col>
-        </Row>
-    );
+
 
     const renderExternalContent = () => (
         <>
@@ -1495,6 +1448,112 @@ const ThreatIntelligenceDetail: React.FC = () => {
             </Row>
         </>
     );
+
+    // 各厂商的通信样本数据
+    const vendorSamples: Record<string, Array<{ key: string; hash: string }>> = {
+        '奇安信': [
+            { key: '1', hash: 'd41d8cd98f00b204e9800998ecf8427e' },
+            { key: '2', hash: '5d41402abc4b2a76b9719d911017c592' },
+            { key: '3', hash: '098f6bcd4621d373cade4e832627b4f6' },
+            { key: '4', hash: 'a94a8fe5ccb19ba61c4c0873d391e987982fbbd3' },
+            { key: '5', hash: '7c4a8d09ca3762af61e59520943dc26494f8941b' }
+        ],
+        '腾讯': [
+            { key: '1', hash: 'e10adc3949ba59abbe56e057f20f883e' },
+            { key: '2', hash: '25f9e794323b453885f5181f1b624d0b' }
+        ],
+        '360': [
+            { key: '1', hash: '96e79218965eb72c92a549dd5a330112' },
+            { key: '2', hash: 'fcea920f7412b5da7be0cf42b8c93759' },
+            { key: '3', hash: 'e3ceb5881a0a1fdaad01296d7554868d' }
+        ],
+        '华为': [
+            { key: '1', hash: 'c4ca4238a0b923820dcc509a6f75849b' }
+        ],
+        '阿里云': [
+            { key: '1', hash: 'c81e728d9d4c2f636f067f89cc14862c' },
+            { key: '2', hash: 'eccbc87e4b5ce2fe28308fd9f2a7baf3' }
+        ],
+        '长亭': [
+            { key: '1', hash: 'a87ff679a2f3e71d9181a67b7542122c' },
+            { key: '2', hash: 'e4da3b7fbbce2345d7772b0674a318d5' },
+            { key: '3', hash: '1679091c5a880faf6fb5e6087eb1b2dc' },
+            { key: '4', hash: '8f14e45fceea167a5a36dedd4bea2543' }
+        ]
+    };
+
+    const handleVendorSampleClick = (vendor: string) => {
+        setCurrentVendor(vendor);
+        setCommunicationModalVisible(true);
+    };
+
+    const handleVirusFamilyClick = (familyName: string) => {
+        setCurrentVirusFamily(familyName);
+        setVirusFamilyModalVisible(true);
+    };
+
+    // 病毒家族详细信息数据
+    const virusFamilyDetails: Record<string, {
+        name: string;
+        type: string;
+        description: string;
+        firstSeen: string;
+        threatLevel: string;
+        targets: string[];
+        techniques: string[];
+        iocExamples: string[];
+    }> = {
+        'Lockbit勒索病毒': {
+            name: 'Lockbit勒索病毒',
+            type: '勒索软件',
+            description: 'Lockbit是一个高度复杂的勒索软件家族，以其快速加密能力和双重勒索策略而闻名。该恶意软件主要针对企业网络，通过加密关键文件并要求支付赎金来获取解密密钥。',
+            firstSeen: '2019年9月',
+            threatLevel: '高危',
+            targets: ['企业网络', '政府机构', '医疗机构', '金融机构'],
+            techniques: ['网络钓鱼', '漏洞利用', '横向移动', '权限提升'],
+            iocExamples: ['lockbit.exe', 'lockbit.bit', '*.lockbit']
+        },
+        'Emotet木马': {
+            name: 'Emotet木马',
+            type: '银行木马',
+            description: 'Emotet是一种模块化的银行木马，最初设计用于窃取银行凭证。它通过垃圾邮件传播，能够下载其他恶意软件，并作为其他威胁的传播媒介。',
+            firstSeen: '2014年',
+            threatLevel: '高危',
+            targets: ['银行用户', '企业员工', '政府机构'],
+            techniques: ['垃圾邮件', '宏病毒', '凭证窃取', '模块化加载'],
+            iocExamples: ['emotet.exe', 'emotet.dll', '*.emotet']
+        },
+        'WannaCry勒索病毒': {
+            name: 'WannaCry勒索病毒',
+            type: '勒索软件',
+            description: 'WannaCry是一个全球性的勒索软件攻击，利用Windows SMB协议的漏洞进行传播。它在2017年造成了全球性的网络安全事件，影响了超过150个国家的30多万台计算机。',
+            firstSeen: '2017年5月',
+            threatLevel: '高危',
+            targets: ['Windows系统', '企业网络', '医疗机构', '政府机构'],
+            techniques: ['漏洞利用', '蠕虫传播', '文件加密', '勒索'],
+            iocExamples: ['wcry.exe', '@WanaDecryptor@.exe', '*.wcry']
+        },
+        'Fancy Bear间谍软件': {
+            name: 'Fancy Bear间谍软件',
+            type: '高级持续性威胁(APT)',
+            description: 'Fancy Bear是一个与俄罗斯政府相关的APT组织，专门从事网络间谍活动。该组织使用多种恶意软件工具进行长期的情报收集和网络渗透。',
+            firstSeen: '2007年',
+            threatLevel: '高危',
+            targets: ['政府机构', '军事组织', '外交部门', '媒体机构'],
+            techniques: ['鱼叉式钓鱼', '零日漏洞', '凭证窃取', '数据窃取'],
+            iocExamples: ['x-agent.exe', 'x-tunnel.exe', '*.bear']
+        }
+    };
+
+    // 威胁类型数据
+    const vendorThreatTypes: Record<string, string[]> = {
+        '奇安信': ['远控木马类', '勒索软件', '间谍软件', '钓鱼网站', '挖矿木马', '后门程序'],
+        '腾讯': ['钓鱼网站', '恶意软件', '网络攻击'],
+        '360': ['勒索软件', '木马程序', '病毒'],
+        '华为': ['可疑行为', '异常访问', '恶意扫描'],
+        '阿里云': ['挖矿木马', 'DDoS攻击', '数据窃取'],
+        '长亭': ['间谍软件', 'APT攻击', '零日漏洞']
+    };
 
     return (
         <div>
@@ -2043,354 +2102,339 @@ const ThreatIntelligenceDetail: React.FC = () => {
                                 }}
                             >
                                 <div style={{ flex: '1 0 calc(20% - 12.8px)', minWidth: 0 }}>
-                                    <Card type="inner" title={
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                            <span>奇安信威胁情报</span>
-                                            <img src="/images/奇安信.png" alt="奇安信" style={{ width: 32, height: 32 }} />
-                                        </div>
-                                    }>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
-                                            <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>威胁等级</span>
-                                            <Tag color="red" style={{ margin: 0 }}>高危</Tag>
-                                        </div>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
-                                            <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>置信度</span>
-                                            <div style={{ display: 'flex', gap: '2px' }}>
-                                                <StarFilled style={{ color: '#faad14', fontSize: 16 }} />
-                                                <StarFilled style={{ color: '#faad14', fontSize: 16 }} />
-                                                <StarFilled style={{ color: '#faad14', fontSize: 16 }} />
-                                            </div>
-                                        </div>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
-                                            <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>威胁类型</span>
-                                            <Tag color="red" style={{ margin: 0 }}>远控木马类</Tag>
-                                        </div>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
-                                            <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>关联APT组织</span>
-                                            <Tag color="orange" style={{ margin: 0 }}>Lazarus</Tag>
-                                        </div>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
-                                            <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>恶意病毒家族</span>
-                                            <span>Lockbit勒索病毒</span>
-                                        </div>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
-                                            <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>首次发现时间</span>
-                                            <span>2024-12-01 10:00:00</span>
-                                        </div>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
-                                            <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>最近发现时间</span>
-                                            <span>2024-12-11 12:03:44</span>
-                                        </div>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
-                                            <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>情报过期时间</span>
-                                            <span>2024-12-31 11:22:31</span>
-                                        </div>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
-                                            <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>IOC信息</span>
+                                    <VendorCardWithLoading vendor="奇安信" isLoading={vendorLoadingStates['奇安信']}>
+                                        <Card type="inner" title={
                                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                                <Tag color="blue" style={{ margin: 0 }}>5</Tag>
-                                                <Button type="link" size="small" style={{ padding: 0, height: 'auto' }}>详情</Button>
+                                                <span>奇安信威胁情报</span>
+                                                <img src="/images/奇安信.png" alt="奇安信" style={{ width: 32, height: 32 }} />
                                             </div>
-                                        </div>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12 }}>
-                                            <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>通信样本</span>
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                                <Tag color="blue" style={{ margin: 0 }}>5</Tag>
-                                                <Button type="link" size="small" style={{ padding: 0, height: 'auto' }} onClick={() => setCommunicationModalVisible(true)}>详情</Button>
+                                        }>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
+                                                <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>威胁等级</span>
+                                                <Tag color="red" style={{ margin: 0 }}>高危</Tag>
                                             </div>
-                                        </div>
-                                    </Card>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
+                                                <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>置信度</span>
+                                                <ConfidenceStars level={3} />
+                                            </div>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
+                                                <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>威胁类型</span>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                                    {vendorThreatTypes['奇安信'].length <= 2 ? (
+                                                        vendorThreatTypes['奇安信'].map((type, index) => (
+                                                            <Tag key={index} color="volcano" style={{ margin: 0 }}>{type}</Tag>
+                                                        ))
+                                                    ) : (
+                                                        <>
+                                                            <Tag color="blue" style={{ margin: 0, borderRadius: '50%', width: 24, height: 24, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0 }}>{vendorThreatTypes['奇安信'].length}</Tag>
+                                                            <Button type="link" size="small" onClick={() => setThreatTypeModalVisible(true)}>更多</Button>
+                                                        </>
+                                                    )}
+                                                </div>
+                                            </div>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
+                                                <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>关联APT组织</span>
+                                                <Tag color="orange" style={{ margin: 0 }}>Lazarus</Tag>
+                                            </div>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
+                                                <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>恶意病毒家族</span>
+                                                <Tag
+                                                    color="#f00"
+                                                    style={{ margin: 0, cursor: 'pointer' }}
+                                                    onClick={() => handleVirusFamilyClick('Lockbit勒索病毒')}
+                                                >
+                                                    Lockbit勒索病毒
+                                                </Tag>
+                                            </div>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
+                                                <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>首次发现时间</span>
+                                                <span>2024-12-01 10:00:00</span>
+                                            </div>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
+                                                <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>最近发现时间</span>
+                                                <span>2024-12-11 12:03:44</span>
+                                            </div>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
+                                                <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>情报过期时间</span>
+                                                <span>2024-12-31 11:22:31</span>
+                                            </div>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12 }}>
+                                                <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>通信样本</span>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                    <Tag color="blue" style={{ margin: 0, borderRadius: '50%', width: 24, height: 24, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0 }}>5</Tag>
+                                                    <Button type="link" size="small" style={{ padding: 0, height: 'auto' }} onClick={() => handleVendorSampleClick('奇安信')}>详情</Button>
+                                                </div>
+                                            </div>
+                                        </Card>
+                                    </VendorCardWithLoading>
                                 </div>
                                 <div style={{ flex: '1 0 calc(20% - 12.8px)', minWidth: 0 }}>
-                                    <Card type="inner" title={
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                            <span>腾讯威胁情报</span>
-                                            <img src="/images/腾讯.png" alt="腾讯" style={{ width: 32, height: 32 }} />
-                                        </div>
-                                    }>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
-                                            <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>威胁等级</span>
-                                            <Tag color="orange" style={{ margin: 0 }}>中危</Tag>
-                                        </div>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
-                                            <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>置信度</span>
-                                            <div style={{ display: 'flex', gap: '2px' }}>
-                                                <StarFilled style={{ color: '#faad14', fontSize: 16 }} />
-                                                <StarFilled style={{ color: '#faad14', fontSize: 16 }} />
-                                            </div>
-                                        </div>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
-                                            <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>威胁类型</span>
-                                            <Tag color="orange" style={{ margin: 0 }}>钓鱼网站</Tag>
-                                        </div>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
-                                            <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>关联APT组织</span>
-                                            <Tag color="purple" style={{ margin: 0 }}>APT29</Tag>
-                                        </div>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
-                                            <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>恶意病毒家族</span>
-                                            <span>Emotet木马</span>
-                                        </div>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
-                                            <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>首次发现时间</span>
-                                            <span>2024-12-02 15:30:00</span>
-                                        </div>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
-                                            <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>最近发现时间</span>
-                                            <span>2024-12-12 09:45:00</span>
-                                        </div>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
-                                            <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>情报过期时间</span>
-                                            <span>2024-12-30 15:30:00</span>
-                                        </div>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
-                                            <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>IOC信息</span>
+                                    <VendorCardWithLoading vendor="腾讯" isLoading={vendorLoadingStates['腾讯']}>
+                                        <Card type="inner" title={
                                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                                <Tag color="blue" style={{ margin: 0 }}>3</Tag>
-                                                <Button type="link" size="small" style={{ padding: 0, height: 'auto' }}>详情</Button>
+                                                <span>腾讯威胁情报</span>
+                                                <img src="/images/腾讯.png" alt="腾讯" style={{ width: 32, height: 32 }} />
                                             </div>
-                                        </div>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12 }}>
-                                            <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>通信样本</span>
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                                <Tag color="blue" style={{ margin: 0 }}>2</Tag>
-                                                <Button type="link" size="small" style={{ padding: 0, height: 'auto' }}>详情</Button>
+                                        }>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
+                                                <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>威胁等级</span>
+                                                <Tag color="orange" style={{ margin: 0 }}>中危</Tag>
                                             </div>
-                                        </div>
-                                    </Card>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
+                                                <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>置信度</span>
+                                                <ConfidenceStars level={2} />
+                                            </div>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
+                                                <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>威胁类型</span>
+                                                <Tag color="volcano" style={{ margin: 0 }}>钓鱼网站</Tag>
+                                            </div>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
+                                                <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>关联APT组织</span>
+                                                <Tag color="orange" style={{ margin: 0 }}>APT29</Tag>
+                                            </div>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
+                                                <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>恶意病毒家族</span>
+                                                <Tag
+                                                    color="#f00"
+                                                    style={{ margin: 0, cursor: 'pointer' }}
+                                                    onClick={() => handleVirusFamilyClick('Emotet木马')}
+                                                >
+                                                    Emotet木马
+                                                </Tag>
+                                            </div>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
+                                                <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>首次发现时间</span>
+                                                <span>2024-12-02 15:30:00</span>
+                                            </div>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
+                                                <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>最近发现时间</span>
+                                                <span>2024-12-12 09:45:00</span>
+                                            </div>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
+                                                <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>情报过期时间</span>
+                                                <span>2024-12-30 15:30:00</span>
+                                            </div>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12 }}>
+                                                <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>通信样本</span>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                    <Tag color="blue" style={{ margin: 0, borderRadius: '50%', width: 24, height: 24, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0 }}>2</Tag>
+                                                    <Button type="link" size="small" style={{ padding: 0, height: 'auto' }} onClick={() => handleVendorSampleClick('腾讯')}>详情</Button>
+                                                </div>
+                                            </div>
+                                        </Card>
+                                    </VendorCardWithLoading>
                                 </div>
                                 <div style={{ flex: '1 0 calc(20% - 12.8px)', minWidth: 0 }}>
-                                    <Card type="inner" title={
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                            <span>360威胁情报</span>
-                                            <img src="/images/360.png" alt="360" style={{ width: 32, height: 32 }} />
-                                        </div>
-                                    }>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
-                                            <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>威胁等级</span>
-                                            <Tag color="red" style={{ margin: 0 }}>高危</Tag>
-                                        </div>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
-                                            <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>置信度</span>
-                                            <div style={{ display: 'flex', gap: '2px' }}>
-                                                <StarFilled style={{ color: '#faad14', fontSize: 16 }} />
-                                                <StarFilled style={{ color: '#faad14', fontSize: 16 }} />
-                                                <StarFilled style={{ color: '#faad14', fontSize: 16 }} />
-                                            </div>
-                                        </div>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
-                                            <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>威胁类型</span>
-                                            <Tag color="red" style={{ margin: 0 }}>勒索软件</Tag>
-                                        </div>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
-                                            <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>关联APT组织</span>
-                                            <Tag color="blue" style={{ margin: 0 }}>WannaCry</Tag>
-                                        </div>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
-                                            <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>恶意病毒家族</span>
-                                            <span>WannaCry勒索病毒</span>
-                                        </div>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
-                                            <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>首次发现时间</span>
-                                            <span>2024-12-03 08:15:00</span>
-                                        </div>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
-                                            <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>最近发现时间</span>
-                                            <span>2024-12-13 14:20:00</span>
-                                        </div>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
-                                            <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>情报过期时间</span>
-                                            <span>2024-12-29 08:15:00</span>
-                                        </div>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
-                                            <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>IOC信息</span>
+                                    <VendorCardWithLoading vendor="360" isLoading={vendorLoadingStates['360']}>
+                                        <Card type="inner" title={
                                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                                <Tag color="blue" style={{ margin: 0 }}>4</Tag>
-                                                <Button type="link" size="small" style={{ padding: 0, height: 'auto' }}>详情</Button>
+                                                <span>360威胁情报</span>
+                                                <img src="/images/360.png" alt="360" style={{ width: 32, height: 32 }} />
                                             </div>
-                                        </div>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12 }}>
-                                            <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>通信样本</span>
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                                <Tag color="blue" style={{ margin: 0 }}>3</Tag>
-                                                <Button type="link" size="small" style={{ padding: 0, height: 'auto' }}>详情</Button>
+                                        }>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
+                                                <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>威胁等级</span>
+                                                <Tag color="red" style={{ margin: 0 }}>高危</Tag>
                                             </div>
-                                        </div>
-                                    </Card>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
+                                                <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>置信度</span>
+                                                <ConfidenceStars level={3} />
+                                            </div>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
+                                                <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>威胁类型</span>
+                                                <Tag color="volcano" style={{ margin: 0 }}>勒索软件</Tag>
+                                            </div>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
+                                                <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>关联APT组织</span>
+                                                <Tag color="orange" style={{ margin: 0 }}>WannaCry</Tag>
+                                            </div>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
+                                                <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>恶意病毒家族</span>
+                                                <Tag
+                                                    color="#f00"
+                                                    style={{ margin: 0, cursor: 'pointer' }}
+                                                    onClick={() => handleVirusFamilyClick('WannaCry勒索病毒')}
+                                                >
+                                                    WannaCry勒索病毒
+                                                </Tag>
+                                            </div>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
+                                                <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>首次发现时间</span>
+                                                <span>2024-12-03 08:15:00</span>
+                                            </div>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
+                                                <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>最近发现时间</span>
+                                                <span>2024-12-13 14:20:00</span>
+                                            </div>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
+                                                <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>情报过期时间</span>
+                                                <span>2024-12-29 08:15:00</span>
+                                            </div>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12 }}>
+                                                <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>通信样本</span>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                    <Tag color="blue" style={{ margin: 0, borderRadius: '50%', width: 24, height: 24, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0 }}>3</Tag>
+                                                    <Button type="link" size="small" style={{ padding: 0, height: 'auto' }} onClick={() => handleVendorSampleClick('360')}>详情</Button>
+                                                </div>
+                                            </div>
+                                        </Card>
+                                    </VendorCardWithLoading>
                                 </div>
                                 <div style={{ flex: '1 0 calc(20% - 12.8px)', minWidth: 0 }}>
-                                    <Card type="inner" title={
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                            <span>华为威胁情报</span>
-                                            <img src="/images/华为.png" alt="华为" style={{ width: 32, height: 32 }} />
-                                        </div>
-                                    }>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
-                                            <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>威胁等级</span>
-                                            <Tag color="green" style={{ margin: 0 }}>低危</Tag>
-                                        </div>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
-                                            <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>置信度</span>
-                                            <div style={{ display: 'flex', gap: '2px' }}>
-                                                <StarFilled style={{ color: '#faad14', fontSize: 16 }} />
-                                            </div>
-                                        </div>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
-                                            <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>威胁类型</span>
-                                            <Tag color="green" style={{ margin: 0 }}>可疑行为</Tag>
-                                        </div>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
-                                            <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>关联APT组织</span>
-                                            <Tag color="default" style={{ margin: 0 }}>未知</Tag>
-                                        </div>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
-                                            <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>恶意病毒家族</span>
-                                            <span>未知家族</span>
-                                        </div>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
-                                            <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>首次发现时间</span>
-                                            <span>2024-12-04 11:20:00</span>
-                                        </div>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
-                                            <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>最近发现时间</span>
-                                            <span>2024-12-14 16:10:00</span>
-                                        </div>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
-                                            <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>情报过期时间</span>
-                                            <span>2024-12-28 11:20:00</span>
-                                        </div>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
-                                            <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>IOC信息</span>
+                                    <VendorCardWithLoading vendor="华为" isLoading={vendorLoadingStates['华为']}>
+                                        <Card type="inner" title={
                                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                                <Tag color="blue" style={{ margin: 0 }}>1</Tag>
-                                                <Button type="link" size="small" style={{ padding: 0, height: 'auto' }}>详情</Button>
+                                                <span>华为威胁情报</span>
+                                                <img src="/images/华为.png" alt="华为" style={{ width: 32, height: 32 }} />
                                             </div>
-                                        </div>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12 }}>
-                                            <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>通信样本</span>
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                                <Tag color="blue" style={{ margin: 0 }}>1</Tag>
-                                                <Button type="link" size="small" style={{ padding: 0, height: 'auto' }}>详情</Button>
+                                        }>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
+                                                <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>威胁等级</span>
+                                                <Tag color="green" style={{ margin: 0 }}>低危</Tag>
                                             </div>
-                                        </div>
-                                    </Card>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
+                                                <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>置信度</span>
+                                                <ConfidenceStars level={1} />
+                                            </div>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
+                                                <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>威胁类型</span>
+                                                <Tag color="volcano" style={{ margin: 0 }}>可疑行为</Tag>
+                                            </div>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
+                                                <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>关联APT组织</span>
+                                                <span>--</span>
+                                            </div>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
+                                                <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>恶意病毒家族</span>
+                                                <span>--</span>
+                                            </div>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
+                                                <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>首次发现时间</span>
+                                                <span>2024-12-04 11:20:00</span>
+                                            </div>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
+                                                <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>最近发现时间</span>
+                                                <span>2024-12-14 16:10:00</span>
+                                            </div>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
+                                                <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>情报过期时间</span>
+                                                <span>2024-12-28 11:20:00</span>
+                                            </div>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12 }}>
+                                                <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>通信样本</span>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                    <Tag color="blue" style={{ margin: 0, borderRadius: '50%', width: 24, height: 24, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0 }}>1</Tag>
+                                                    <Button type="link" size="small" style={{ padding: 0, height: 'auto' }} onClick={() => handleVendorSampleClick('华为')}>详情</Button>
+                                                </div>
+                                            </div>
+                                        </Card>
+                                    </VendorCardWithLoading>
                                 </div>
                                 <div style={{ flex: '1 0 calc(20% - 12.8px)', minWidth: 0 }}>
-                                    <Card type="inner" title={
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                            <span>阿里云威胁情报</span>
-                                            <img src="/images/阿里.png" alt="阿里云" style={{ width: 32, height: 32 }} />
-                                        </div>
-                                    }>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
-                                            <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>威胁等级</span>
-                                            <Tag color="orange" style={{ margin: 0 }}>中危</Tag>
-                                        </div>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
-                                            <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>置信度</span>
-                                            <div style={{ display: 'flex', gap: '2px' }}>
-                                                <StarFilled style={{ color: '#faad14', fontSize: 16 }} />
-                                                <StarFilled style={{ color: '#faad14', fontSize: 16 }} />
-                                            </div>
-                                        </div>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
-                                            <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>威胁类型</span>
-                                            <Tag color="orange" style={{ margin: 0 }}>挖矿木马</Tag>
-                                        </div>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
-                                            <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>关联APT组织</span>
-                                            <Tag color="cyan" style={{ margin: 0 }}>挖矿组织</Tag>
-                                        </div>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
-                                            <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>恶意病毒家族</span>
-                                            <span>XMRig挖矿木马</span>
-                                        </div>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
-                                            <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>首次发现时间</span>
-                                            <span>2024-12-05 13:45:00</span>
-                                        </div>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
-                                            <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>最近发现时间</span>
-                                            <span>2024-12-15 10:30:00</span>
-                                        </div>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
-                                            <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>情报过期时间</span>
-                                            <span>2024-12-27 13:45:00</span>
-                                        </div>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
-                                            <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>IOC信息</span>
+                                    <VendorCardWithLoading vendor="阿里云" isLoading={vendorLoadingStates['阿里云']}>
+                                        <Card type="inner" title={
                                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                                <Tag color="blue" style={{ margin: 0 }}>2</Tag>
-                                                <Button type="link" size="small" style={{ padding: 0, height: 'auto' }}>详情</Button>
+                                                <span>阿里云威胁情报</span>
+                                                <img src="/images/阿里.png" alt="阿里云" style={{ width: 32, height: 32 }} />
                                             </div>
-                                        </div>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12 }}>
-                                            <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>通信样本</span>
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                                <Tag color="blue" style={{ margin: 0 }}>2</Tag>
-                                                <Button type="link" size="small" style={{ padding: 0, height: 'auto' }}>详情</Button>
+                                        }>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
+                                                <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>威胁等级</span>
+                                                <Tag color="orange" style={{ margin: 0 }}>中危</Tag>
                                             </div>
-                                        </div>
-                                    </Card>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
+                                                <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>置信度</span>
+                                                <ConfidenceStars level={2} />
+                                            </div>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
+                                                <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>威胁类型</span>
+                                                <Tag color="volcano" style={{ margin: 0 }}>挖矿木马</Tag>
+                                            </div>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
+                                                <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>关联APT组织</span>
+                                                <Tag color="orange" style={{ margin: 0 }}>挖矿组织</Tag>
+                                            </div>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
+                                                <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>恶意病毒家族</span>
+                                                <span>--</span>
+                                            </div>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
+                                                <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>首次发现时间</span>
+                                                <span>2024-12-05 13:45:00</span>
+                                            </div>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
+                                                <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>最近发现时间</span>
+                                                <span>2024-12-15 10:30:00</span>
+                                            </div>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
+                                                <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>情报过期时间</span>
+                                                <span>2024-12-27 13:45:00</span>
+                                            </div>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12 }}>
+                                                <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>通信样本</span>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                    <Tag color="blue" style={{ margin: 0, borderRadius: '50%', width: 24, height: 24, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0 }}>2</Tag>
+                                                    <Button type="link" size="small" style={{ padding: 0, height: 'auto' }} onClick={() => handleVendorSampleClick('阿里云')}>详情</Button>
+                                                </div>
+                                            </div>
+                                        </Card>
+                                    </VendorCardWithLoading>
                                 </div>
                                 <div style={{ flex: '1 0 calc(20% - 12.8px)', minWidth: 0 }}>
-                                    <Card type="inner" title={
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                            <span>长亭威胁情报</span>
-                                            <img src="/images/长亭.png" alt="长亭" style={{ width: 32, height: 32 }} />
-                                        </div>
-                                    }>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
-                                            <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>威胁等级</span>
-                                            <Tag color="red" style={{ margin: 0 }}>高危</Tag>
-                                        </div>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
-                                            <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>置信度</span>
-                                            <div style={{ display: 'flex', gap: '2px' }}>
-                                                <StarFilled style={{ color: '#faad14', fontSize: 16 }} />
-                                                <StarFilled style={{ color: '#faad14', fontSize: 16 }} />
-                                                <StarFilled style={{ color: '#faad14', fontSize: 16 }} />
-                                            </div>
-                                        </div>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
-                                            <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>威胁类型</span>
-                                            <Tag color="red" style={{ margin: 0 }}>间谍软件</Tag>
-                                        </div>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
-                                            <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>关联APT组织</span>
-                                            <Tag color="magenta" style={{ margin: 0 }}>APT28</Tag>
-                                        </div>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
-                                            <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>恶意病毒家族</span>
-                                            <span>Fancy Bear间谍软件</span>
-                                        </div>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
-                                            <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>首次发现时间</span>
-                                            <span>2024-12-06 07:30:00</span>
-                                        </div>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
-                                            <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>最近发现时间</span>
-                                            <span>2024-12-16 12:15:00</span>
-                                        </div>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
-                                            <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>情报过期时间</span>
-                                            <span>2024-12-26 07:30:00</span>
-                                        </div>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
-                                            <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>IOC信息</span>
+                                    <VendorCardWithLoading vendor="长亭" isLoading={vendorLoadingStates['长亭']}>
+                                        <Card type="inner" title={
                                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                                <Tag color="blue" style={{ margin: 0 }}>6</Tag>
-                                                <Button type="link" size="small" style={{ padding: 0, height: 'auto' }}>详情</Button>
+                                                <span>长亭威胁情报</span>
+                                                <img src="/images/长亭.png" alt="长亭" style={{ width: 32, height: 32 }} />
                                             </div>
-                                        </div>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12 }}>
-                                            <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>通信样本</span>
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                                <Tag color="blue" style={{ margin: 0 }}>4</Tag>
-                                                <Button type="link" size="small" style={{ padding: 0, height: 'auto' }}>详情</Button>
+                                        }>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
+                                                <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>威胁等级</span>
+                                                <Tag color="red" style={{ margin: 0 }}>高危</Tag>
                                             </div>
-                                        </div>
-                                    </Card>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
+                                                <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>置信度</span>
+                                                <ConfidenceStars level={3} />
+                                            </div>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
+                                                <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>威胁类型</span>
+                                                <Tag color="volcano" style={{ margin: 0 }}>间谍软件</Tag>
+                                            </div>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
+                                                <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>关联APT组织</span>
+                                                <Tag color="orange" style={{ margin: 0 }}>APT28</Tag>
+                                            </div>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
+                                                <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>恶意病毒家族</span>
+                                                <Tag
+                                                    color="#f00"
+                                                    style={{ margin: 0, cursor: 'pointer' }}
+                                                    onClick={() => handleVirusFamilyClick('Fancy Bear间谍软件')}
+                                                >
+                                                    Fancy Bear间谍软件
+                                                </Tag>
+                                            </div>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
+                                                <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>首次发现时间</span>
+                                                <span>2024-12-06 07:30:00</span>
+                                            </div>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
+                                                <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>最近发现时间</span>
+                                                <span>2024-12-16 12:15:00</span>
+                                            </div>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
+                                                <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>情报过期时间</span>
+                                                <span>2024-12-26 07:30:00</span>
+                                            </div>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12 }}>
+                                                <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>通信样本</span>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                    <Tag color="blue" style={{ margin: 0, borderRadius: '50%', width: 24, height: 24, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0 }}>4</Tag>
+                                                    <Button type="link" size="small" style={{ padding: 0, height: 'auto' }} onClick={() => handleVendorSampleClick('长亭')}>详情</Button>
+                                                </div>
+                                            </div>
+                                        </Card>
+                                    </VendorCardWithLoading>
                                 </div>
                             </div>
                         </div>
@@ -2428,23 +2472,24 @@ const ThreatIntelligenceDetail: React.FC = () => {
                 </Col>
 
                 <Col span={24}>
-                    <Card title="IOC信息">
+                    <Card title="关联IOC信息">
                         <div style={{ display: 'flex', gap: 16 }}>
                             <div style={{ flex: 1 }}>
                                 <Table
                                     pagination={false}
                                     dataSource={[
-                                        { key: '1', type: 'IP地址', port: '80', uri: '-', firstSeen: '2024-12-01 10:00:00' },
-                                        { key: '2', type: '域名', port: '443', uri: '-', firstSeen: '2024-12-02 14:30:00' },
-                                        { key: '3', type: 'URL', port: '80', uri: '/payload.exe', firstSeen: '2024-12-03 09:15:00' },
-                                        { key: '4', type: 'MD5', port: '-', uri: '-', firstSeen: '2024-12-04 16:45:00' },
-                                        { key: '5', type: 'SHA256', port: '-', uri: '-', firstSeen: '2024-12-05 11:20:00' }
+                                        { key: '1', port: '80', uri: '-', type: '恶意IP', firstSeen: '2024-12-01 10:00:00', vendor: '奇安信' },
+                                        { key: '2', port: '443', uri: '-', type: '恶意域名', firstSeen: '2024-12-02 14:30:00', vendor: '腾讯' },
+                                        { key: '3', port: '80', uri: '/payload.exe', type: '恶意URL', firstSeen: '2024-12-03 09:15:00', vendor: '360' },
+                                        { key: '4', port: '10023', uri: '-', type: '恶意文件MD5', firstSeen: '2024-12-04 16:45:00', vendor: '华为' },
+                                        { key: '5', port: '554', uri: '-', type: '恶意文件SHA256', firstSeen: '2024-12-05 11:20:00', vendor: '阿里云' }
                                     ]}
                                     columns={[
-                                        { title: 'IOC类型', dataIndex: 'type', key: 'type', width: 100 },
                                         { title: '端口号', dataIndex: 'port', key: 'port', width: 80 },
                                         { title: 'URI', dataIndex: 'uri', key: 'uri', width: 120 },
-                                        { title: '首次发现时间', dataIndex: 'firstSeen', key: 'firstSeen', width: 150 }
+                                        { title: '威胁情报类型', dataIndex: 'type', key: 'type', width: 120 },
+                                        { title: '首次发现时间', dataIndex: 'firstSeen', key: 'firstSeen', width: 150 },
+                                        { title: '厂商', dataIndex: 'vendor', key: 'vendor', width: 100 }
                                     ]}
                                     style={{
                                         fontSize: 12,
@@ -2486,7 +2531,7 @@ const ThreatIntelligenceDetail: React.FC = () => {
                 </Col>
             </Row>
             <Modal
-                title="通信样本详情"
+                title={`${currentVendor}威胁情报 - 通信样本`}
                 open={communicationModalVisible}
                 onCancel={() => setCommunicationModalVisible(false)}
                 footer={null}
@@ -2494,13 +2539,7 @@ const ThreatIntelligenceDetail: React.FC = () => {
             >
                 <Table
                     pagination={false}
-                    dataSource={[
-                        { key: '1', hash: 'd41d8cd98f00b204e9800998ecf8427e' },
-                        { key: '2', hash: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855' },
-                        { key: '3', hash: 'a1b2c3d4e5f6789012345678901234567890abcdef' },
-                        { key: '4', hash: 'f1e2d3c4b5a6789012345678901234567890fedcba' },
-                        { key: '5', hash: '1234567890abcdef1234567890abcdef12345678' }
-                    ]}
+                    dataSource={vendorSamples[currentVendor]}
                     columns={[
                         { title: '样本Hash', dataIndex: 'hash', key: 'hash', ellipsis: true }
                     ]}
@@ -2564,6 +2603,34 @@ const ThreatIntelligenceDetail: React.FC = () => {
                         </Space>
                     </Form.Item>
                 </Form>
+            </Modal>
+            <Modal
+                title={`${currentVirusFamily}病毒家族详细信息`}
+                open={virusFamilyModalVisible}
+                onCancel={() => setVirusFamilyModalVisible(false)}
+                footer={null}
+                width={600}
+            >
+                {currentVirusFamily && virusFamilyDetails[currentVirusFamily] && (
+                    <div>
+                        <p style={{ lineHeight: 1.6, color: '#595959', fontSize: 14 }}>{virusFamilyDetails[currentVirusFamily].description}</p>
+                    </div>
+                )}
+            </Modal>
+            <Modal
+                title="奇安信威胁情报 - 威胁类型"
+                open={threatTypeModalVisible}
+                onCancel={() => setThreatTypeModalVisible(false)}
+                footer={null}
+                width={600}
+            >
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                    {vendorThreatTypes['奇安信'].map((type, index) => (
+                        <Tag key={index} color="volcano" style={{ margin: 0, padding: '4px 8px' }}>
+                            {type}
+                        </Tag>
+                    ))}
+                </div>
             </Modal>
         </div >
     );
