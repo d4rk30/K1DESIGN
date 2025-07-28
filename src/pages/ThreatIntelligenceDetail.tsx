@@ -1,13 +1,48 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { Card, Row, Col, Table, Tag, Space, Button, Input, message, Modal, Form, Upload, Carousel, Alert, Empty, Spin } from 'antd';
+import { Card, Row, Col, Table, Tag, Space, Button, Input, message, Modal, Form, Upload, Carousel, Alert, Empty, Spin, Collapse } from 'antd';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { SearchOutlined, ReloadOutlined, UpOutlined, DownOutlined, CopyOutlined, ApartmentOutlined, GlobalOutlined, ApiOutlined, LinkOutlined, InboxOutlined, LeftOutlined, RightOutlined } from '@ant-design/icons';
+import { SearchOutlined, ReloadOutlined, UpOutlined, DownOutlined, CopyOutlined, ApartmentOutlined, GlobalOutlined, ApiOutlined, LinkOutlined, InboxOutlined, LeftOutlined, RightOutlined, StarFilled } from '@ant-design/icons';
 import LabelSelect from '@/components/LabelSelect';
 import { US, CN, GB, FR, DE, RU } from 'country-flag-icons/react/3x2';
 import LabelInput from '@/components/LabelInput';
 import LabelTextArea from '@/components/LabelTextArea';
 import type { UploadFile, UploadProps } from 'antd';
 import ReactECharts from 'echarts-for-react';
+
+// 自定义波浪移动loading组件
+const WaveLoading: React.FC<{ size?: number; color?: string }> = ({ size = 12, color = '#1890ff' }) => {
+    return (
+        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+            {[0, 1, 2].map((index) => (
+                <div
+                    key={index}
+                    style={{
+                        width: size,
+                        height: size,
+                        borderRadius: '50%',
+                        backgroundColor: color,
+                        animation: `waveMove 1.4s ease-in-out infinite`,
+                        animationDelay: `${index * 0.2}s`
+                    }}
+                />
+            ))}
+            <style>
+                {`
+                    @keyframes waveMove {
+                        0%, 60%, 100% {
+                            transform: translateY(0);
+                            opacity: 0.4;
+                        }
+                        30% {
+                            transform: translateY(-8px);
+                            opacity: 1;
+                        }
+                    }
+                `}
+            </style>
+        </div>
+    );
+};
 
 const ThreatIntelligenceDetail: React.FC = () => {
     const location = useLocation();
@@ -33,6 +68,10 @@ const ThreatIntelligenceDetail: React.FC = () => {
     const [subdomainsLoading, setSubdomainsLoading] = useState(false);
     const [statsLoading, setStatsLoading] = useState(true);
     const [vendorLoadingList, setVendorLoadingList] = useState(Array(8).fill(true));
+    const [overviewFieldsLoading, setOverviewFieldsLoading] = useState(true);
+    const [currentSlide, setCurrentSlide] = useState(0);
+    const [activeDetail, setActiveDetail] = useState<string | null>(null);
+    const [communicationModalVisible, setCommunicationModalVisible] = useState(false);
 
     const attackTabs = [
         { key: 'attackTrace', tab: '攻击实时轨迹' },
@@ -99,6 +138,15 @@ const ThreatIntelligenceDetail: React.FC = () => {
             return () => clearInterval(timer);
         }
     }, [showAlert]);
+
+    // 控制威胁情报概览字段的loading状态
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setOverviewFieldsLoading(false);
+        }, 2000); // 2秒后显示内容
+
+        return () => clearTimeout(timer);
+    }, []);
 
     useEffect(() => {
         if (activeTabKey === 'attackTrace') {
@@ -1456,13 +1504,13 @@ const ThreatIntelligenceDetail: React.FC = () => {
                         <Col flex="auto">
                             <Input
                                 placeholder={'攻击情报仅支持输入IP，外联情报支持IP、域名和URL'}
-                                style={{ height: 40, border: '1px solid #f0f0f0' }}
+                                style={{ height: 50, border: '1px solid #f0f0f0', fontSize: 18, padding: '0 16px' }}
                                 defaultValue={query}
                             />
                         </Col>
                         <Col>
                             <Space>
-                                <Button type={'default'} style={{ height: 40 }}
+                                <Button type={'default'} style={{ height: 50, fontSize: 16, padding: '0 24px' }}
                                     onClick={() => {
                                         setStatsLoading(true);
                                         setTimeout(() => setStatsLoading(false), 1000);
@@ -1471,7 +1519,7 @@ const ThreatIntelligenceDetail: React.FC = () => {
                                 >
                                     攻击情报查询
                                 </Button>
-                                <Button type={'default'} style={{ height: 40 }}
+                                <Button type={'default'} style={{ height: 50, fontSize: 16, padding: '0 24px' }}
                                     onClick={() => {
                                         setStatsLoading(true);
                                         setTimeout(() => setStatsLoading(false), 1000);
@@ -1484,331 +1532,949 @@ const ThreatIntelligenceDetail: React.FC = () => {
                         </Col>
                     </Row>
                 </Col>
-                {/* 新增无标题卡片 */}
+                {/* 威胁情报概览卡片 */}
                 <Col span={24}>
-                    <Card>
-                        <Row>
-                            <Col span={3}>
-                                {/* ECharts 环形图 */}
-                                <ReactECharts
-                                    style={{ width: '160px', height: 160 }}
-                                    option={{
-                                        series: [
-                                            {
-                                                type: 'pie',
-                                                radius: ['70%', '90%'],
-                                                avoidLabelOverlap: false,
-                                                label: { show: false },
-                                                labelLine: { show: false },
-                                                itemStyle: {
-                                                    borderRadius: 12,
-                                                    borderColor: '#fff',
-                                                    borderWidth: 2,
-                                                },
-                                                data: [
+                    <Card title="威胁情报概览">
+                        <div style={{ position: 'relative' }}>
+                            <Row gutter={24}>
+                                {/* 左侧IP信息 */}
+                                <Col flex="auto">
+                                    <div style={{ display: 'flex', alignItems: 'center', marginBottom: 16 }}>
+                                        <div style={{
+                                            width: 48,
+                                            height: 48,
+                                            backgroundColor: '#EFF6FF',
+                                            borderRadius: '8px',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            marginRight: 12
+                                        }}>
+                                            {inputType === 'ip' ? (
+                                                <img
+                                                    src="/images/ip.png"
+                                                    alt="IP"
+                                                    style={{ width: 24, height: 24 }}
+                                                />
+                                            ) : inputType === 'domain' ? (
+                                                <GlobalOutlined style={{ fontSize: 24, color: '#2663EB' }} />
+                                            ) : inputType === 'url' ? (
+                                                <LinkOutlined style={{ fontSize: 28, color: '#2663EB' }} />
+                                            ) : (
+                                                <img
+                                                    src="/images/ip.png"
+                                                    alt="IP"
+                                                    style={{ width: 24, height: 24 }}
+                                                />
+                                            )}
+                                        </div>
+                                        <div>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 4 }}>
+                                                <div
+                                                    style={{
+                                                        fontSize: query.length > 100 ? 14 : query.length > 50 ? 20 : 32,
+                                                        fontWeight: 600,
+                                                        color: '#262626',
+                                                        maxWidth: '800px',
+                                                        overflow: 'hidden',
+                                                        textOverflow: 'ellipsis',
+                                                        whiteSpace: 'nowrap'
+                                                    }}
+                                                    title={query}
+                                                >
+                                                    {query}
+                                                </div>
+                                                <Button
+                                                    type="text"
+                                                    icon={<CopyOutlined />}
+                                                    style={{
+                                                        marginLeft: 4,
+                                                        background: '#f5f5f5',
+                                                        color: '#666',
+                                                        boxShadow: 'none',
+                                                        padding: '0 8px',
+                                                        height: 28,
+                                                        display: 'flex',
+                                                        alignItems: 'center'
+                                                    }}
+                                                    onClick={() => {
+                                                        if (query) {
+                                                            navigator.clipboard.writeText(query);
+                                                            message.success('已复制');
+                                                        }
+                                                    }}
+                                                    title="复制"
+                                                />
+                                                <div style={{ display: 'flex', gap: 8 }}>
+                                                    <Tag>攻击情报</Tag>
+                                                    <Tag>IP情报</Tag>
+                                                    <Tag>黑名单</Tag>
+                                                    <Tag>私有情报</Tag>
+                                                </div>
+
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <Row gutter={[24, 16]}>
+                                        {(() => {
+                                            if (inputType === 'ip') {
+                                                return (
+                                                    <>
+                                                        <Col span={12}>
+                                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
+                                                                <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>运营商</span>
+                                                                {overviewFieldsLoading ? (
+                                                                    <WaveLoading size={8} color="#1890ff" />
+                                                                ) : (
+                                                                    <span style={{ fontSize: 14, color: '#262626' }}>中国电信</span>
+                                                                )}
+                                                            </div>
+                                                        </Col>
+                                                        <Col span={12}>
+                                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
+                                                                <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>归属地</span>
+                                                                {overviewFieldsLoading ? (
+                                                                    <WaveLoading size={8} color="#1890ff" />
+                                                                ) : (
+                                                                    <span style={{ fontSize: 14, color: '#262626' }}>中国·北京</span>
+                                                                )}
+                                                            </div>
+                                                        </Col>
+                                                        <Col span={12}>
+                                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
+                                                                <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>经纬度</span>
+                                                                {overviewFieldsLoading ? (
+                                                                    <WaveLoading size={8} color="#1890ff" />
+                                                                ) : (
+                                                                    <span style={{ fontSize: 14, color: '#262626' }}>39.9042, 116.4074</span>
+                                                                )}
+                                                            </div>
+                                                        </Col>
+                                                        <Col span={12}>
+                                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
+                                                                <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>ASN</span>
+                                                                {overviewFieldsLoading ? (
+                                                                    <WaveLoading size={8} color="#1890ff" />
+                                                                ) : (
+                                                                    <span style={{ fontSize: 14, color: '#262626' }}>AS4134 (中国电信)</span>
+                                                                )}
+                                                            </div>
+                                                        </Col>
+                                                    </>
+                                                );
+                                            } else if (inputType === 'domain') {
+                                                return (
+                                                    <>
+                                                        <Col span={12}>
+                                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
+                                                                <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>域名注册商</span>
+                                                                {overviewFieldsLoading ? (
+                                                                    <WaveLoading size={8} color="#1890ff" />
+                                                                ) : (
+                                                                    <span style={{ fontSize: 14, color: '#262626' }}>阿里云</span>
+                                                                )}
+                                                            </div>
+                                                        </Col>
+                                                        <Col span={12}>
+                                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
+                                                                <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>域名注册时间</span>
+                                                                {overviewFieldsLoading ? (
+                                                                    <WaveLoading size={8} color="#1890ff" />
+                                                                ) : (
+                                                                    <span style={{ fontSize: 14, color: '#262626' }}>2023-01-15 10:30:00</span>
+                                                                )}
+                                                            </div>
+                                                        </Col>
+                                                        <Col span={12}>
+                                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
+                                                                <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>域名过期时间</span>
+                                                                {overviewFieldsLoading ? (
+                                                                    <WaveLoading size={8} color="#1890ff" />
+                                                                ) : (
+                                                                    <span style={{ fontSize: 14, color: '#262626' }}>2024-01-15 10:30:00</span>
+                                                                )}
+                                                            </div>
+                                                        </Col>
+                                                        <Col span={12}>
+                                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
+                                                                <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>注册邮箱</span>
+                                                                {overviewFieldsLoading ? (
+                                                                    <WaveLoading size={8} color="#1890ff" />
+                                                                ) : (
+                                                                    <span style={{ fontSize: 14, color: '#262626' }}>admin@example.com</span>
+                                                                )}
+                                                            </div>
+                                                        </Col>
+                                                    </>
+                                                );
+                                            } else if (inputType === 'url') {
+                                                return (
+                                                    <>
+                                                        <Col span={12}>
+                                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
+                                                                <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>标题</span>
+                                                                {overviewFieldsLoading ? (
+                                                                    <WaveLoading size={8} color="#1890ff" />
+                                                                ) : (
+                                                                    <span style={{ fontSize: 14, color: '#262626' }}>示例网站首页</span>
+                                                                )}
+                                                            </div>
+                                                        </Col>
+                                                        <Col span={12}>
+                                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
+                                                                <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>响应状态码</span>
+                                                                {overviewFieldsLoading ? (
+                                                                    <WaveLoading size={8} color="#1890ff" />
+                                                                ) : (
+                                                                    <span style={{ fontSize: 14, color: '#262626' }}>200</span>
+                                                                )}
+                                                            </div>
+                                                        </Col>
+                                                        <Col span={12}>
+                                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
+                                                                <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>网站</span>
+                                                                {overviewFieldsLoading ? (
+                                                                    <WaveLoading size={8} color="#1890ff" />
+                                                                ) : (
+                                                                    <span style={{ fontSize: 14, color: '#262626' }}>example.com</span>
+                                                                )}
+                                                            </div>
+                                                        </Col>
+                                                        <Col span={12}>
+                                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
+                                                                <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>SHA256</span>
+                                                                {overviewFieldsLoading ? (
+                                                                    <WaveLoading size={8} color="#1890ff" />
+                                                                ) : (
+                                                                    <span style={{ fontSize: 14, color: '#262626' }}>a1b2c3d4...</span>
+                                                                )}
+                                                            </div>
+                                                        </Col>
+                                                    </>
+                                                );
+                                            }
+                                            return null;
+                                        })()}
+                                    </Row>
+                                </Col>
+
+                                {/* 右侧多源风险评分 */}
+                                <Col span={5}>
+                                    <div style={{
+                                        borderLeft: '1px solid #f0f0f0',
+                                        paddingLeft: '16px',
+                                        marginLeft: '12px'
+                                    }}>
+                                        <div style={{ fontSize: 16, fontWeight: 500, color: '#262626', marginBottom: 16 }}>
+                                            多源风险评分
+                                        </div>
+                                        {/* 三类风险类型的厂商判断分布 */}
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                                            <div style={{ flex: 1 }}>
+                                                {/* 白名单 */}
+                                                <div style={{ marginBottom: 14, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                    <span style={{
+                                                        fontWeight: 600,
+                                                        color: '#52c41a',
+                                                        fontSize: 15,
+                                                        padding: '4px 8px',
+                                                        background: 'linear-gradient(to right, #ffffff, #f6ffed, #ffffff)',
+                                                        borderRadius: '4px',
+                                                        width: '100px',
+                                                        display: 'inline-block',
+                                                        textAlign: 'center'
+                                                    }}>白名单</span>
+                                                    {(queryType === 'attack' ? ['绿盟'] : ['360', '长亭']).map((vendor, index) => (
+                                                        <Tag
+                                                            key={index}
+                                                            color="green"
+                                                            style={{
+                                                                borderRadius: '12px',
+                                                                fontSize: '12px',
+                                                                padding: '2px 8px',
+                                                                border: '1px solid #b7eb8f',
+                                                                backgroundColor: '#f6ffed'
+                                                            }}
+                                                        >
+                                                            {vendor}
+                                                        </Tag>
+                                                    ))}
+                                                </div>
+                                                {/* 恶意威胁 */}
+                                                <div style={{ marginBottom: 14, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                    <span style={{
+                                                        fontWeight: 600,
+                                                        color: '#f5222d',
+                                                        fontSize: 15,
+                                                        padding: '4px 8px',
+                                                        background: 'linear-gradient(to right, #ffffff, #fff1f0, #ffffff)',
+                                                        borderRadius: '4px',
+                                                        width: '100px',
+                                                        display: 'inline-block',
+                                                        textAlign: 'center'
+                                                    }}>恶意</span>
+                                                    {(queryType === 'attack' ? ['公安一所'] : ['奇安信', '华为']).map((vendor, index) => (
+                                                        <Tag
+                                                            key={index}
+                                                            style={{
+                                                                borderRadius: '12px',
+                                                                fontSize: '12px',
+                                                                padding: '2px 8px',
+                                                                border: '1px solid #ffccc7',
+                                                                backgroundColor: '#fff2f0',
+                                                                color: '#f5222d'
+                                                            }}
+                                                        >
+                                                            {vendor}
+                                                        </Tag>
+                                                    ))}
+                                                </div>
+                                                {/* 未知 */}
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                    <span style={{
+                                                        fontWeight: 600,
+                                                        color: '#faad14',
+                                                        fontSize: 15,
+                                                        padding: '4px 8px',
+                                                        background: 'linear-gradient(to right, #ffffff, #fffbe6, #ffffff)',
+                                                        borderRadius: '4px',
+                                                        width: '100px',
+                                                        display: 'inline-block',
+                                                        textAlign: 'center'
+                                                    }}>未知</span>
+                                                    {(queryType === 'attack' ? ['知道创宇'] : ['腾讯', '阿里云']).map((vendor, index) => (
+                                                        <Tag
+                                                            key={index}
+                                                            color="orange"
+                                                            style={{
+                                                                borderRadius: '12px',
+                                                                fontSize: '12px',
+                                                                padding: '2px 8px',
+                                                                border: '1px solid #ffe58f',
+                                                                backgroundColor: '#fffbe6'
+                                                            }}
+                                                        >
+                                                            {vendor}
+                                                        </Tag>
+                                                    ))}
+                                                </div>
+                                            </div>
+
+                                        </div>
+                                    </div>
+                                </Col>
+                                <Col span={3}>
+                                    {/* 饼图 */}
+                                    <div style={{ marginLeft: 24 }}>
+                                        <ReactECharts
+                                            style={{ width: '160px', height: 160 }}
+                                            option={{
+                                                series: [
                                                     {
-                                                        value: 67,
-                                                        name: '高危',
+                                                        type: 'pie',
+                                                        radius: ['70%', '90%'],
+                                                        avoidLabelOverlap: false,
+                                                        label: { show: false },
+                                                        labelLine: { show: false },
                                                         itemStyle: {
-                                                            color: {
-                                                                type: 'linear',
-                                                                x: 0,
-                                                                y: 0,
-                                                                x2: 0,
-                                                                y2: 1,
-                                                                colorStops: [
-                                                                    { offset: 0, color: '#f5222d' }, // 顶部
-                                                                    { offset: 1, color: '#ffa39e' }  // 底部
-                                                                ]
+                                                            borderRadius: 12,
+                                                            borderColor: '#fff',
+                                                            borderWidth: 2,
+                                                        },
+                                                        data: [
+                                                            {
+                                                                value: queryType === 'attack' ? 1 : 2,
+                                                                name: '白名单',
+                                                                itemStyle: {
+                                                                    color: {
+                                                                        type: 'linear',
+                                                                        x: 0,
+                                                                        y: 0,
+                                                                        x2: 0,
+                                                                        y2: 1,
+                                                                        colorStops: [
+                                                                            { offset: 0, color: '#52c41a' },
+                                                                            { offset: 0.5, color: '#52c41a' },
+                                                                            { offset: 1, color: 'rgba(82, 196, 26, 0.3)' }
+                                                                        ]
+                                                                    }
+                                                                }
+                                                            },
+                                                            {
+                                                                value: queryType === 'attack' ? 1 : 2,
+                                                                name: '恶意威胁',
+                                                                itemStyle: {
+                                                                    color: {
+                                                                        type: 'linear',
+                                                                        x: 0,
+                                                                        y: 0,
+                                                                        x2: 0,
+                                                                        y2: 1,
+                                                                        colorStops: [
+                                                                            { offset: 0, color: '#f5222d' },
+                                                                            { offset: 0.5, color: '#f5222d' },
+                                                                            { offset: 1, color: 'rgba(245, 34, 45, 0.3)' }
+                                                                        ]
+                                                                    }
+                                                                }
+                                                            },
+                                                            {
+                                                                value: queryType === 'attack' ? 1 : 2,
+                                                                name: '未知',
+                                                                itemStyle: {
+                                                                    color: {
+                                                                        type: 'linear',
+                                                                        x: 0,
+                                                                        y: 0,
+                                                                        x2: 0,
+                                                                        y2: 1,
+                                                                        colorStops: [
+                                                                            { offset: 0, color: '#faad14' },
+                                                                            { offset: 0.5, color: '#faad14' },
+                                                                            { offset: 1, color: 'rgba(250, 173, 20, 0.3)' }
+                                                                        ]
+                                                                    }
+                                                                }
                                                             }
+                                                        ],
+                                                    },
+                                                ],
+                                                graphic: [
+                                                    {
+                                                        type: 'text',
+                                                        left: 'center',
+                                                        top: '30%',
+                                                        style: {
+                                                            text: queryType === 'attack' ? '1' : '2',
+                                                            fontSize: 48,
+                                                            fontWeight: 'bold',
+                                                            fill: '#333333',
+                                                            textAlign: 'center'
                                                         }
                                                     },
-                                                    { value: 33, name: '安全', itemStyle: { color: '#f5f5f5' } },
+                                                    {
+                                                        type: 'text',
+                                                        left: 'center',
+                                                        top: '60%',
+                                                        style: {
+                                                            text: queryType === 'attack' ? '/3' : '/6',
+                                                            fontSize: 16,
+                                                            fill: '#999',
+                                                            textAlign: 'center'
+                                                        }
+                                                    }
                                                 ],
-                                            },
-                                        ],
-                                        graphic: [
-                                            {
-                                                type: 'text',
-                                                left: 'center',
-                                                top: '30%',
-                                                style: {
-                                                    text: '2',
-                                                    fontSize: 48,
-                                                    fontWeight: 'bold',
-                                                    fill: '#f5222d',
-                                                    textAlign: 'center'
-                                                }
-                                            },
-                                            {
-                                                type: 'text',
-                                                left: 'center',
-                                                top: '60%',
-                                                style: {
-                                                    text: '/3',
-                                                    fontSize: 16,
-                                                    fill: '#999',
-                                                    textAlign: 'center'
-                                                }
-                                            }
-                                        ],
-                                        tooltip: { show: false },
-                                        legend: { show: false },
-                                    }}
-                                />
-                                <div style={{
-                                    textAlign: 'center',
-                                    marginTop: 8,
-                                    fontSize: 14,
-                                    color: '#f5222d',
-                                    width: '160px',
-                                    fontWeight: 500,
-                                    background: 'linear-gradient(to right, #ffffff, #fff1f0, #ffffff)',
-                                    padding: '4px 8px',
-                                    borderRadius: '4px'
-                                }}>
-                                    威胁统计
-                                </div>
-                            </Col>
-                            <Col span={18}>
-                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-                                    <div style={{ display: 'flex', alignItems: 'center' }}>
-                                        <span style={{ fontSize: 32, fontWeight: 600, color: '#222', marginRight: 12 }}>
-                                            {query}
-                                        </span>
-                                        <Tag>
-                                            攻击情报
-                                        </Tag>
-                                        <span
-                                            style={{
-                                                cursor: 'pointer',
-                                                color: '#bfbfbf',
-                                                fontSize: 16,
-                                                display: 'inline-flex',
-                                                alignItems: 'center',
-                                                marginLeft: 8
+                                                tooltip: {
+                                                    show: true,
+                                                    formatter: function (params: any) {
+                                                        const vendors: { [key: string]: string[] } = {
+                                                            '白名单': queryType === 'attack' ? ['绿盟'] : ['360', '长亭'],
+                                                            '恶意威胁': queryType === 'attack' ? ['公安一所'] : ['奇安信', '华为'],
+                                                            '未知': queryType === 'attack' ? ['知道创宇'] : ['腾讯', '阿里云']
+                                                        };
+                                                        const vendorList = vendors[params.name] || [];
+                                                        const tagColors: { [key: string]: string } = {
+                                                            '白名单': '#52c41a',
+                                                            '恶意威胁': '#f5222d',
+                                                            '未知': '#faad14'
+                                                        };
+                                                        const tagBgColors: { [key: string]: string } = {
+                                                            '白名单': '#f6ffed',
+                                                            '恶意威胁': '#fff2f0',
+                                                            '未知': '#fffbe6'
+                                                        };
+                                                        const tagBorderColors: { [key: string]: string } = {
+                                                            '白名单': '#b7eb8f',
+                                                            '恶意威胁': '#ffccc7',
+                                                            '未知': '#ffe58f'
+                                                        };
+                                                        const color = tagColors[params.name] || '#52c41a';
+                                                        const bgColor = tagBgColors[params.name] || '#f6ffed';
+                                                        const borderColor = tagBorderColors[params.name] || '#b7eb8f';
+
+                                                        const vendorTags = vendorList.map(vendor =>
+                                                            `<span style="display: inline-block; padding: 2px 8px; background-color: ${bgColor}; color: ${color}; border: 1px solid ${borderColor}; border-radius: 12px; font-size: 11px; margin-right: 4px;">${vendor}</span>`
+                                                        ).join('');
+
+                                                        return `${vendorTags} 判断为 ${params.name}`;
+                                                    },
+                                                    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                                                    borderColor: '#d9d9d9',
+                                                    borderWidth: 1,
+                                                    textStyle: {
+                                                        color: '#333',
+                                                        fontSize: 12
+                                                    }
+                                                },
+                                                legend: { show: false },
                                             }}
-                                            onClick={() => {
-                                                if (navigator && navigator.clipboard) {
-                                                    navigator.clipboard.writeText(query);
-                                                    message.success('已复制到剪贴板');
-                                                } else {
-                                                    // 兼容性处理
-                                                    const input = document.createElement('input');
-                                                    input.value = query;
-                                                    document.body.appendChild(input);
-                                                    input.select();
-                                                    document.execCommand('copy');
-                                                    document.body.removeChild(input);
-                                                    message.success('已复制到剪贴板');
-                                                }
-                                            }}
-                                        >
-                                            <CopyOutlined />
-                                        </span>
+                                        />
                                     </div>
-                                    <Button
-                                        onClick={() => setFeedbackVisible(true)}
-                                        style={{ marginRight: 60 }}
-                                    >
-                                        误报反馈
-                                    </Button>
-                                </div>
-
-                                {/* 情报厂商表格 */}
-                                <div style={{ marginTop: 16 }}>
-                                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
-                                        <thead>
-                                            <tr style={{ height: 40 }}>
-                                                <th style={{ textAlign: 'left', padding: '8px 16px', color: '#8c8c8c', fontWeight: 400 }}>情报厂商</th>
-                                                <th style={{ textAlign: 'center', padding: '8px 16px', color: '#8c8c8c', fontWeight: 400 }}>是否有效</th>
-                                                <th style={{ textAlign: 'center', padding: '8px 16px', color: '#8c8c8c', fontWeight: 400 }}>置信度</th>
-                                                <th style={{ textAlign: 'center', padding: '8px 16px', color: '#8c8c8c', fontWeight: 400 }}>威胁等级</th>
-                                                <th style={{ textAlign: 'center', padding: '8px 16px', color: '#8c8c8c', fontWeight: 400 }}>资产/威胁类型</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            <tr style={{ height: 48 }}>
-                                                <td style={{ padding: '8px 16px', fontWeight: 500 }}>公安一所</td>
-                                                <td style={{ textAlign: 'center', padding: '8px 16px' }}>
-                                                    <Tag color="green" style={{ fontSize: 12 }}>
-                                                        永久有效
-                                                    </Tag>
-                                                </td>
-                                                <td style={{ textAlign: 'center', padding: '8px 16px' }}>
-                                                    <div style={{ display: 'flex', justifyContent: 'center', gap: '2px' }}>
-                                                        <span style={{ color: '#fadb14', fontSize: 16 }}>★</span>
-                                                        <span style={{ color: '#fadb14', fontSize: 16 }}>★</span>
-                                                        <span style={{ color: '#fadb14', fontSize: 16 }}>★</span>
-                                                    </div>
-                                                </td>
-                                                <td style={{ textAlign: 'center', padding: '8px 16px' }}>
-                                                    <div style={{ display: 'flex', justifyContent: 'center', gap: '4px' }}>
-                                                        {[1, 2, 3].map(i => (
-                                                            <div key={i} style={{
-                                                                width: 16,
-                                                                height: 16,
-                                                                borderRadius: '50%',
-                                                                backgroundColor: '#f5222d',
-                                                                display: 'flex',
-                                                                alignItems: 'center',
-                                                                justifyContent: 'center'
-                                                            }}>
-                                                                <img
-                                                                    src="/images/skull-2-line.png"
-                                                                    alt="skull"
-                                                                    style={{
-                                                                        width: 10,
-                                                                        height: 10,
-                                                                        filter: 'brightness(0) invert(1)'
-                                                                    }}
-                                                                />
-                                                            </div>
-                                                        ))}
-                                                    </div>
-                                                </td>
-                                                <td style={{ textAlign: 'center', padding: '8px 16px' }}>
-                                                    <Tag color="#f5222d" style={{ fontSize: 12 }}>
-                                                        普通木马
-                                                    </Tag>
-                                                </td>
-                                            </tr>
-                                            {[
-                                                { name: '知道创宇', hasData: true },
-                                                { name: '绿盟', hasData: false }
-                                            ].map((vendor, index) => (
-                                                <tr key={index} style={{ height: 48 }}>
-                                                    <td style={{ padding: '8px 16px', fontWeight: 500 }}>{vendor.name}</td>
-                                                    <td style={{ textAlign: 'center', padding: '8px 16px' }}>
-                                                        {vendor.name === '知道创宇' ? (
-                                                            <Tag color="green" style={{ fontSize: 12 }}>
-                                                                永久有效
-                                                            </Tag>
-                                                        ) : (
-                                                            <Tag color="default" style={{ fontSize: 12 }}>
-                                                                无数据
-                                                            </Tag>
-                                                        )}
-                                                    </td>
-                                                    <td style={{ textAlign: 'center', padding: '8px 16px' }}>
-                                                        <div style={{ display: 'flex', justifyContent: 'center', gap: '2px' }}>
-                                                            {vendor.name === '知道创宇' ?
-                                                                [1, 2, 3].map(i => (
-                                                                    <span key={i} style={{ color: '#fadb14', fontSize: 16 }}>★</span>
-                                                                )) :
-                                                                [1, 2, 3].map(i => (
-                                                                    <span key={i} style={{ color: '#d9d9d9', fontSize: 16 }}>★</span>
-                                                                ))
-                                                            }
-                                                        </div>
-                                                    </td>
-                                                    <td style={{ textAlign: 'center', padding: '8px 16px' }}>
-                                                        <div style={{ display: 'flex', justifyContent: 'center', gap: '4px' }}>
-                                                            {vendor.name === '知道创宇' ?
-                                                                [1, 2, 3].map(i => (
-                                                                    <div key={i} style={{
-                                                                        width: 16,
-                                                                        height: 16,
-                                                                        borderRadius: '50%',
-                                                                        backgroundColor: i <= 2 ? '#f5222d' : '#d9d9d9',
-                                                                        display: 'flex',
-                                                                        alignItems: 'center',
-                                                                        justifyContent: 'center'
-                                                                    }}>
-                                                                        <img
-                                                                            src="/images/skull-2-line.png"
-                                                                            alt="skull"
-                                                                            style={{
-                                                                                width: 10,
-                                                                                height: 10,
-                                                                                filter: 'brightness(0) invert(1)'
-                                                                            }}
-                                                                        />
-                                                                    </div>
-                                                                )) :
-                                                                [1, 2, 3].map(i => (
-                                                                    <div key={i} style={{
-                                                                        width: 16,
-                                                                        height: 16,
-                                                                        borderRadius: '50%',
-                                                                        backgroundColor: '#d9d9d9',
-                                                                        display: 'flex',
-                                                                        alignItems: 'center',
-                                                                        justifyContent: 'center'
-                                                                    }}>
-                                                                        <img
-                                                                            src="/images/skull-2-line.png"
-                                                                            alt="skull"
-                                                                            style={{
-                                                                                width: 10,
-                                                                                height: 10,
-                                                                                filter: 'brightness(0) invert(1)'
-                                                                            }}
-                                                                        />
-                                                                    </div>
-                                                                ))
-                                                            }
-                                                        </div>
-                                                    </td>
-                                                    <td style={{ textAlign: 'center', padding: '8px 16px', color: '#8c8c8c' }}>
-                                                        {vendor.name === '知道创宇' ? (
-                                                            <Tag color="#f5222d" style={{ fontSize: 12 }}>
-                                                                恶意软件
-                                                            </Tag>
-                                                        ) : '--'}
-                                                    </td>
-                                                </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </Col>
-                            <Col span={3}>
-                                {/* 信息字段区域 */}
-                                <div style={{
-                                    padding: '16px',
-                                    border: '1px solid #f0f0f0',
-                                    borderRadius: '6px',
-                                    backgroundColor: '#fff'
-                                }}>
-                                    <div style={{ marginBottom: 16 }}>
-                                        <div style={{ color: '#8c8c8c', fontSize: 13, marginBottom: 4 }}>
-                                            运营商/注册商
-                                        </div>
-                                        <div style={{ color: '#262626', fontSize: 14 }}>
-                                            --
-                                        </div>
-                                    </div>
-
-                                    <div style={{ marginBottom: 16 }}>
-                                        <div style={{ color: '#8c8c8c', fontSize: 13, marginBottom: 4 }}>
-                                            地理位置
-                                        </div>
-                                        <div style={{ color: '#262626', fontSize: 14 }}>
-                                            --
-                                        </div>
-                                    </div>
-
-                                    <div>
-                                        <div style={{ color: '#8c8c8c', fontSize: 13, marginBottom: 4 }}>
-                                            经纬度
-                                        </div>
-                                        <div style={{ color: '#262626', fontSize: 14 }}>
-                                            --
-                                        </div>
-                                    </div>
-                                </div>
-                            </Col>
-                        </Row>
+                                </Col>
+                            </Row>
+                        </div>
                     </Card>
                 </Col>
-                <Col span={24}>
-                    <Card styles={{ body: { padding: '24px' } }}>
-                        {queryType === 'attack' ? renderAttackContent() : renderExternalContent()}
-                    </Card>
-                </Col>
+
+                {/* 多源威胁情报卡片 */}
                 <Col span={24}>
                     <Card
+                        title="多源威胁情报"
+                        style={{ borderRadius: 8 }}
+                        extra={
+                            <Button
+                                type="link"
+                                onClick={() => setFeedbackVisible(true)}
+                                style={{ padding: 0, height: 'auto' }}
+                            >
+                                误报反馈
+                            </Button>
+                        }
+                    >
+                        <div style={{ position: 'relative', overflow: 'hidden', paddingRight: '3px' }}>
+                            <div
+                                ref={carouselRef}
+                                style={{
+                                    display: 'flex',
+                                    gap: 16,
+                                    transition: 'transform 0.3s ease',
+                                    transform: `translateX(${currentSlide * -20}%)`
+                                }}
+                            >
+                                <div style={{ flex: '1 0 calc(20% - 12.8px)', minWidth: 0 }}>
+                                    <Card type="inner" title={
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                            <span>奇安信威胁情报</span>
+                                            <img src="/images/奇安信.png" alt="奇安信" style={{ width: 32, height: 32 }} />
+                                        </div>
+                                    }>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
+                                            <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>威胁等级</span>
+                                            <Tag color="red" style={{ margin: 0 }}>高危</Tag>
+                                        </div>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
+                                            <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>置信度</span>
+                                            <div style={{ display: 'flex', gap: '2px' }}>
+                                                <StarFilled style={{ color: '#faad14', fontSize: 16 }} />
+                                                <StarFilled style={{ color: '#faad14', fontSize: 16 }} />
+                                                <StarFilled style={{ color: '#faad14', fontSize: 16 }} />
+                                            </div>
+                                        </div>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
+                                            <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>威胁类型</span>
+                                            <Tag color="red" style={{ margin: 0 }}>远控木马类</Tag>
+                                        </div>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
+                                            <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>关联APT组织</span>
+                                            <Tag color="orange" style={{ margin: 0 }}>Lazarus</Tag>
+                                        </div>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
+                                            <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>恶意病毒家族</span>
+                                            <span>Lockbit勒索病毒</span>
+                                        </div>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
+                                            <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>首次发现时间</span>
+                                            <span>2024-12-01 10:00:00</span>
+                                        </div>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
+                                            <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>最近发现时间</span>
+                                            <span>2024-12-11 12:03:44</span>
+                                        </div>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
+                                            <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>情报过期时间</span>
+                                            <span>2024-12-31 11:22:31</span>
+                                        </div>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
+                                            <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>IOC信息</span>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                <Tag color="blue" style={{ margin: 0 }}>5</Tag>
+                                                <Button type="link" size="small" style={{ padding: 0, height: 'auto' }}>详情</Button>
+                                            </div>
+                                        </div>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12 }}>
+                                            <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>通信样本</span>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                <Tag color="blue" style={{ margin: 0 }}>5</Tag>
+                                                <Button type="link" size="small" style={{ padding: 0, height: 'auto' }} onClick={() => setCommunicationModalVisible(true)}>详情</Button>
+                                            </div>
+                                        </div>
+                                    </Card>
+                                </div>
+                                <div style={{ flex: '1 0 calc(20% - 12.8px)', minWidth: 0 }}>
+                                    <Card type="inner" title={
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                            <span>腾讯威胁情报</span>
+                                            <img src="/images/腾讯.png" alt="腾讯" style={{ width: 32, height: 32 }} />
+                                        </div>
+                                    }>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
+                                            <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>威胁等级</span>
+                                            <Tag color="orange" style={{ margin: 0 }}>中危</Tag>
+                                        </div>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
+                                            <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>置信度</span>
+                                            <div style={{ display: 'flex', gap: '2px' }}>
+                                                <StarFilled style={{ color: '#faad14', fontSize: 16 }} />
+                                                <StarFilled style={{ color: '#faad14', fontSize: 16 }} />
+                                            </div>
+                                        </div>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
+                                            <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>威胁类型</span>
+                                            <Tag color="orange" style={{ margin: 0 }}>钓鱼网站</Tag>
+                                        </div>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
+                                            <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>关联APT组织</span>
+                                            <Tag color="purple" style={{ margin: 0 }}>APT29</Tag>
+                                        </div>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
+                                            <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>恶意病毒家族</span>
+                                            <span>Emotet木马</span>
+                                        </div>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
+                                            <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>首次发现时间</span>
+                                            <span>2024-12-02 15:30:00</span>
+                                        </div>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
+                                            <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>最近发现时间</span>
+                                            <span>2024-12-12 09:45:00</span>
+                                        </div>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
+                                            <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>情报过期时间</span>
+                                            <span>2024-12-30 15:30:00</span>
+                                        </div>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
+                                            <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>IOC信息</span>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                <Tag color="blue" style={{ margin: 0 }}>3</Tag>
+                                                <Button type="link" size="small" style={{ padding: 0, height: 'auto' }}>详情</Button>
+                                            </div>
+                                        </div>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12 }}>
+                                            <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>通信样本</span>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                <Tag color="blue" style={{ margin: 0 }}>2</Tag>
+                                                <Button type="link" size="small" style={{ padding: 0, height: 'auto' }}>详情</Button>
+                                            </div>
+                                        </div>
+                                    </Card>
+                                </div>
+                                <div style={{ flex: '1 0 calc(20% - 12.8px)', minWidth: 0 }}>
+                                    <Card type="inner" title={
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                            <span>360威胁情报</span>
+                                            <img src="/images/360.png" alt="360" style={{ width: 32, height: 32 }} />
+                                        </div>
+                                    }>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
+                                            <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>威胁等级</span>
+                                            <Tag color="red" style={{ margin: 0 }}>高危</Tag>
+                                        </div>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
+                                            <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>置信度</span>
+                                            <div style={{ display: 'flex', gap: '2px' }}>
+                                                <StarFilled style={{ color: '#faad14', fontSize: 16 }} />
+                                                <StarFilled style={{ color: '#faad14', fontSize: 16 }} />
+                                                <StarFilled style={{ color: '#faad14', fontSize: 16 }} />
+                                            </div>
+                                        </div>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
+                                            <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>威胁类型</span>
+                                            <Tag color="red" style={{ margin: 0 }}>勒索软件</Tag>
+                                        </div>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
+                                            <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>关联APT组织</span>
+                                            <Tag color="blue" style={{ margin: 0 }}>WannaCry</Tag>
+                                        </div>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
+                                            <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>恶意病毒家族</span>
+                                            <span>WannaCry勒索病毒</span>
+                                        </div>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
+                                            <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>首次发现时间</span>
+                                            <span>2024-12-03 08:15:00</span>
+                                        </div>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
+                                            <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>最近发现时间</span>
+                                            <span>2024-12-13 14:20:00</span>
+                                        </div>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
+                                            <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>情报过期时间</span>
+                                            <span>2024-12-29 08:15:00</span>
+                                        </div>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
+                                            <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>IOC信息</span>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                <Tag color="blue" style={{ margin: 0 }}>4</Tag>
+                                                <Button type="link" size="small" style={{ padding: 0, height: 'auto' }}>详情</Button>
+                                            </div>
+                                        </div>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12 }}>
+                                            <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>通信样本</span>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                <Tag color="blue" style={{ margin: 0 }}>3</Tag>
+                                                <Button type="link" size="small" style={{ padding: 0, height: 'auto' }}>详情</Button>
+                                            </div>
+                                        </div>
+                                    </Card>
+                                </div>
+                                <div style={{ flex: '1 0 calc(20% - 12.8px)', minWidth: 0 }}>
+                                    <Card type="inner" title={
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                            <span>华为威胁情报</span>
+                                            <img src="/images/华为.png" alt="华为" style={{ width: 32, height: 32 }} />
+                                        </div>
+                                    }>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
+                                            <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>威胁等级</span>
+                                            <Tag color="green" style={{ margin: 0 }}>低危</Tag>
+                                        </div>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
+                                            <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>置信度</span>
+                                            <div style={{ display: 'flex', gap: '2px' }}>
+                                                <StarFilled style={{ color: '#faad14', fontSize: 16 }} />
+                                            </div>
+                                        </div>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
+                                            <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>威胁类型</span>
+                                            <Tag color="green" style={{ margin: 0 }}>可疑行为</Tag>
+                                        </div>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
+                                            <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>关联APT组织</span>
+                                            <Tag color="default" style={{ margin: 0 }}>未知</Tag>
+                                        </div>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
+                                            <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>恶意病毒家族</span>
+                                            <span>未知家族</span>
+                                        </div>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
+                                            <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>首次发现时间</span>
+                                            <span>2024-12-04 11:20:00</span>
+                                        </div>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
+                                            <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>最近发现时间</span>
+                                            <span>2024-12-14 16:10:00</span>
+                                        </div>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
+                                            <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>情报过期时间</span>
+                                            <span>2024-12-28 11:20:00</span>
+                                        </div>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
+                                            <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>IOC信息</span>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                <Tag color="blue" style={{ margin: 0 }}>1</Tag>
+                                                <Button type="link" size="small" style={{ padding: 0, height: 'auto' }}>详情</Button>
+                                            </div>
+                                        </div>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12 }}>
+                                            <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>通信样本</span>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                <Tag color="blue" style={{ margin: 0 }}>1</Tag>
+                                                <Button type="link" size="small" style={{ padding: 0, height: 'auto' }}>详情</Button>
+                                            </div>
+                                        </div>
+                                    </Card>
+                                </div>
+                                <div style={{ flex: '1 0 calc(20% - 12.8px)', minWidth: 0 }}>
+                                    <Card type="inner" title={
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                            <span>阿里云威胁情报</span>
+                                            <img src="/images/阿里.png" alt="阿里云" style={{ width: 32, height: 32 }} />
+                                        </div>
+                                    }>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
+                                            <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>威胁等级</span>
+                                            <Tag color="orange" style={{ margin: 0 }}>中危</Tag>
+                                        </div>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
+                                            <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>置信度</span>
+                                            <div style={{ display: 'flex', gap: '2px' }}>
+                                                <StarFilled style={{ color: '#faad14', fontSize: 16 }} />
+                                                <StarFilled style={{ color: '#faad14', fontSize: 16 }} />
+                                            </div>
+                                        </div>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
+                                            <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>威胁类型</span>
+                                            <Tag color="orange" style={{ margin: 0 }}>挖矿木马</Tag>
+                                        </div>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
+                                            <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>关联APT组织</span>
+                                            <Tag color="cyan" style={{ margin: 0 }}>挖矿组织</Tag>
+                                        </div>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
+                                            <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>恶意病毒家族</span>
+                                            <span>XMRig挖矿木马</span>
+                                        </div>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
+                                            <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>首次发现时间</span>
+                                            <span>2024-12-05 13:45:00</span>
+                                        </div>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
+                                            <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>最近发现时间</span>
+                                            <span>2024-12-15 10:30:00</span>
+                                        </div>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
+                                            <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>情报过期时间</span>
+                                            <span>2024-12-27 13:45:00</span>
+                                        </div>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
+                                            <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>IOC信息</span>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                <Tag color="blue" style={{ margin: 0 }}>2</Tag>
+                                                <Button type="link" size="small" style={{ padding: 0, height: 'auto' }}>详情</Button>
+                                            </div>
+                                        </div>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12 }}>
+                                            <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>通信样本</span>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                <Tag color="blue" style={{ margin: 0 }}>2</Tag>
+                                                <Button type="link" size="small" style={{ padding: 0, height: 'auto' }}>详情</Button>
+                                            </div>
+                                        </div>
+                                    </Card>
+                                </div>
+                                <div style={{ flex: '1 0 calc(20% - 12.8px)', minWidth: 0 }}>
+                                    <Card type="inner" title={
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                            <span>长亭威胁情报</span>
+                                            <img src="/images/长亭.png" alt="长亭" style={{ width: 32, height: 32 }} />
+                                        </div>
+                                    }>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
+                                            <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>威胁等级</span>
+                                            <Tag color="red" style={{ margin: 0 }}>高危</Tag>
+                                        </div>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
+                                            <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>置信度</span>
+                                            <div style={{ display: 'flex', gap: '2px' }}>
+                                                <StarFilled style={{ color: '#faad14', fontSize: 16 }} />
+                                                <StarFilled style={{ color: '#faad14', fontSize: 16 }} />
+                                                <StarFilled style={{ color: '#faad14', fontSize: 16 }} />
+                                            </div>
+                                        </div>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
+                                            <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>威胁类型</span>
+                                            <Tag color="red" style={{ margin: 0 }}>间谍软件</Tag>
+                                        </div>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
+                                            <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>关联APT组织</span>
+                                            <Tag color="magenta" style={{ margin: 0 }}>APT28</Tag>
+                                        </div>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
+                                            <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>恶意病毒家族</span>
+                                            <span>Fancy Bear间谍软件</span>
+                                        </div>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
+                                            <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>首次发现时间</span>
+                                            <span>2024-12-06 07:30:00</span>
+                                        </div>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
+                                            <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>最近发现时间</span>
+                                            <span>2024-12-16 12:15:00</span>
+                                        </div>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
+                                            <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>情报过期时间</span>
+                                            <span>2024-12-26 07:30:00</span>
+                                        </div>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
+                                            <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>IOC信息</span>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                <Tag color="blue" style={{ margin: 0 }}>6</Tag>
+                                                <Button type="link" size="small" style={{ padding: 0, height: 'auto' }}>详情</Button>
+                                            </div>
+                                        </div>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12 }}>
+                                            <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>通信样本</span>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                <Tag color="blue" style={{ margin: 0 }}>4</Tag>
+                                                <Button type="link" size="small" style={{ padding: 0, height: 'auto' }}>详情</Button>
+                                            </div>
+                                        </div>
+                                    </Card>
+                                </div>
+                            </div>
+                        </div>
+                        <div
+                            style={{
+                                position: 'absolute', left: -15, top: '60%', transform: 'translateY(-50%)',
+                                width: 32, height: 32, borderRadius: '50%', backgroundColor: '#fff', border: '1px solid #d9d9d9',
+                                display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', zIndex: 10,
+                                boxShadow: '0 2px 8px rgba(0,0,0,0.1)', transition: 'all 0.3s'
+                            }}
+                            onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#f0f9ff'; e.currentTarget.style.borderColor = '#1890ff'; e.currentTarget.style.boxShadow = '0 4px 12px rgba(24, 144, 255, 0.15)'; }}
+                            onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#fff'; e.currentTarget.style.borderColor = '#d9d9d9'; e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)'; }}
+                            onClick={() => setCurrentSlide(Math.max(0, currentSlide - 1))}
+                        >
+                            <LeftOutlined style={{ fontSize: 14, color: '#666' }} />
+                        </div>
+                        <div
+                            style={{
+                                position: 'absolute', right: -15, top: '60%', transform: 'translateY(-50%)',
+                                width: 32, height: 32, borderRadius: '50%', backgroundColor: '#fff', border: '1px solid #d9d9d9',
+                                display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', zIndex: 10,
+                                boxShadow: '0 2px 8px rgba(0,0,0,0.1)', transition: 'all 0.3s'
+                            }}
+                            onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#f0f9ff'; e.currentTarget.style.borderColor = '#1890ff'; e.currentTarget.style.boxShadow = '0 4px 12px rgba(24, 144, 255, 0.15)'; }}
+                            onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#fff'; e.currentTarget.style.borderColor = '#d9d9d9'; e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)'; }}
+                            onClick={() => setCurrentSlide(Math.min(1, currentSlide + 1))}
+                        >
+                            <RightOutlined style={{ fontSize: 14, color: '#666' }} />
+                        </div>
+
+
+
+
+                    </Card>
+                </Col>
+
+                <Col span={24}>
+                    <Card title="IOC信息">
+                        <div style={{ display: 'flex', gap: 16 }}>
+                            <div style={{ flex: 1 }}>
+                                <Table
+                                    pagination={false}
+                                    dataSource={[
+                                        { key: '1', type: 'IP地址', port: '80', uri: '-', firstSeen: '2024-12-01 10:00:00' },
+                                        { key: '2', type: '域名', port: '443', uri: '-', firstSeen: '2024-12-02 14:30:00' },
+                                        { key: '3', type: 'URL', port: '80', uri: '/payload.exe', firstSeen: '2024-12-03 09:15:00' },
+                                        { key: '4', type: 'MD5', port: '-', uri: '-', firstSeen: '2024-12-04 16:45:00' },
+                                        { key: '5', type: 'SHA256', port: '-', uri: '-', firstSeen: '2024-12-05 11:20:00' }
+                                    ]}
+                                    columns={[
+                                        { title: 'IOC类型', dataIndex: 'type', key: 'type', width: 100 },
+                                        { title: '端口号', dataIndex: 'port', key: 'port', width: 80 },
+                                        { title: 'URI', dataIndex: 'uri', key: 'uri', width: 120 },
+                                        { title: '首次发现时间', dataIndex: 'firstSeen', key: 'firstSeen', width: 150 }
+                                    ]}
+                                    style={{
+                                        fontSize: 12,
+                                        border: '1px solid #F0F0F0',
+                                        borderRadius: '6px'
+                                    }}
+                                />
+                            </div>
+                            <div style={{ width: 300 }}>
+                                <Card type="inner" title="证据链" style={{ height: '100%' }}>
+                                    <Empty
+                                        description="暂无信息"
+                                        style={{
+                                            height: '100%',
+                                            display: 'flex',
+                                            flexDirection: 'column',
+                                            justifyContent: 'center',
+                                            minHeight: 200
+                                        }}
+                                    />
+                                </Card>
+                            </div>
+                        </div>
+                    </Card>
+                </Col>
+
+
+                <Col span={24}>
+                    <Card
+                        title="情报测绘信息"
                         tabList={getTabs()}
                         activeTabKey={activeTabKey}
                         onTabChange={handleTabChange}
@@ -1819,6 +2485,33 @@ const ThreatIntelligenceDetail: React.FC = () => {
                     </Card>
                 </Col>
             </Row>
+            <Modal
+                title="通信样本详情"
+                open={communicationModalVisible}
+                onCancel={() => setCommunicationModalVisible(false)}
+                footer={null}
+                width={800}
+            >
+                <Table
+                    pagination={false}
+                    dataSource={[
+                        { key: '1', hash: 'd41d8cd98f00b204e9800998ecf8427e' },
+                        { key: '2', hash: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855' },
+                        { key: '3', hash: 'a1b2c3d4e5f6789012345678901234567890abcdef' },
+                        { key: '4', hash: 'f1e2d3c4b5a6789012345678901234567890fedcba' },
+                        { key: '5', hash: '1234567890abcdef1234567890abcdef12345678' }
+                    ]}
+                    columns={[
+                        { title: '样本Hash', dataIndex: 'hash', key: 'hash', ellipsis: true }
+                    ]}
+                    style={{
+                        fontSize: 12,
+                        border: '1px solid #F0F0F0',
+                        borderRadius: '6px'
+                    }}
+                />
+            </Modal>
+
             <Modal
                 title="误报反馈"
                 open={feedbackVisible}
@@ -1872,7 +2565,7 @@ const ThreatIntelligenceDetail: React.FC = () => {
                     </Form.Item>
                 </Form>
             </Modal>
-        </div>
+        </div >
     );
 };
 

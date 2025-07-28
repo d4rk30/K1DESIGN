@@ -9,6 +9,7 @@ const ThreatIntelligenceTrace: React.FC = () => {
     const handleSearch = (type: 'attack' | 'external') => {
         const ipRegex = /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
         const domainRegex = /^(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,6}$/;
+        const urlRegex = /^https?:\/\/(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)*[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?::[0-9]+)?(?:\/[^\s]*)?$/;
 
         if (!inputValue.trim()) {
             message.error('请输入查询内容');
@@ -24,12 +25,22 @@ const ThreatIntelligenceTrace: React.FC = () => {
         } else { // external
             const isIp = ipRegex.test(inputValue);
             const isDomain = domainRegex.test(inputValue);
+            const isUrl = urlRegex.test(inputValue);
 
-            if (!isIp && !isDomain) {
-                message.error('外联情报查询请输入有效的IP或域名');
+            if (!isIp && !isDomain && !isUrl) {
+                message.error('外联情报查询请输入有效的IP、域名或URL');
                 return;
             }
-            const inputType = isIp ? 'ip' : 'domain';
+
+            let inputType: string;
+            if (isIp) {
+                inputType = 'ip';
+            } else if (isUrl) {
+                inputType = 'url';
+            } else {
+                inputType = 'domain';
+            }
+
             navigate('detail', { state: { type, query: inputValue, inputType } });
         }
     };
