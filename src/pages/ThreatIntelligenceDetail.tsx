@@ -1697,7 +1697,7 @@ const ThreatIntelligenceDetail: React.FC = () => {
                                                 <div style={{ marginBottom: 14, display: 'flex', alignItems: 'center', gap: '8px' }}>
                                                     <span style={{
                                                         fontWeight: 600,
-                                                        color: '#52c41a',
+                                                        color: '#29E1AD',
                                                         fontSize: 15,
                                                         padding: '4px 8px',
                                                         background: 'linear-gradient(to right, #ffffff, #E2FAF2, #ffffff)',
@@ -1709,12 +1709,12 @@ const ThreatIntelligenceDetail: React.FC = () => {
                                                     {(queryType === 'attack' ? ['绿盟'] : ['360', '长亭']).map((vendor, index) => (
                                                         <Tag
                                                             key={index}
-                                                            color="green"
                                                             style={{
+                                                                color: '#29E1AD',
                                                                 borderRadius: '12px',
                                                                 fontSize: '12px',
                                                                 padding: '2px 8px',
-                                                                border: '1px solid #b7eb8f',
+                                                                border: '1px solid #29E1AD',
                                                                 backgroundColor: '#E2FAF2'
                                                             }}
                                                         >
