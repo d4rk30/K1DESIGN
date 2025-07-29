@@ -121,6 +121,11 @@ const ThreatIntelligenceDetail: React.FC = () => {
     const [virusFamilyModalVisible, setVirusFamilyModalVisible] = useState(false);
     const [currentVirusFamily, setCurrentVirusFamily] = useState<string>('');
     const [threatTypeModalVisible, setThreatTypeModalVisible] = useState(false);
+    const [iocInfoLoading, setIocInfoLoading] = useState(true);
+    const [activePieSegment, setActivePieSegment] = useState<string | null>(() => {
+        // 根据queryType设置初始值，避免闪烁
+        return queryType === 'attack' ? '威胁' : '安全';
+    });
     const [vendorLoadingStates, setVendorLoadingStates] = useState<Record<string, boolean>>({
         // 外联情报厂商
         '奇安信': true,
@@ -278,7 +283,14 @@ const ThreatIntelligenceDetail: React.FC = () => {
         }
     }, [activeTabKey]);
 
+    // 控制IOC信息的loading状态
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setIocInfoLoading(false);
+        }, 2500); // 2.5秒后显示内容
 
+        return () => clearTimeout(timer);
+    }, []);
 
     const handleTabChange = (key: string) => {
         setActiveTabKey(key);
@@ -1515,8 +1527,8 @@ const ThreatIntelligenceDetail: React.FC = () => {
                                                     title="复制"
                                                 />
                                                 <div style={{ display: 'flex', gap: 8 }}>
-                                                    <Tag>攻击情报</Tag>
-                                                    <Tag>IP情报</Tag>
+                                                    <Tag>{queryType === 'attack' ? '攻击情报' : '外联情报'}</Tag>
+                                                    <Tag>{inputType === 'ip' ? 'IP情报' : inputType === 'domain' ? '域名情报' : 'URL情报'}</Tag>
                                                     <Tag>黑名单</Tag>
                                                     <Tag>私有情报</Tag>
                                                 </div>
@@ -1546,7 +1558,7 @@ const ThreatIntelligenceDetail: React.FC = () => {
                                                                 {overviewFieldsLoading ? (
                                                                     <WaveLoading size={8} color="#1890ff" />
                                                                 ) : (
-                                                                    <span style={{ fontSize: 14, color: '#262626' }}>中国·北京</span>
+                                                                    <span style={{ fontSize: 14, color: '#262626' }}>中国 | 北京</span>
                                                                 )}
                                                             </div>
                                                         </Col>
@@ -1669,7 +1681,7 @@ const ThreatIntelligenceDetail: React.FC = () => {
                                 </Col>
 
                                 {/* 右侧多源风险评分 */}
-                                <Col span={5}>
+                                <Col span={4}>
                                     <div style={{
                                         borderLeft: '1px solid #f0f0f0',
                                         paddingLeft: '16px',
@@ -1688,12 +1700,12 @@ const ThreatIntelligenceDetail: React.FC = () => {
                                                         color: '#52c41a',
                                                         fontSize: 15,
                                                         padding: '4px 8px',
-                                                        background: 'linear-gradient(to right, #ffffff, #f6ffed, #ffffff)',
+                                                        background: 'linear-gradient(to right, #ffffff, #E2FAF2, #ffffff)',
                                                         borderRadius: '4px',
                                                         width: '100px',
                                                         display: 'inline-block',
                                                         textAlign: 'center'
-                                                    }}>白名单</span>
+                                                    }}>安全</span>
                                                     {(queryType === 'attack' ? ['绿盟'] : ['360', '长亭']).map((vendor, index) => (
                                                         <Tag
                                                             key={index}
@@ -1703,7 +1715,7 @@ const ThreatIntelligenceDetail: React.FC = () => {
                                                                 fontSize: '12px',
                                                                 padding: '2px 8px',
                                                                 border: '1px solid #b7eb8f',
-                                                                backgroundColor: '#f6ffed'
+                                                                backgroundColor: '#E2FAF2'
                                                             }}
                                                         >
                                                             {vendor}
@@ -1722,7 +1734,7 @@ const ThreatIntelligenceDetail: React.FC = () => {
                                                         width: '100px',
                                                         display: 'inline-block',
                                                         textAlign: 'center'
-                                                    }}>恶意</span>
+                                                    }}>威胁</span>
                                                     {(queryType === 'attack' ? ['公安一所'] : ['奇安信', '华为']).map((vendor, index) => (
                                                         <Tag
                                                             key={index}
@@ -1777,7 +1789,7 @@ const ThreatIntelligenceDetail: React.FC = () => {
                                     {/* 饼图 */}
                                     <div style={{ marginLeft: 24 }}>
                                         <ReactECharts
-                                            style={{ width: '160px', height: 160 }}
+                                            style={{ width: '160px', height: 160, cursor: 'pointer' }}
                                             option={{
                                                 series: [
                                                     {
@@ -1794,27 +1806,27 @@ const ThreatIntelligenceDetail: React.FC = () => {
                                                         data: [
                                                             {
                                                                 value: queryType === 'attack' ? 1 : 2,
-                                                                name: '白名单',
+                                                                name: '安全',
                                                                 itemStyle: {
-                                                                    color: {
+                                                                    color: activePieSegment === '安全' ? {
                                                                         type: 'linear',
                                                                         x: 0,
                                                                         y: 0,
                                                                         x2: 0,
                                                                         y2: 1,
                                                                         colorStops: [
-                                                                            { offset: 0, color: '#52c41a' },
-                                                                            { offset: 0.5, color: '#52c41a' },
-                                                                            { offset: 1, color: 'rgba(82, 196, 26, 0.3)' }
+                                                                            { offset: 0, color: '#34E9C0' },
+                                                                            { offset: 0.5, color: '#34E9C0' },
+                                                                            { offset: 1, color: 'rgba(52, 233, 192, 0.3)' }
                                                                         ]
-                                                                    }
+                                                                    } : '#f0f0f0'
                                                                 }
                                                             },
                                                             {
                                                                 value: queryType === 'attack' ? 1 : 2,
-                                                                name: '恶意威胁',
+                                                                name: '威胁',
                                                                 itemStyle: {
-                                                                    color: {
+                                                                    color: activePieSegment === '威胁' ? {
                                                                         type: 'linear',
                                                                         x: 0,
                                                                         y: 0,
@@ -1825,14 +1837,14 @@ const ThreatIntelligenceDetail: React.FC = () => {
                                                                             { offset: 0.5, color: '#f5222d' },
                                                                             { offset: 1, color: 'rgba(245, 34, 45, 0.3)' }
                                                                         ]
-                                                                    }
+                                                                    } : '#f0f0f0'
                                                                 }
                                                             },
                                                             {
                                                                 value: queryType === 'attack' ? 1 : 2,
                                                                 name: '未知',
                                                                 itemStyle: {
-                                                                    color: {
+                                                                    color: activePieSegment === '未知' ? {
                                                                         type: 'linear',
                                                                         x: 0,
                                                                         y: 0,
@@ -1843,7 +1855,7 @@ const ThreatIntelligenceDetail: React.FC = () => {
                                                                             { offset: 0.5, color: '#faad14' },
                                                                             { offset: 1, color: 'rgba(250, 173, 20, 0.3)' }
                                                                         ]
-                                                                    }
+                                                                    } : '#f0f0f0'
                                                                 }
                                                             }
                                                         ],
@@ -1851,26 +1863,16 @@ const ThreatIntelligenceDetail: React.FC = () => {
                                                 ],
                                                 graphic: [
                                                     {
-                                                        type: 'text',
+                                                        type: 'image',
                                                         left: 'center',
-                                                        top: '30%',
+                                                        top: 'center',
                                                         style: {
-                                                            text: queryType === 'attack' ? '1' : '2',
-                                                            fontSize: 48,
-                                                            fontWeight: 'bold',
-                                                            fill: '#333333',
-                                                            textAlign: 'center'
-                                                        }
-                                                    },
-                                                    {
-                                                        type: 'text',
-                                                        left: 'center',
-                                                        top: '60%',
-                                                        style: {
-                                                            text: queryType === 'attack' ? '/3' : '/6',
-                                                            fontSize: 16,
-                                                            fill: '#999',
-                                                            textAlign: 'center'
+                                                            image: activePieSegment === '安全' ? '/images/safe_.png' :
+                                                                activePieSegment === '威胁' ? '/images/attack_.png' :
+                                                                    activePieSegment === '未知' ? '/images/noknow_.png' :
+                                                                        '/images/attack_.png',
+                                                            width: 90,
+                                                            height: 90
                                                         }
                                                     }
                                                 ],
@@ -1878,24 +1880,24 @@ const ThreatIntelligenceDetail: React.FC = () => {
                                                     show: true,
                                                     formatter: function (params: any) {
                                                         const vendors: { [key: string]: string[] } = {
-                                                            '白名单': queryType === 'attack' ? ['绿盟'] : ['360', '长亭'],
-                                                            '恶意威胁': queryType === 'attack' ? ['公安一所'] : ['奇安信', '华为'],
+                                                            '安全': queryType === 'attack' ? ['绿盟'] : ['360', '长亭'],
+                                                            '威胁': queryType === 'attack' ? ['公安一所'] : ['奇安信', '华为'],
                                                             '未知': queryType === 'attack' ? ['知道创宇'] : ['腾讯', '阿里云']
                                                         };
                                                         const vendorList = vendors[params.name] || [];
                                                         const tagColors: { [key: string]: string } = {
-                                                            '白名单': '#52c41a',
-                                                            '恶意威胁': '#f5222d',
+                                                            '安全': '#34E9C0',
+                                                            '威胁': '#f5222d',
                                                             '未知': '#faad14'
                                                         };
                                                         const tagBgColors: { [key: string]: string } = {
-                                                            '白名单': '#f6ffed',
-                                                            '恶意威胁': '#fff2f0',
+                                                            '安全': '#f6ffed',
+                                                            '威胁': '#fff2f0',
                                                             '未知': '#fffbe6'
                                                         };
                                                         const tagBorderColors: { [key: string]: string } = {
-                                                            '白名单': '#b7eb8f',
-                                                            '恶意威胁': '#ffccc7',
+                                                            '安全': '#b7eb8f',
+                                                            '威胁': '#ffccc7',
                                                             '未知': '#ffe58f'
                                                         };
                                                         const color = tagColors[params.name] || '#52c41a';
@@ -1917,6 +1919,17 @@ const ThreatIntelligenceDetail: React.FC = () => {
                                                     }
                                                 },
                                                 legend: { show: false },
+                                            }}
+                                            onEvents={{
+                                                click: (params: any) => {
+                                                    if (activePieSegment === params.name) {
+                                                        // 如果点击的是当前激活的段，则取消激活
+                                                        setActivePieSegment(null);
+                                                    } else {
+                                                        // 否则激活点击的段
+                                                        setActivePieSegment(params.name);
+                                                    }
+                                                }
                                             }}
                                         />
                                     </div>
@@ -2070,46 +2083,57 @@ const ThreatIntelligenceDetail: React.FC = () => {
 
                 <Col span={24}>
                     <Card title="关联IOC信息">
-                        <div style={{ display: 'flex', gap: 16 }}>
-                            <div style={{ flex: 1 }}>
-                                <Table
-                                    pagination={false}
-                                    dataSource={[
-                                        { key: '1', port: '80', uri: '-', type: '恶意IP', firstSeen: '2024-12-01 10:00:00', vendor: '奇安信' },
-                                        { key: '2', port: '443', uri: '-', type: '恶意域名', firstSeen: '2024-12-02 14:30:00', vendor: '腾讯' },
-                                        { key: '3', port: '80', uri: '/payload.exe', type: '恶意URL', firstSeen: '2024-12-03 09:15:00', vendor: '360' },
-                                        { key: '4', port: '10023', uri: '-', type: '恶意文件MD5', firstSeen: '2024-12-04 16:45:00', vendor: '华为' },
-                                        { key: '5', port: '554', uri: '-', type: '恶意文件SHA256', firstSeen: '2024-12-05 11:20:00', vendor: '阿里云' }
-                                    ]}
-                                    columns={[
-                                        { title: '端口号', dataIndex: 'port', key: 'port', width: 80 },
-                                        { title: 'URI', dataIndex: 'uri', key: 'uri', width: 120 },
-                                        { title: '威胁情报类型', dataIndex: 'type', key: 'type', width: 120 },
-                                        { title: '首次发现时间', dataIndex: 'firstSeen', key: 'firstSeen', width: 150 },
-                                        { title: '厂商', dataIndex: 'vendor', key: 'vendor', width: 100 }
-                                    ]}
-                                    style={{
-                                        fontSize: 12,
-                                        border: '1px solid #F0F0F0',
-                                        borderRadius: '6px'
-                                    }}
-                                />
+                        {iocInfoLoading ? (
+                            <div style={{
+                                minHeight: 300,
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center'
+                            }}>
+                                <WaveLoading size={8} color="#1890ff" />
                             </div>
-                            <div style={{ width: 300 }}>
-                                <Card type="inner" title="证据链" style={{ height: '100%' }}>
-                                    <Empty
-                                        description="暂无信息"
+                        ) : (
+                            <div style={{ display: 'flex', gap: 16 }}>
+                                <div style={{ flex: 1 }}>
+                                    <Table
+                                        pagination={false}
+                                        dataSource={[
+                                            { key: '1', port: '80', uri: '-', type: '恶意IP', firstSeen: '2024-12-01 10:00:00', vendor: '奇安信' },
+                                            { key: '2', port: '443', uri: '-', type: '恶意域名', firstSeen: '2024-12-02 14:30:00', vendor: '腾讯' },
+                                            { key: '3', port: '80', uri: '/payload.exe', type: '恶意URL', firstSeen: '2024-12-03 09:15:00', vendor: '360' },
+                                            { key: '4', port: '10023', uri: '-', type: '恶意文件MD5', firstSeen: '2024-12-04 16:45:00', vendor: '华为' },
+                                            { key: '5', port: '554', uri: '-', type: '恶意文件SHA256', firstSeen: '2024-12-05 11:20:00', vendor: '阿里云' }
+                                        ]}
+                                        columns={[
+                                            { title: '端口号', dataIndex: 'port', key: 'port', width: 80 },
+                                            { title: 'URI', dataIndex: 'uri', key: 'uri', width: 120 },
+                                            { title: '威胁情报类型', dataIndex: 'type', key: 'type', width: 120 },
+                                            { title: '首次发现时间', dataIndex: 'firstSeen', key: 'firstSeen', width: 150 },
+                                            { title: '厂商', dataIndex: 'vendor', key: 'vendor', width: 100 }
+                                        ]}
                                         style={{
-                                            height: '100%',
-                                            display: 'flex',
-                                            flexDirection: 'column',
-                                            justifyContent: 'center',
-                                            minHeight: 200
+                                            fontSize: 12,
+                                            border: '1px solid #F0F0F0',
+                                            borderRadius: '6px'
                                         }}
                                     />
-                                </Card>
+                                </div>
+                                <div style={{ width: 300 }}>
+                                    <Card type="inner" title="证据链" style={{ height: '100%' }}>
+                                        <Empty
+                                            description="暂无信息"
+                                            style={{
+                                                height: '100%',
+                                                display: 'flex',
+                                                flexDirection: 'column',
+                                                justifyContent: 'center',
+                                                minHeight: 200
+                                            }}
+                                        />
+                                    </Card>
+                                </div>
                             </div>
-                        </div>
+                        )}
                     </Card>
                 </Col>
 
