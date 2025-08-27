@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useMemo } from 'react';
 import { Card, Row, Col, Table, Tag, Space, Button, Input, message, Modal, Form, Upload, Empty } from 'antd';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { SearchOutlined, ReloadOutlined, UpOutlined, DownOutlined, CopyOutlined, GlobalOutlined, LinkOutlined, InboxOutlined, LeftOutlined, RightOutlined, StarFilled, StarOutlined } from '@ant-design/icons';
@@ -8,6 +8,7 @@ import LabelInput from '@/components/LabelInput';
 import LabelTextArea from '@/components/LabelTextArea';
 import type { UploadFile, UploadProps } from 'antd';
 import ReactECharts from 'echarts-for-react';
+import { RiFileCopyLine, RiFullscreenLine } from "@remixicon/react";
 
 // 置信度星星组件
 const ConfidenceStars: React.FC<{ level: number }> = ({ level }) => {
@@ -123,9 +124,13 @@ const ThreatIntelligenceDetail: React.FC = () => {
     const [threatTypeModalVisible, setThreatTypeModalVisible] = useState(false);
     const [iocInfoLoading, setIocInfoLoading] = useState(true);
     const [activePieSegment, setActivePieSegment] = useState<string | null>(() => {
-        // 根据queryType设置初始值，避免闪烁
+        // 直接在初始化时设置默认值，避免后续状态变化导致的闪烁
         return queryType === 'attack' ? '威胁' : '安全';
     });
+    const [iocCurrentPage, setIocCurrentPage] = useState(1);
+    const [iocPageSize, setIocPageSize] = useState(10);
+    const [selectedIocKey, setSelectedIocKey] = useState<string>('1');
+    const [evidenceChainModalVisible, setEvidenceChainModalVisible] = useState(false);
     const [vendorLoadingStates, setVendorLoadingStates] = useState<Record<string, boolean>>({
         // 外联情报厂商
         '奇安信': true,
@@ -162,6 +167,59 @@ const ThreatIntelligenceDetail: React.FC = () => {
         { key: 'reverseDomain', tab: '反查域名' }
     ];
 
+    // 证据链数据
+    const evidenceChainData = {
+        '1': {
+            ParentProcess: 'C:\\Windows\\Sysnative\\cmd.exe',
+            CurrentProcess: 'CertUtil.exe',
+            Related: 'http://121.37.189.177:7777/3389.bat',
+            IP: '121.37.189.177',
+            TechniqueRefer: 'https://attack.mitre.org/software/S0160/'
+        },
+        '2': {
+            ParentProcess: 'C:\\Windows\\System32\\svchost.exe',
+            CurrentProcess: 'powershell.exe',
+            Related: 'http://malware.example.com/payload.ps1',
+            IP: '192.168.1.100',
+            TechniqueRefer: 'https://attack.mitre.org/techniques/T1059/001/'
+        },
+        '3': null, // 空状态
+        '4': {
+            ParentProcess: 'C:\\Windows\\System32\\services.exe',
+            CurrentProcess: 'regsvr32.exe',
+            Related: 'http://malware.org/loader.sct',
+            IP: '172.16.0.25',
+            TechniqueRefer: 'https://attack.mitre.org/techniques/T1117/'
+        }
+    };
+
+    const handleIocRowClick = (record: any) => {
+        setSelectedIocKey(record.key);
+    };
+
+    const handleCopyEvidenceChain = () => {
+        const currentEvidence = evidenceChainData[selectedIocKey as keyof typeof evidenceChainData];
+        if (currentEvidence) {
+            const evidenceText = `ParentProcess: ${currentEvidence.ParentProcess}
+CurrentProcess: ${currentEvidence.CurrentProcess}
+Related: ${currentEvidence.Related}
+IP: ${currentEvidence.IP}
+TechniqueRefer: ${currentEvidence.TechniqueRefer}`;
+
+            navigator.clipboard.writeText(evidenceText).then(() => {
+                message.success('已复制到剪贴板');
+            }).catch(() => {
+                message.error('复制失败');
+            });
+        } else {
+            message.warning('当前没有可复制的信息');
+        }
+    };
+
+    const handleShowEvidenceChainModal = () => {
+        setEvidenceChainModalVisible(true);
+    };
+
     const getTabs = () => {
         if (queryType === 'attack') {
             return attackTabs;
@@ -187,6 +245,8 @@ const ThreatIntelligenceDetail: React.FC = () => {
             setActiveTabKey(tabs[0].key);
         }
     }, [queryType, inputType]);
+
+    // 移除了设置饼图初始状态的 useEffect，因为已经在 useState 初始化时设置
 
 
 
@@ -429,7 +489,7 @@ const ThreatIntelligenceDetail: React.FC = () => {
                     }
                 ]}
                 pagination={{
-                    total: 5,
+                    total: 4,
                     pageSize: 10,
                     showSizeChanger: true,
                     showQuickJumper: true,
@@ -1236,6 +1296,130 @@ const ThreatIntelligenceDetail: React.FC = () => {
         setVirusFamilyModalVisible(true);
     };
 
+    // 创建稳定的饼图配置基础对象
+    const baseChartConfig = useMemo(() => {
+        const activeColors = {
+            '安全': {
+                type: 'linear',
+                x: 0, y: 0, x2: 0, y2: 1,
+                colorStops: [
+                    { offset: 0, color: '#34E9C0' },
+                    { offset: 0.5, color: '#34E9C0' },
+                    { offset: 1, color: 'rgba(52, 233, 192, 0.3)' }
+                ]
+            },
+            '威胁': {
+                type: 'linear',
+                x: 0, y: 0, x2: 0, y2: 1,
+                colorStops: [
+                    { offset: 0, color: '#f5222d' },
+                    { offset: 0.5, color: '#f5222d' },
+                    { offset: 1, color: 'rgba(245, 34, 45, 0.3)' }
+                ]
+            },
+            '未知': {
+                type: 'linear',
+                x: 0, y: 0, x2: 0, y2: 1,
+                colorStops: [
+                    { offset: 0, color: '#faad14' },
+                    { offset: 0.5, color: '#faad14' },
+                    { offset: 1, color: 'rgba(250, 173, 20, 0.3)' }
+                ]
+            }
+        };
+
+        const images = {
+            '安全': '/images/safe_.png',
+            '威胁': '/images/attack_.png',
+            '未知': '/images/noknow_.png'
+        };
+
+        return { activeColors, images };
+    }, []);
+
+    // 使用 useMemo 缓存饼图配置，减少重新渲染
+    const pieChartOption = useMemo(() => ({
+        series: [{
+            type: 'pie',
+            radius: ['70%', '90%'],
+            avoidLabelOverlap: false,
+            label: { show: false },
+            labelLine: { show: false },
+            itemStyle: {
+                borderRadius: 12,
+                borderColor: '#fff',
+                borderWidth: 2,
+            },
+            data: [
+                {
+                    value: queryType === 'attack' ? 1 : 2,
+                    name: '安全',
+                    itemStyle: {
+                        color: activePieSegment === '安全' ? baseChartConfig.activeColors['安全'] : '#f0f0f0'
+                    }
+                },
+                {
+                    value: queryType === 'attack' ? 1 : 2,
+                    name: '威胁',
+                    itemStyle: {
+                        color: activePieSegment === '威胁' ? baseChartConfig.activeColors['威胁'] : '#f0f0f0'
+                    }
+                },
+                {
+                    value: queryType === 'attack' ? 1 : 2,
+                    name: '未知',
+                    itemStyle: {
+                        color: activePieSegment === '未知' ? baseChartConfig.activeColors['未知'] : '#f0f0f0'
+                    }
+                }
+            ],
+        }],
+        graphic: [{
+            type: 'image',
+            left: 'center',
+            top: 'center',
+            style: {
+                image: (activePieSegment && baseChartConfig.images[activePieSegment as keyof typeof baseChartConfig.images]) || baseChartConfig.images['威胁'],
+                width: 90,
+                height: 90
+            }
+        }],
+        tooltip: {
+            show: true,
+            formatter: function (params: any) {
+                const vendors: { [key: string]: string[] } = {
+                    '安全': queryType === 'attack' ? ['绿盟'] : ['360', '长亭'],
+                    '威胁': queryType === 'attack' ? ['公安一所'] : ['奇安信', '华为'],
+                    '未知': queryType === 'attack' ? ['知道创宇'] : ['腾讯', '阿里云']
+                };
+                const vendorList = vendors[params.name] || [];
+                const tagColors: { [key: string]: string } = {
+                    '安全': '#29E1AD', '威胁': '#f5222d', '未知': '#faad14'
+                };
+                const tagBgColors: { [key: string]: string } = {
+                    '安全': '#E2FAF2', '威胁': '#fff2f0', '未知': '#fffbe6'
+                };
+                const tagBorderColors: { [key: string]: string } = {
+                    '安全': '#29E1AD', '威胁': '#ffccc7', '未知': '#ffe58f'
+                };
+                const color = tagColors[params.name] || '#52c41a';
+                const bgColor = tagBgColors[params.name] || '#f6ffed';
+                const borderColor = tagBorderColors[params.name] || '#b7eb8f';
+
+                const vendorTags = vendorList.map(vendor =>
+                    `<span style="display: inline-block; padding: 2px 8px; background-color: ${bgColor}; color: ${color}; border: 1px solid ${borderColor}; border-radius: 12px; font-size: 11px; margin-right: 4px;">${vendor}</span>`
+                ).join('');
+
+                return `${vendorTags} 判断为 ${params.name}`;
+            },
+            backgroundColor: 'rgba(255, 255, 255, 0.95)',
+            borderColor: '#d9d9d9',
+            borderWidth: 1,
+            textStyle: { color: '#333', fontSize: 12 }
+        },
+        legend: { show: false },
+    }), [queryType, activePieSegment, baseChartConfig]);
+
     // 根据查询类型获取厂商列表
     const getVendorsByQueryType = () => {
         if (queryType === 'attack') {
@@ -1320,7 +1504,7 @@ const ThreatIntelligenceDetail: React.FC = () => {
                     logo: '/images/华为.png',
                     threatLevel: 'green',
                     confidenceLevel: 1,
-                    aptOrg: '--',
+                    aptOrg: 'APT28',
                     virusFamily: '--',
                     firstSeen: '2024-12-04 11:20:00',
                     lastSeen: '2024-12-14 16:10:00',
@@ -1455,7 +1639,16 @@ const ThreatIntelligenceDetail: React.FC = () => {
                 </Col>
                 {/* 威胁情报概览卡片 */}
                 <Col span={24}>
-                    <Card title="威胁情报概览">
+                    <Card title={
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <span>威胁情报概览</span>
+                            <Button
+                                onClick={() => setFeedbackVisible(true)}
+                            >
+                                误报反馈
+                            </Button>
+                        </div>
+                    }>
                         <div style={{ position: 'relative' }}>
                             <Row gutter={24}>
                                 {/* 左侧IP信息 */}
@@ -1668,7 +1861,7 @@ const ThreatIntelligenceDetail: React.FC = () => {
                                                                 {overviewFieldsLoading ? (
                                                                     <WaveLoading size={8} color="#1890ff" />
                                                                 ) : (
-                                                                    <span style={{ fontSize: 14, color: '#262626' }}>a1b2c3d4...</span>
+                                                                    <span style={{ fontSize: 14, color: '#262626' }}>A1B2C3D4C5D6E7F8G9H0I1J2K3L4M5N6O7P8Q9R0S1T2U3V4W5X6Y7Z8</span>
                                                                 )}
                                                             </div>
                                                         </Col>
@@ -1789,137 +1982,11 @@ const ThreatIntelligenceDetail: React.FC = () => {
                                     {/* 饼图 */}
                                     <div style={{ marginLeft: 24 }}>
                                         <ReactECharts
+                                            key={`pie-chart-${queryType}`}
                                             style={{ width: '160px', height: 160, cursor: 'pointer' }}
-                                            option={{
-                                                series: [
-                                                    {
-                                                        type: 'pie',
-                                                        radius: ['70%', '90%'],
-                                                        avoidLabelOverlap: false,
-                                                        label: { show: false },
-                                                        labelLine: { show: false },
-                                                        itemStyle: {
-                                                            borderRadius: 12,
-                                                            borderColor: '#fff',
-                                                            borderWidth: 2,
-                                                        },
-                                                        data: [
-                                                            {
-                                                                value: queryType === 'attack' ? 1 : 2,
-                                                                name: '安全',
-                                                                itemStyle: {
-                                                                    color: activePieSegment === '安全' ? {
-                                                                        type: 'linear',
-                                                                        x: 0,
-                                                                        y: 0,
-                                                                        x2: 0,
-                                                                        y2: 1,
-                                                                        colorStops: [
-                                                                            { offset: 0, color: '#34E9C0' },
-                                                                            { offset: 0.5, color: '#34E9C0' },
-                                                                            { offset: 1, color: 'rgba(52, 233, 192, 0.3)' }
-                                                                        ]
-                                                                    } : '#f0f0f0'
-                                                                }
-                                                            },
-                                                            {
-                                                                value: queryType === 'attack' ? 1 : 2,
-                                                                name: '威胁',
-                                                                itemStyle: {
-                                                                    color: activePieSegment === '威胁' ? {
-                                                                        type: 'linear',
-                                                                        x: 0,
-                                                                        y: 0,
-                                                                        x2: 0,
-                                                                        y2: 1,
-                                                                        colorStops: [
-                                                                            { offset: 0, color: '#f5222d' },
-                                                                            { offset: 0.5, color: '#f5222d' },
-                                                                            { offset: 1, color: 'rgba(245, 34, 45, 0.3)' }
-                                                                        ]
-                                                                    } : '#f0f0f0'
-                                                                }
-                                                            },
-                                                            {
-                                                                value: queryType === 'attack' ? 1 : 2,
-                                                                name: '未知',
-                                                                itemStyle: {
-                                                                    color: activePieSegment === '未知' ? {
-                                                                        type: 'linear',
-                                                                        x: 0,
-                                                                        y: 0,
-                                                                        x2: 0,
-                                                                        y2: 1,
-                                                                        colorStops: [
-                                                                            { offset: 0, color: '#faad14' },
-                                                                            { offset: 0.5, color: '#faad14' },
-                                                                            { offset: 1, color: 'rgba(250, 173, 20, 0.3)' }
-                                                                        ]
-                                                                    } : '#f0f0f0'
-                                                                }
-                                                            }
-                                                        ],
-                                                    },
-                                                ],
-                                                graphic: [
-                                                    {
-                                                        type: 'image',
-                                                        left: 'center',
-                                                        top: 'center',
-                                                        style: {
-                                                            image: activePieSegment === '安全' ? '/images/safe_.png' :
-                                                                activePieSegment === '威胁' ? '/images/attack_.png' :
-                                                                    activePieSegment === '未知' ? '/images/noknow_.png' :
-                                                                        '/images/attack_.png',
-                                                            width: 90,
-                                                            height: 90
-                                                        }
-                                                    }
-                                                ],
-                                                tooltip: {
-                                                    show: true,
-                                                    formatter: function (params: any) {
-                                                        const vendors: { [key: string]: string[] } = {
-                                                            '安全': queryType === 'attack' ? ['绿盟'] : ['360', '长亭'],
-                                                            '威胁': queryType === 'attack' ? ['公安一所'] : ['奇安信', '华为'],
-                                                            '未知': queryType === 'attack' ? ['知道创宇'] : ['腾讯', '阿里云']
-                                                        };
-                                                        const vendorList = vendors[params.name] || [];
-                                                        const tagColors: { [key: string]: string } = {
-                                                            '安全': '#34E9C0',
-                                                            '威胁': '#f5222d',
-                                                            '未知': '#faad14'
-                                                        };
-                                                        const tagBgColors: { [key: string]: string } = {
-                                                            '安全': '#f6ffed',
-                                                            '威胁': '#fff2f0',
-                                                            '未知': '#fffbe6'
-                                                        };
-                                                        const tagBorderColors: { [key: string]: string } = {
-                                                            '安全': '#b7eb8f',
-                                                            '威胁': '#ffccc7',
-                                                            '未知': '#ffe58f'
-                                                        };
-                                                        const color = tagColors[params.name] || '#52c41a';
-                                                        const bgColor = tagBgColors[params.name] || '#f6ffed';
-                                                        const borderColor = tagBorderColors[params.name] || '#b7eb8f';
-
-                                                        const vendorTags = vendorList.map(vendor =>
-                                                            `<span style="display: inline-block; padding: 2px 8px; background-color: ${bgColor}; color: ${color}; border: 1px solid ${borderColor}; border-radius: 12px; font-size: 11px; margin-right: 4px;">${vendor}</span>`
-                                                        ).join('');
-
-                                                        return `${vendorTags} 判断为 ${params.name}`;
-                                                    },
-                                                    backgroundColor: 'rgba(255, 255, 255, 0.95)',
-                                                    borderColor: '#d9d9d9',
-                                                    borderWidth: 1,
-                                                    textStyle: {
-                                                        color: '#333',
-                                                        fontSize: 12
-                                                    }
-                                                },
-                                                legend: { show: false },
-                                            }}
+                                            option={pieChartOption}
+                                            notMerge={true}
+                                            lazyUpdate={true}
                                             onEvents={{
                                                 click: (params: any) => {
                                                     if (activePieSegment === params.name) {
@@ -1944,15 +2011,6 @@ const ThreatIntelligenceDetail: React.FC = () => {
                     <Card
                         title="多源威胁情报"
                         style={{ borderRadius: 8 }}
-                        extra={
-                            <Button
-                                type="link"
-                                onClick={() => setFeedbackVisible(true)}
-                                style={{ padding: 0, height: 'auto' }}
-                            >
-                                误报反馈
-                            </Button>
-                        }
                     >
                         <div style={{ position: 'relative', overflow: getVendorsByQueryType().length > 5 ? 'hidden' : 'visible', paddingRight: getVendorsByQueryType().length > 5 ? '3px' : '0' }}>
                             <div
@@ -1964,7 +2022,7 @@ const ThreatIntelligenceDetail: React.FC = () => {
                                     transform: getVendorsByQueryType().length > 5 ? `translateX(${currentSlide * -20}%)` : 'none'
                                 }}
                             >
-                                {getVendorsByQueryType().map((vendor, index) => (
+                                {getVendorsByQueryType().map((vendor) => (
                                     <div key={vendor.name} style={{ flex: `1 0 calc(${queryType === 'attack' ? '33.33%' : '20%'} - 12.8px)`, minWidth: 0 }}>
                                         <VendorCardWithLoading vendor={vendor.name} isLoading={vendorLoadingStates[vendor.name]}>
                                             <Card type="inner" title={
@@ -2096,13 +2154,25 @@ const ThreatIntelligenceDetail: React.FC = () => {
                             <div style={{ display: 'flex', gap: 16 }}>
                                 <div style={{ flex: 1 }}>
                                     <Table
-                                        pagination={false}
+                                        pagination={{
+                                            current: iocCurrentPage,
+                                            pageSize: iocPageSize,
+                                            total: 4,
+                                            showSizeChanger: true,
+                                            showQuickJumper: true,
+                                            showTotal: (total, range) => `第 ${range[0]}-${range[1]} 条，共 ${total} 条`,
+                                            pageSizeOptions: ['10', '20', '50'],
+                                            onChange: (page, pageSize) => {
+                                                setIocCurrentPage(page);
+                                                setIocPageSize(pageSize);
+                                            },
+                                            style: { marginRight: '16px' }
+                                        }}
                                         dataSource={[
                                             { key: '1', port: '80', uri: '-', type: '恶意IP', firstSeen: '2024-12-01 10:00:00', vendor: '奇安信' },
                                             { key: '2', port: '443', uri: '-', type: '恶意域名', firstSeen: '2024-12-02 14:30:00', vendor: '腾讯' },
                                             { key: '3', port: '80', uri: '/payload.exe', type: '恶意URL', firstSeen: '2024-12-03 09:15:00', vendor: '360' },
                                             { key: '4', port: '10023', uri: '-', type: '恶意文件MD5', firstSeen: '2024-12-04 16:45:00', vendor: '华为' },
-                                            { key: '5', port: '554', uri: '-', type: '恶意文件SHA256', firstSeen: '2024-12-05 11:20:00', vendor: '阿里云' }
                                         ]}
                                         columns={[
                                             { title: '端口号', dataIndex: 'port', key: 'port', width: 80 },
@@ -2111,6 +2181,14 @@ const ThreatIntelligenceDetail: React.FC = () => {
                                             { title: '首次发现时间', dataIndex: 'firstSeen', key: 'firstSeen', width: 150 },
                                             { title: '厂商', dataIndex: 'vendor', key: 'vendor', width: 100 }
                                         ]}
+                                        onRow={(record) => ({
+                                            onClick: () => handleIocRowClick(record),
+                                            style: {
+                                                cursor: 'pointer',
+                                                backgroundColor: record.key === selectedIocKey ? '#f0f9ff' : 'transparent',
+                                                transition: 'background-color 0.2s'
+                                            }
+                                        })}
                                         style={{
                                             fontSize: 12,
                                             border: '1px solid #F0F0F0',
@@ -2118,18 +2196,76 @@ const ThreatIntelligenceDetail: React.FC = () => {
                                         }}
                                     />
                                 </div>
-                                <div style={{ width: 300 }}>
-                                    <Card type="inner" title="证据链" style={{ height: '100%' }}>
-                                        <Empty
-                                            description="暂无信息"
-                                            style={{
+                                <div style={{ width: 400 }}>
+                                    <Card type="inner" title={
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                            <span>证据链</span>
+                                            <div style={{ display: 'flex', gap: '8px' }}>
+                                                <div
+                                                    style={{ cursor: 'pointer' }}
+                                                    onClick={handleShowEvidenceChainModal}
+                                                    title="查看证据链详情"
+                                                >
+                                                    <RiFullscreenLine
+                                                        size={18} // 设置大小
+                                                        color="#ccc" // 设置颜色
+                                                    />
+                                                </div>
+                                                <div
+                                                    style={{ cursor: 'pointer' }}
+                                                    onClick={handleCopyEvidenceChain}
+                                                    title="复制证据链信息"
+                                                >
+                                                    <RiFileCopyLine
+                                                        size={18} // 设置大小
+                                                        color="#ccc" // 设置颜色
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    } style={{ height: '100%' }}>
+                                        {evidenceChainData[selectedIocKey as keyof typeof evidenceChainData] ? (
+                                            <div style={{
                                                 height: '100%',
-                                                display: 'flex',
-                                                flexDirection: 'column',
-                                                justifyContent: 'center',
-                                                minHeight: 200
-                                            }}
-                                        />
+                                                fontSize: '12px',
+                                                lineHeight: '1.6',
+                                                color: '#333',
+                                                wordWrap: 'break-word',
+                                                wordBreak: 'break-all',
+                                                overflowWrap: 'break-word'
+                                            }}>
+                                                <div style={{ marginBottom: '12px', wordBreak: 'break-all' }}>
+                                                    <span>ParentProcess:</span>
+                                                    <span>{evidenceChainData[selectedIocKey as keyof typeof evidenceChainData]?.ParentProcess}</span>
+                                                </div>
+                                                <div style={{ marginBottom: '12px', wordBreak: 'break-all' }}>
+                                                    <span>CurrentProcess:</span>
+                                                    <span>{evidenceChainData[selectedIocKey as keyof typeof evidenceChainData]?.CurrentProcess}</span>
+                                                </div>
+                                                <div style={{ marginBottom: '12px', wordBreak: 'break-all' }}>
+                                                    <span>Related:</span>
+                                                    <span>{evidenceChainData[selectedIocKey as keyof typeof evidenceChainData]?.Related}</span>
+                                                </div>
+                                                <div style={{ marginBottom: '12px', wordBreak: 'break-all' }}>
+                                                    <span>{evidenceChainData[selectedIocKey as keyof typeof evidenceChainData]?.IP}</span>
+                                                </div>
+                                                <div style={{ marginBottom: '12px', wordBreak: 'break-all' }}>
+                                                    <span>TechniqueRefer:</span>
+                                                    <span>{evidenceChainData[selectedIocKey as keyof typeof evidenceChainData]?.TechniqueRefer}</span>
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <Empty
+                                                description="暂无信息"
+                                                style={{
+                                                    height: '100%',
+                                                    display: 'flex',
+                                                    flexDirection: 'column',
+                                                    justifyContent: 'center',
+                                                    minHeight: 240
+                                                }}
+                                            />
+                                        )}
                                     </Card>
                                 </div>
                             </div>
@@ -2170,6 +2306,52 @@ const ThreatIntelligenceDetail: React.FC = () => {
                         borderRadius: '6px'
                     }}
                 />
+            </Modal>
+
+            <Modal
+                title="证据链详情"
+                open={evidenceChainModalVisible}
+                onCancel={() => setEvidenceChainModalVisible(false)}
+                footer={null}
+                width={600}
+            >
+                {evidenceChainData[selectedIocKey as keyof typeof evidenceChainData] ? (
+                    <div style={{
+                        fontSize: '14px',
+                        lineHeight: '1.8',
+                        color: '#333',
+                        wordWrap: 'break-word',
+                        wordBreak: 'break-all',
+                        overflowWrap: 'break-word'
+                    }}>
+                        <div style={{ marginBottom: '16px', wordBreak: 'break-all' }}>
+                            <span>ParentProcess:</span>
+                            <span>{evidenceChainData[selectedIocKey as keyof typeof evidenceChainData]?.ParentProcess}</span>
+                        </div>
+                        <div style={{ marginBottom: '16px', wordBreak: 'break-all' }}>
+                            <span>CurrentProcess:</span>
+                            <span>{evidenceChainData[selectedIocKey as keyof typeof evidenceChainData]?.CurrentProcess}</span>
+                        </div>
+                        <div style={{ marginBottom: '16px', wordBreak: 'break-all' }}>
+                            <span>Related:</span>
+                            <span>{evidenceChainData[selectedIocKey as keyof typeof evidenceChainData]?.Related}</span>
+                        </div>
+                        <div style={{ marginBottom: '16px', wordBreak: 'break-all' }}>
+                            <span>{evidenceChainData[selectedIocKey as keyof typeof evidenceChainData]?.IP}</span>
+                        </div>
+                        <div style={{ marginBottom: '16px', wordBreak: 'break-all' }}>
+                            <span>TechniqueRefer:</span>
+                            <span>{evidenceChainData[selectedIocKey as keyof typeof evidenceChainData]?.TechniqueRefer}</span>
+                        </div>
+                    </div>
+                ) : (
+                    <Empty
+                        description="暂无证据链信息"
+                        style={{
+                            padding: '40px 0'
+                        }}
+                    />
+                )}
             </Modal>
 
             <Modal

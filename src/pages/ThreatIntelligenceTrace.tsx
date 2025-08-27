@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Input, Button, Space, message } from 'antd';
+import { Input, Button, Space, message, Tag, Row, Col } from 'antd';
 import { useNavigate } from 'react-router-dom';
 
 const ThreatIntelligenceTrace: React.FC = () => {
@@ -43,6 +43,10 @@ const ThreatIntelligenceTrace: React.FC = () => {
 
             navigate('detail', { state: { type, query: inputValue, inputType } });
         }
+    };
+
+    const handleExampleClick = (example: string) => {
+        setInputValue(example);
     };
 
     return (
@@ -134,6 +138,134 @@ const ThreatIntelligenceTrace: React.FC = () => {
                             </Button>
                         </Space>
                     </div>
+
+                    {/* 搜索示例区域 */}
+                    <div style={{
+                        width: '100%',
+                        maxWidth: '900px',
+                        marginTop: '32px',
+                        padding: '24px',
+                        borderRadius: '12px',
+                        border: '1px solid rgba(0, 0, 0, 0.06)',
+                        position: 'relative',
+                        background: 'rgba(255, 255, 255, 0.3)'
+                    }}>
+                        <div style={{
+                            fontSize: '16px',
+                            fontWeight: '500',
+                            color: 'rgba(0, 0, 0, 0.75)',
+                            marginBottom: '16px',
+                        }}>
+                            搜索示例
+                        </div>
+                        <div style={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '16px',
+                        }}>
+                            <Row>
+                                <Col span={6} style={{ borderRight: '1px solid rgba(0, 0, 0, 0.1)', paddingRight: '16px' }}>
+                                    <div>
+                                        <div style={{
+                                            fontSize: '14px',
+                                            color: 'rgba(0, 0, 0, 0.6)',
+                                            marginBottom: '16px',
+                                        }}>
+                                            查询IP情报：
+                                        </div>
+                                        <Space wrap>
+                                            <Tag
+                                                style={{
+                                                    cursor: 'pointer',
+                                                    padding: '4px 12px',
+                                                    fontSize: '13px',
+                                                }}
+                                                onClick={() => handleExampleClick('188.190.10.197')}
+                                            >
+                                                188.190.10.197
+                                            </Tag>
+                                            <Tag
+                                                style={{
+                                                    cursor: 'pointer',
+                                                    padding: '4px 12px',
+                                                    fontSize: '13px',
+                                                }}
+                                                onClick={() => handleExampleClick('121.37.189.177')}
+                                            >
+                                                121.37.189.177
+                                            </Tag>
+                                        </Space>
+                                    </div>
+                                </Col>
+                                <Col span={8} style={{ borderRight: '1px solid rgba(0, 0, 0, 0.1)', paddingRight: '16px', paddingLeft: '16px' }}>
+                                    <div>
+                                        <div style={{
+                                            fontSize: '14px',
+                                            color: 'rgba(0, 0, 0, 0.6)',
+                                            marginBottom: '16px',
+                                        }}>
+                                            查询域名情报：
+                                        </div>
+                                        <Space wrap>
+                                            <Tag
+                                                style={{
+                                                    cursor: 'pointer',
+                                                    padding: '4px 12px',
+                                                    fontSize: '13px',
+                                                }}
+                                                onClick={() => handleExampleClick('admin01.spikq.com')}
+                                            >
+                                                admin01.spikq.com
+                                            </Tag>
+                                            <Tag
+                                                style={{
+                                                    cursor: 'pointer',
+                                                    padding: '4px 12px',
+                                                    fontSize: '13px',
+                                                }}
+                                                onClick={() => handleExampleClick('update.wpsofiice.net')}
+                                            >
+                                                http://update.wpsofiice.net
+                                            </Tag>
+                                        </Space>
+                                    </div>
+                                </Col>
+                                <Col span={8} style={{ paddingLeft: '16px' }}>
+                                    <div>
+                                        <div style={{
+                                            fontSize: '14px',
+                                            color: 'rgba(0, 0, 0, 0.6)',
+                                            marginBottom: '16px',
+                                        }}>
+                                            查询URL情报：
+                                        </div>
+                                        <Space wrap>
+                                            <Tag
+                                                style={{
+                                                    cursor: 'pointer',
+                                                    padding: '4px 12px',
+                                                    fontSize: '13px',
+                                                }}
+                                                onClick={() => handleExampleClick('ewoijioewoif27.club/search?q=123')}
+                                            >
+                                                ewoijioewoif27.club/search?q=123
+                                            </Tag>
+                                            <Tag
+                                                style={{
+                                                    cursor: 'pointer',
+                                                    padding: '4px 12px',
+                                                    fontSize: '13px',
+                                                }}
+                                                onClick={() => handleExampleClick('http://chromedata.webredirect.org/search?q=123')}
+                                            >
+                                                http://chromedata.webredirect.org/search?q=123
+                                            </Tag>
+                                        </Space>
+                                    </div>
+                                </Col>
+                            </Row>
+                        </div>
+                    </div>
                 </div>
                 <div style={{
                     textAlign: 'center',
@@ -147,7 +279,7 @@ const ThreatIntelligenceTrace: React.FC = () => {
                     云端情报支持：公安部第一研究所
                 </div>
             </div>
-        </div>
+        </div >
     );
 };
 
