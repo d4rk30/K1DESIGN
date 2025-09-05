@@ -331,14 +331,12 @@ const MainLayout = () => {
         const pathname = location.pathname.substring(1);
 
         if (pathname === 'threat-intelligence-trace/detail') {
-            const type = location.state?.type;
             return [
                 { title: '威胁情报' },
                 {
                     title: '威胁情报溯源',
                     onClick: () => navigate('/threat-intelligence-trace')
-                },
-                { title: type === 'attack' ? '攻击情报查询' : '外联情报查询' }
+                }
             ];
         }
 

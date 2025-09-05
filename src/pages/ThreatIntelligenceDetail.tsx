@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef, useMemo } from 'react';
-import { Card, Row, Col, Table, Tag, Space, Button, Input, message, Modal, Form, Upload, Empty } from 'antd';
+import { Card, Row, Col, Table, Tag, Space, Button, Input, message, Modal, Form, Upload, Empty, Dropdown } from 'antd';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { SearchOutlined, ReloadOutlined, UpOutlined, DownOutlined, CopyOutlined, GlobalOutlined, LinkOutlined, InboxOutlined, LeftOutlined, RightOutlined, StarFilled, StarOutlined } from '@ant-design/icons';
+import { SearchOutlined, ReloadOutlined, UpOutlined, DownOutlined, CopyOutlined, GlobalOutlined, LinkOutlined, InboxOutlined, LeftOutlined, RightOutlined, StarFilled, StarOutlined, DeleteOutlined } from '@ant-design/icons';
 import LabelSelect from '@/components/LabelSelect';
 import { US, CN, GB, FR, DE, RU } from 'country-flag-icons/react/3x2';
 import LabelInput from '@/components/LabelInput';
@@ -131,6 +131,13 @@ const ThreatIntelligenceDetail: React.FC = () => {
     const [iocPageSize, setIocPageSize] = useState(10);
     const [selectedIocKey, setSelectedIocKey] = useState<string>('1');
     const [evidenceChainModalVisible, setEvidenceChainModalVisible] = useState(false);
+    const [searchHistory, setSearchHistory] = useState<string[]>([
+        '192.168.1.100',
+        'malware.example.com',
+        'https://evil.com/payload.exe',
+        '10.0.0.50',
+        'phishing.test.org'
+    ]);
     const [vendorLoadingStates, setVendorLoadingStates] = useState<Record<string, boolean>>({
         // 外联情报厂商
         '奇安信': true,
@@ -218,6 +225,11 @@ TechniqueRefer: ${currentEvidence.TechniqueRefer}`;
 
     const handleShowEvidenceChainModal = () => {
         setEvidenceChainModalVisible(true);
+    };
+
+    const handleDeleteSearchHistory = (index: number, e: React.MouseEvent) => {
+        e.stopPropagation();
+        setSearchHistory(prev => prev.filter((_, i) => i !== index));
     };
 
     const getTabs = () => {
@@ -1430,7 +1442,7 @@ TechniqueRefer: ${currentEvidence.TechniqueRefer}`;
                     threatLevel: 'red',
                     confidenceLevel: 3,
                     aptOrg: 'APT28',
-                    virusFamily: 'Fancy Bear间谍软件',
+                    virusFamily: 'Bear间谍软件',
                     firstSeen: '2024-12-01 10:00:00',
                     lastSeen: '2024-12-11 12:03:44',
                     expireTime: '2024-12-31 11:22:31',
@@ -1459,6 +1471,18 @@ TechniqueRefer: ${currentEvidence.TechniqueRefer}`;
                     lastSeen: '2024-12-13 14:20:00',
                     expireTime: '2024-12-29 08:15:00',
                     sampleCount: 4
+                },
+                {
+                    name: '华为情报',
+                    logo: '/images/华为.png',
+                    threatLevel: 'unknown',
+                    confidenceLevel: 0,
+                    aptOrg: '--',
+                    virusFamily: '--',
+                    firstSeen: '--',
+                    lastSeen: '--',
+                    expireTime: '--',
+                    sampleCount: 0
                 }
             ];
         } else {
@@ -1474,6 +1498,18 @@ TechniqueRefer: ${currentEvidence.TechniqueRefer}`;
                     lastSeen: '2024-12-11 12:03:44',
                     expireTime: '2024-12-31 11:22:31',
                     sampleCount: 5
+                },
+                {
+                    name: '华为情报',
+                    logo: '/images/奇安信.png',
+                    threatLevel: 'unknown',
+                    confidenceLevel: 0,
+                    aptOrg: '--',
+                    virusFamily: '--',
+                    firstSeen: '--',
+                    lastSeen: '--',
+                    expireTime: '--',
+                    sampleCount: 0
                 },
                 {
                     name: '腾讯',
@@ -1613,25 +1649,71 @@ TechniqueRefer: ${currentEvidence.TechniqueRefer}`;
                 <Col span={24}>
                     <Row gutter={16} align="middle">
                         <Col flex="auto">
-                            <Input
-                                placeholder={'攻击情报仅支持输入IP，外联情报支持IP、域名和URL'}
-                                style={{ height: 50, border: '1px solid #f0f0f0', fontSize: 18, padding: '0 16px' }}
-                                defaultValue={query}
-                            />
+                            <Dropdown
+                                menu={{
+                                    items: searchHistory.map((item, index) => ({
+                                        key: index,
+                                        label: (
+                                            <div
+                                                style={{
+                                                    display: 'flex',
+                                                    justifyContent: 'space-between',
+                                                    alignItems: 'center',
+                                                    padding: '4px 8px',
+                                                    borderRadius: '4px',
+                                                    transition: 'background-color 0.2s'
+                                                }}
+                                                onMouseEnter={(e) => {
+                                                    e.currentTarget.style.backgroundColor = '#f5f5f5';
+                                                    const deleteBtn = e.currentTarget.querySelector('.delete-btn') as HTMLElement;
+                                                    if (deleteBtn) {
+                                                        deleteBtn.style.opacity = '1';
+                                                    }
+                                                }}
+                                                onMouseLeave={(e) => {
+                                                    e.currentTarget.style.backgroundColor = 'transparent';
+                                                    const deleteBtn = e.currentTarget.querySelector('.delete-btn') as HTMLElement;
+                                                    if (deleteBtn) {
+                                                        deleteBtn.style.opacity = '0';
+                                                    }
+                                                }}
+                                            >
+                                                <span style={{ flex: 1 }}>{item}</span>
+                                                <Button
+                                                    className="delete-btn"
+                                                    type="text"
+                                                    size="small"
+                                                    icon={<DeleteOutlined />}
+                                                    onClick={(e) => handleDeleteSearchHistory(index, e)}
+                                                    style={{
+                                                        padding: '0 4px',
+                                                        height: 'auto',
+                                                        color: '#999',
+                                                        opacity: 0,
+                                                        transition: 'opacity 0.2s'
+                                                    }}
+                                                />
+                                            </div>
+                                        ),
+                                    })),
+                                }}
+                                trigger={['click']}
+                                placement="bottomLeft"
+                            >
+                                <Input
+                                    placeholder={'请输入IP / 域名 / URL'}
+                                    style={{ height: 40, border: '1px solid #f0f0f0', fontSize: 14, padding: '0 16px' }}
+                                    defaultValue={query}
+                                />
+                            </Dropdown>
                         </Col>
                         <Col>
                             <Space>
-                                <Button type={'default'} style={{ height: 50, fontSize: 16, padding: '0 24px' }}
+                                <Button icon={<SearchOutlined />} type={'default'} style={{ height: 40, fontSize: 14, padding: '0 24px' }}
                                     onClick={() => {
                                     }}
                                 >
-                                    攻击情报查询
-                                </Button>
-                                <Button type={'default'} style={{ height: 50, fontSize: 16, padding: '0 24px' }}
-                                    onClick={() => {
-                                    }}
-                                >
-                                    外联情报查询
+                                    情报查询
                                 </Button>
                             </Space>
                         </Col>
@@ -1643,6 +1725,7 @@ TechniqueRefer: ${currentEvidence.TechniqueRefer}`;
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                             <span>威胁情报概览</span>
                             <Button
+
                                 onClick={() => setFeedbackVisible(true)}
                             >
                                 误报反馈
@@ -2012,130 +2095,275 @@ TechniqueRefer: ${currentEvidence.TechniqueRefer}`;
                         title="多源威胁情报"
                         style={{ borderRadius: 8 }}
                     >
-                        <div style={{ position: 'relative', overflow: getVendorsByQueryType().length > 5 ? 'hidden' : 'visible', paddingRight: getVendorsByQueryType().length > 5 ? '3px' : '0' }}>
-                            <div
-                                ref={carouselRef}
-                                style={{
-                                    display: 'flex',
-                                    gap: 16,
-                                    transition: 'transform 0.3s ease',
-                                    transform: getVendorsByQueryType().length > 5 ? `translateX(${currentSlide * -20}%)` : 'none'
-                                }}
-                            >
-                                {getVendorsByQueryType().map((vendor) => (
-                                    <div key={vendor.name} style={{ flex: `1 0 calc(${queryType === 'attack' ? '33.33%' : '20%'} - 12.8px)`, minWidth: 0 }}>
-                                        <VendorCardWithLoading vendor={vendor.name} isLoading={vendorLoadingStates[vendor.name]}>
-                                            <Card type="inner" title={
+                        <div style={{
+                            display: 'flex',
+                            flexWrap: 'wrap',
+                            gap: '16px',
+                            maxWidth: '100%'
+                        }}>
+                            {getVendorsByQueryType().map((vendor) => (
+                                <div key={vendor.name} style={{
+                                    flex: '1 1 calc(20% - 12.8px)',
+                                    minWidth: '360px',
+                                    maxWidth: 'calc(20% - 12.8px)',
+                                    height: '100%'
+                                }}>
+                                    <VendorCardWithLoading vendor={vendor.name} isLoading={vendorLoadingStates[vendor.name]}>
+                                        <Card type="inner"
+                                            style={{ height: '100%', display: 'flex', flexDirection: 'column' }}
+                                            styles={{ body: { padding: '16px' } }}
+                                        >
+                                            {/* 标题区域 */}
+                                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
                                                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                                    <span>{vendor.name}威胁情报</span>
                                                     <img src={vendor.logo} alt={vendor.name} style={{ width: 32, height: 32 }} />
+                                                    <span style={{ fontSize: 16, fontWeight: 500, color: '#262626' }}>{vendor.name}</span>
                                                 </div>
-                                            }>
-                                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
-                                                    <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>威胁等级</span>
-                                                    <Tag color={vendor.threatLevel} style={{ margin: 0 }}>
-                                                        {vendor.threatLevel === 'red' ? '高危' : vendor.threatLevel === 'orange' ? '中危' : '低危'}
-                                                    </Tag>
-                                                </div>
-                                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
-                                                    <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>置信度</span>
-                                                    <ConfidenceStars level={vendor.confidenceLevel} />
-                                                </div>
-                                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
-                                                    <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>威胁类型</span>
-                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                                        {vendorThreatTypes[vendor.name] && vendorThreatTypes[vendor.name].length <= 2 ? (
-                                                            vendorThreatTypes[vendor.name].map((type, typeIndex) => (
-                                                                <Tag key={typeIndex} color="volcano" style={{ margin: 0 }}>{type}</Tag>
-                                                            ))
-                                                        ) : vendorThreatTypes[vendor.name] ? (
-                                                            <>
-                                                                <Tag color="blue" style={{ margin: 0, borderRadius: '50%', width: 24, height: 24, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0 }}>{vendorThreatTypes[vendor.name].length}</Tag>
-                                                                <Button type="link" size="small" onClick={() => setThreatTypeModalVisible(true)}>更多</Button>
-                                                            </>
-                                                        ) : (
-                                                            <span>--</span>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
-                                                    <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>关联APT组织</span>
-                                                    <Tag color="orange" style={{ margin: 0 }}>{vendor.aptOrg}</Tag>
-                                                </div>
-                                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
-                                                    <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>恶意病毒家族</span>
-                                                    {vendor.virusFamily !== '--' ? (
-                                                        <Tag
-                                                            color="#f00"
-                                                            style={{ margin: 0, cursor: 'pointer' }}
-                                                            onClick={() => handleVirusFamilyClick(vendor.virusFamily)}
-                                                        >
-                                                            {vendor.virusFamily}
-                                                        </Tag>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                                    {/* 攻击类型tag */}
+                                                    {vendor.name !== '华为情报' && (() => {
+                                                        const attackType = queryType === 'attack' ? '正面攻击' : '受控外联';
+                                                        return (
+                                                            <Tag color="default" style={{ fontSize: '12px', padding: '2px 6px' }}>
+                                                                {attackType}
+                                                            </Tag>
+                                                        );
+                                                    })()}
+                                                    {/* 威胁等级tag */}
+                                                    {vendor.threatLevel === 'unknown' ? (
+                                                        <>
+                                                            <Tag color="default" style={{ fontSize: '12px', padding: '2px 6px' }}>
+                                                                未知
+                                                            </Tag>
+                                                            <div style={{ position: 'relative', display: 'inline-block' }}>
+                                                                <Tag
+                                                                    color="default"
+                                                                    style={{ fontSize: '12px', padding: '2px 6px' }}
+                                                                    onMouseEnter={(e) => {
+                                                                        const tooltip = e.currentTarget.parentElement?.querySelector('.expired-tooltip') as HTMLElement;
+                                                                        if (tooltip) {
+                                                                            tooltip.style.opacity = '1';
+                                                                            tooltip.style.visibility = 'visible';
+                                                                        }
+                                                                    }}
+                                                                    onMouseLeave={(e) => {
+                                                                        const tooltip = e.currentTarget.parentElement?.querySelector('.expired-tooltip') as HTMLElement;
+                                                                        if (tooltip) {
+                                                                            tooltip.style.opacity = '0';
+                                                                            tooltip.style.visibility = 'hidden';
+                                                                        }
+                                                                    }}
+                                                                >
+                                                                    过期情报
+                                                                </Tag>
+                                                                <div
+                                                                    className="expired-tooltip"
+                                                                    style={{
+                                                                        position: 'absolute',
+                                                                        top: '100%',
+                                                                        left: '50%',
+                                                                        transform: 'translateX(-50%)',
+                                                                        marginTop: '8px',
+                                                                        backgroundColor: '#fff',
+                                                                        border: '1px solid #d9d9d9',
+                                                                        borderRadius: '6px',
+                                                                        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+                                                                        padding: '12px',
+                                                                        zIndex: 1000,
+                                                                        opacity: 0,
+                                                                        visibility: 'hidden',
+                                                                        transition: 'all 0.2s ease',
+                                                                        minWidth: '360px'
+                                                                    }}
+                                                                    onMouseEnter={(e) => {
+                                                                        e.currentTarget.style.opacity = '1';
+                                                                        e.currentTarget.style.visibility = 'visible';
+                                                                    }}
+                                                                    onMouseLeave={(e) => {
+                                                                        e.currentTarget.style.opacity = '0';
+                                                                        e.currentTarget.style.visibility = 'hidden';
+                                                                    }}
+                                                                >
+                                                                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
+                                                                        <thead>
+                                                                            <tr style={{ backgroundColor: '#fafafa' }}>
+                                                                                <th style={{ padding: '8px 12px', color: '#262626', fontWeight: 500, textAlign: 'left', borderBottom: '1px solid #f0f0f0', minWidth: '120px' }}>过期时间</th>
+                                                                                <th style={{ padding: '8px 12px', color: '#262626', fontWeight: 500, textAlign: 'left', borderBottom: '1px solid #f0f0f0' }}>过期情报标签</th>
+                                                                            </tr>
+                                                                        </thead>
+                                                                        <tbody>
+                                                                            <tr>
+                                                                                <td style={{ padding: '8px 12px', color: '#8c8c8c', minWidth: '120px', verticalAlign: 'top' }}>2024-01-15</td>
+                                                                                <td style={{ padding: '8px 12px' }}>
+                                                                                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                                                                                        <Tag color="default" style={{ fontSize: '11px', padding: '1px 4px' }}>
+                                                                                            恶意IP
+                                                                                        </Tag>
+                                                                                    </div>
+                                                                                </td>
+                                                                            </tr>
+                                                                            <tr>
+                                                                                <td style={{ padding: '8px 12px', color: '#8c8c8c', minWidth: '120px', verticalAlign: 'top' }}>2024-02-20</td>
+                                                                                <td style={{ padding: '8px 12px' }}>
+                                                                                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                                                                                        <Tag color="default" style={{ fontSize: '11px', padding: '1px 4px' }}>
+                                                                                            可疑域名
+                                                                                        </Tag>
+                                                                                        <Tag color="default" style={{ fontSize: '11px', padding: '1px 4px' }}>
+                                                                                            C2服务器
+                                                                                        </Tag>
+                                                                                    </div>
+                                                                                </td>
+                                                                            </tr>
+                                                                            <tr>
+                                                                                <td style={{ padding: '8px 12px', color: '#8c8c8c', minWidth: '120px', verticalAlign: 'top' }}>2024-03-10</td>
+                                                                                <td style={{ padding: '8px 12px' }}>
+                                                                                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                                                                                        <Tag color="default" style={{ fontSize: '11px', padding: '1px 4px' }}>
+                                                                                            钓鱼网站
+                                                                                        </Tag>
+                                                                                        <Tag color="default" style={{ fontSize: '11px', padding: '1px 4px' }}>
+                                                                                            垃圾邮件
+                                                                                        </Tag>
+                                                                                        <Tag color="default" style={{ fontSize: '11px', padding: '1px 4px' }}>
+                                                                                            僵尸网络
+                                                                                        </Tag>
+                                                                                    </div>
+                                                                                </td>
+                                                                            </tr>
+                                                                        </tbody>
+                                                                    </table>
+                                                                </div>
+                                                            </div>
+                                                        </>
                                                     ) : (
-                                                        <span>--</span>
+                                                        <Tag
+                                                            color={vendor.threatLevel === 'red' ? '#f50' : vendor.threatLevel === 'orange' ? '#FF8C00' : vendor.threatLevel === 'green' ? '#00FA9A' : 'default'}
+                                                            style={{ fontSize: '12px', padding: '2px 6px' }}
+                                                        >
+                                                            {vendor.threatLevel === 'red' ? '高危' : vendor.threatLevel === 'orange' ? '中危' : vendor.threatLevel === 'green' ? '低危' : '安全'}
+                                                        </Tag>
                                                     )}
                                                 </div>
-                                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
-                                                    <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>首次发现时间</span>
-                                                    <span>{vendor.firstSeen}</span>
+                                            </div>
+                                            <div style={{ backgroundColor: '#fafafa', padding: '16px', borderRadius: '6px', height: '100%', display: 'flex', flexDirection: 'column' }}>
+                                                {/* 威胁类型 */}
+                                                <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '12px', padding: '8px 0' }}>
+                                                    <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500, minWidth: '60px' }}>威胁类型</span>
+                                                    <span style={{ fontSize: 14, color: '#262626' }}>
+                                                        {vendor.threatLevel === 'unknown' ? '-' : 'DDoS攻击'}
+                                                    </span>
                                                 </div>
-                                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
-                                                    <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>最近发现时间</span>
-                                                    <span>{vendor.lastSeen}</span>
-                                                </div>
-                                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, paddingBottom: 12, borderBottom: '1px solid #f0f0f0' }}>
-                                                    <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>情报过期时间</span>
-                                                    <span>{vendor.expireTime}</span>
-                                                </div>
-                                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12 }}>
-                                                    <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500 }}>通信样本</span>
-                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                                        <Tag color="blue" style={{ margin: 0, borderRadius: '50%', width: 24, height: 24, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0 }}>{vendor.sampleCount}</Tag>
-                                                        <Button type="link" size="small" style={{ padding: 0, height: 'auto' }} onClick={() => handleVendorSampleClick(vendor.name)}>详情</Button>
-                                                    </div>
-                                                </div>
-                                            </Card>
-                                        </VendorCardWithLoading>
-                                    </div>
-                                ))}
 
-                            </div>
+                                                {/* 病毒家族 */}
+                                                <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '12px', padding: '8px 0' }}>
+                                                    <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500, minWidth: '60px' }}>病毒家族</span>
+                                                    {vendor.threatLevel === 'unknown' ? (
+                                                        <span style={{ fontSize: 14, color: '#262626' }}>-</span>
+                                                    ) : (
+                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px', overflow: 'hidden', flex: 1, maxWidth: 'calc(100% - 72px)' }}>
+                                                            {(() => {
+                                                                const virusTags = [
+                                                                    vendor.virusFamily !== '--' ? vendor.virusFamily : '--',
+                                                                    '木马程序',
+                                                                    '勒索软件',
+                                                                    '间谍软件'
+                                                                ].filter(tag => tag !== '--');
+
+                                                                // 动态计算能显示的tag数量
+                                                                const maxVisible = virusTags.length <= 2 ? virusTags.length : 1;
+                                                                const visibleTags = virusTags.slice(0, maxVisible);
+                                                                const hiddenCount = virusTags.length - maxVisible;
+
+                                                                return (
+                                                                    <>
+                                                                        {visibleTags.map((tag, index) => (
+                                                                            <Tag
+                                                                                key={index}
+                                                                                color="blue"
+                                                                                style={{ cursor: index === 0 && vendor.virusFamily !== '--' ? 'pointer' : 'default' }}
+                                                                                onClick={index === 0 && vendor.virusFamily !== '--' ? () => handleVirusFamilyClick(vendor.virusFamily) : undefined}
+                                                                            >
+                                                                                {tag}
+                                                                            </Tag>
+                                                                        ))}
+                                                                        {hiddenCount > 0 && (
+                                                                            <Tag
+                                                                                color="default"
+                                                                                style={{
+                                                                                    borderRadius: '50%',
+                                                                                    width: '24px',
+                                                                                    height: '24px',
+                                                                                    display: 'flex',
+                                                                                    alignItems: 'center',
+                                                                                    justifyContent: 'center',
+                                                                                    padding: 0,
+                                                                                    fontSize: '12px'
+                                                                                }}
+                                                                            >
+                                                                                +{hiddenCount}
+                                                                            </Tag>
+                                                                        )}
+                                                                    </>
+                                                                );
+                                                            })()}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                                {/* 情报标签 */}
+                                                <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '12px', padding: '8px 0' }}>
+                                                    <span style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 500, minWidth: '60px' }}>情报标签</span>
+                                                    {vendor.threatLevel === 'unknown' ? (
+                                                        <span style={{ fontSize: 14, color: '#262626' }}>-</span>
+                                                    ) : (
+                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px', overflow: 'hidden', flex: 1, maxWidth: 'calc(100% - 10px)' }}>
+                                                            {(() => {
+                                                                const intelTags = ['APT组织', 'C2服务器', '僵尸网络', '钓鱼网站', '恶意域名', '远控木马'];
+                                                                // 动态计算能显示的tag数量
+                                                                const maxVisible = intelTags.length <= 2 ? intelTags.length : 1;
+                                                                const visibleTags = intelTags.slice(0, maxVisible);
+                                                                const hiddenCount = intelTags.length - maxVisible;
+
+                                                                return (
+                                                                    <>
+                                                                        {visibleTags.map((tag, index) => (
+                                                                            <Tag
+                                                                                key={index}
+                                                                                color="blue"
+                                                                            >
+                                                                                {tag}
+                                                                            </Tag>
+                                                                        ))}
+                                                                        {hiddenCount > 0 && (
+                                                                            <Tag
+                                                                                color="default"
+                                                                                style={{
+                                                                                    borderRadius: '50%',
+                                                                                    width: '24px',
+                                                                                    height: '24px',
+                                                                                    display: 'flex',
+                                                                                    alignItems: 'center',
+                                                                                    justifyContent: 'center',
+                                                                                    padding: 0,
+                                                                                    fontSize: '12px'
+                                                                                }}
+                                                                            >
+                                                                                +{hiddenCount}
+                                                                            </Tag>
+                                                                        )}
+                                                                    </>
+                                                                );
+                                                            })()}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+
+                                        </Card>
+                                    </VendorCardWithLoading>
+                                </div>
+                            ))}
                         </div>
-                        {getVendorsByQueryType().length > 5 && (
-                            <>
-                                <div
-                                    style={{
-                                        position: 'absolute', left: -15, top: '60%', transform: 'translateY(-50%)',
-                                        width: 32, height: 32, borderRadius: '50%', backgroundColor: '#fff', border: '1px solid #d9d9d9',
-                                        display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', zIndex: 10,
-                                        boxShadow: '0 2px 8px rgba(0,0,0,0.1)', transition: 'all 0.3s'
-                                    }}
-                                    onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#f0f9ff'; e.currentTarget.style.borderColor = '#1890ff'; e.currentTarget.style.boxShadow = '0 4px 12px rgba(24, 144, 255, 0.15)'; }}
-                                    onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#fff'; e.currentTarget.style.borderColor = '#d9d9d9'; e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)'; }}
-                                    onClick={() => setCurrentSlide(Math.max(0, currentSlide - 1))}
-                                >
-                                    <LeftOutlined style={{ fontSize: 14, color: '#666' }} />
-                                </div>
-                                <div
-                                    style={{
-                                        position: 'absolute', right: -15, top: '60%', transform: 'translateY(-50%)',
-                                        width: 32, height: 32, borderRadius: '50%', backgroundColor: '#fff', border: '1px solid #d9d9d9',
-                                        display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', zIndex: 10,
-                                        boxShadow: '0 2px 8px rgba(0,0,0,0.1)', transition: 'all 0.3s'
-                                    }}
-                                    onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#f0f9ff'; e.currentTarget.style.borderColor = '#1890ff'; e.currentTarget.style.boxShadow = '0 4px 12px rgba(24, 144, 255, 0.15)'; }}
-                                    onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#fff'; e.currentTarget.style.borderColor = '#d9d9d9'; e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)'; }}
-                                    onClick={() => setCurrentSlide(Math.min(1, currentSlide + 1))}
-                                >
-                                    <RightOutlined style={{ fontSize: 14, color: '#666' }} />
-                                </div>
-                            </>
-                        )}
-
-
-
-
                     </Card>
                 </Col>
 
@@ -2286,7 +2514,7 @@ TechniqueRefer: ${currentEvidence.TechniqueRefer}`;
                         </div>
                     </Card>
                 </Col>
-            </Row>
+            </Row >
             <Modal
                 title={`${currentVendor}威胁情报 - 通信样本`}
                 open={communicationModalVisible}

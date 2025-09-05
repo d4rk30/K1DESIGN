@@ -1411,7 +1411,7 @@ const Dashboard = () => {
                     </div>
                 </div>
                 <Row gutter={[24, 24]}>
-                    <Col span={12}>
+                    <Col span={24}>
                         <ReactECharts
                             option={getChartOptions('line', {
                                 title: '正向攻击趋势',
@@ -1425,7 +1425,7 @@ const Dashboard = () => {
                             theme="custom"
                         />
                     </Col>
-                    <Col span={12}>
+                    <Col span={24}>
                         <ReactECharts
                             option={getChartOptions('line', {
                                 title: '外联失陷趋势',
@@ -1439,21 +1439,7 @@ const Dashboard = () => {
                             theme="custom"
                         />
                     </Col>
-                    <Col span={12}>
-                        <ReactECharts
-                            option={getChartOptions('line', {
-                                title: '出境流量趋势',
-                                xData: ['00:00', '03:00', '06:00', '09:00', '12:00', '15:00', '18:00', '21:00'],
-                                yData: [150, 180, 160, 200, 250, 220, 190, 210],
-                                lineColor: '#fa8c16',
-                                areaColor: 'rgba(250, 140, 22, 0.15)',
-                                yAxisName: '（单位：Mbps）'
-                            })}
-                            style={{ height: '300px' }}
-                            theme="custom"
-                        />
-                    </Col>
-                    <Col span={12}>
+                    <Col span={24}>
                         <ReactECharts
                             option={getChartOptions('line', {
                                 title: '测绘流量趋势',
